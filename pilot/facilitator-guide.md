@@ -18,7 +18,7 @@ The pages walk them through it in order. The pilot page records their answers an
 
 ## The day before
 
-1. Make one call to Juniper and one to Priya on https://tonyt908.com/livekitlab/ to be sure both agents answer. On LiveKit's free plan the agent sleeps when nobody is using it, and the first call can take up to 20 seconds to start.
+1. Make one call to Juniper on https://tonyt908.com/livekitlab/lab/ and one to Priya on https://tonyt908.com/livekitlab/practice/ to be sure both agents answer. On LiveKit's free plan the agent sleeps when nobody is using it, and the first call can take up to 20 seconds to start.
 2. Give each person a pilot code: P1, P2, P3. Codes are letters, numbers, `-` and `_`, up to 24 characters. Use a new code if someone starts over.
 3. Send each person their own link, with the access code from `LAB_ACCESS_CODE` in `.env.local`:
 

@@ -34,17 +34,25 @@ export interface LabPersona {
 
 /** What every lab RPC returns. */
 export interface LabState {
+  /** The agent's clock, in Unix seconds, for lining up its speech times with the page's. */
+  now?: number;
   settings: LabSettings;
   persona: LabPersona;
 }
 
-/** LiveKit's per-turn timing, in seconds. The first two come on caller turns, the rest on agent turns. */
+/** LiveKit's per-turn timing, in seconds. The first two come on caller turns, the next three on agent turns. */
 export interface TurnMetrics {
   end_of_turn_delay: number | null;
   transcription_delay: number | null;
   llm_node_ttft: number | null;
   tts_node_ttfb: number | null;
   e2e_latency: number | null;
+  /**
+   * When the turn's speech started and stopped, in Unix seconds on the agent's
+   * clock. Both kinds of turn carry them; an agent from before 15 Nov 2026 doesn't.
+   */
+  started_speaking_at?: number | null;
+  stopped_speaking_at?: number | null;
 }
 
 export interface TurnEvent {

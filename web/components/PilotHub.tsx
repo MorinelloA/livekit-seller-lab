@@ -1,8 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { type ReactNode, useEffect, useState } from 'react';
 import { KnowledgeCheck } from '@/components/KnowledgeCheck';
+import { Eyebrow } from '@/components/ui/Bits';
+import { Button, ButtonLink } from '@/components/ui/Button';
+import { cx } from '@/components/ui/cx';
+import { Icon } from '@/components/ui/Icon';
 import { CHECK_QUESTIONS, checkScore, type CheckPhase, letter } from '@/lib/check';
 import {
   type CheckAnswers,
@@ -48,23 +51,18 @@ export function PilotHub() {
   };
 
   return (
-    <main className="mx-auto max-w-3xl space-y-8 px-5 py-10">
-      <header className="space-y-3">
-        <p className="text-sm font-medium tracking-wide text-accent uppercase">
-          <Link href="/" className="hover:underline">
-            Seller Lab 1
-          </Link>{' '}
-          · Pilot{pilot ? ` · ${pilot}` : ''}
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">
+    <main id="main" className="mx-auto flex max-w-[840px] flex-col gap-10 px-5 pt-14 sm:px-10 sm:pt-16">
+      <header className="flex flex-col gap-4">
+        <Eyebrow>Seller Lab 1 · Pilot{pilot ? ` · ${pilot}` : ''}</Eyebrow>
+        <h1 className="display text-[clamp(34px,4vw,48px)] leading-[1.08]">
           {step === 'before' || step === 'after' ? 'Quick check' : 'Trying out Seller Lab 1'}
         </h1>
       </header>
 
       {!pilot ? (
-        <p className="text-stone-700">
-          This page is for people helping Tony try out the lab. Open the link he sent you, and it
-          brings you here with your pilot code.
+        <p className="m-0 text-base leading-relaxed">
+          This page is for people helping Tony try out the lab. Open the link he sent you, and it brings you here with
+          your pilot code.
         </p>
       ) : (
         <>
@@ -82,14 +80,13 @@ export function PilotHub() {
           {step === 'lab' && (
             <NextStep
               title="Step 2: the lab"
-              href="/"
+              href="/lab/"
               linkText="Open the lab"
               doneText="I’ve finished the lab"
               onDone={() => setProgress(reachStep('practice'))}
             >
-              Call Juniper, then work through Make it your own and all four experiments, top to bottom.
-              Use headphones. When you’re done, press the link in the blue bar at the top of the lab.
-              It takes about 30 minutes.
+              Call Juniper, then work through Make it your own and all four experiments, top to bottom. Use headphones.
+              When you’re done, press the link in the bar at the top of the lab. It takes about 30 minutes.
             </NextStep>
           )}
           {step === 'practice' && (
@@ -100,8 +97,8 @@ export function PilotHub() {
               doneText="I’ve finished the practice call"
               onDone={() => setProgress(reachStep('after'))}
             >
-              Read the brief, then call Priya. The call takes 8 to 10 minutes, and a coach scores it
-              when you end it. Call again if you’d like another try.
+              Read the brief, then call Priya. The call takes 8 to 10 minutes, and a coach scores it when you end it.
+              Call again if you’d like another try.
             </NextStep>
           )}
           {step === 'after' && <KnowledgeCheck phase="after" onSubmit={submit('after')} />}
@@ -115,7 +112,7 @@ export function PilotHub() {
 function StepList({ step }: { step: Step }) {
   const order: Step[] = ['before', 'lab', 'practice', 'after', 'done'];
   return (
-    <ol className="grid gap-2 sm:grid-cols-4" aria-label="Steps">
+    <ol className="m-0 grid list-none gap-2 p-0 sm:grid-cols-4" aria-label="Steps">
       {NUMBERED.map((item, i) => {
         const done = order.indexOf(step) > order.indexOf(item.step);
         const now = item.step === step;
@@ -123,15 +120,17 @@ function StepList({ step }: { step: Step }) {
           <li
             key={item.step}
             aria-current={now ? 'step' : undefined}
-            className={`rounded-lg border px-3 py-2 text-sm ${
-              now ? 'border-accent bg-accent-soft font-medium' : 'border-stone-200 bg-white text-stone-600'
-            }`}
+            className={cx(
+              'flex flex-col gap-1 rounded-md border px-3.5 py-3 text-sm',
+              now ? 'border-accent-line bg-accent-soft text-fg' : 'border-line text-subtle',
+            )}
           >
-            <span className="block text-xs text-stone-500">
+            <span className="flex items-center gap-1.5 font-mono text-[11px] tracking-[0.12em] uppercase">
+              {done && <Icon name="check" className="size-3.5 text-accent" strokeWidth={2} />}
               Step {i + 1}
               {done ? ' · done' : ''}
             </span>
-            {item.label}
+            <span className={now ? 'font-semibold' : undefined}>{item.label}</span>
           </li>
         );
       })}
@@ -142,49 +141,43 @@ function StepList({ step }: { step: Step }) {
 function Consent({ pilot, onAgree }: { pilot: string; onAgree: () => void }) {
   const [agreed, setAgreed] = useState(false);
   return (
-    <section className="space-y-5">
-      <p className="text-stone-700">
-        Thanks for helping, {pilot}. Seller Lab 1 teaches new LiveKit sellers why voice AI agents are
-        hard to get right, and how to ask a prospect about it. You’ll go through four steps, about 50
-        minutes in all:
+    <section className="flex flex-col gap-5 text-base leading-relaxed">
+      <p className="m-0">
+        Thanks for helping, {pilot}. Seller Lab 1 teaches new LiveKit sellers why voice AI agents are hard to get right,
+        and how to ask a prospect about it. You’ll go through four steps, about 50 minutes in all:
       </p>
-      <ol className="list-decimal space-y-1 pl-6 text-stone-700">
+      <ol className="m-0 flex list-decimal flex-col gap-1 pl-6">
         <li>A quick check: five questions and three ratings.</li>
         <li>The lab, with Juniper, a voice agent for a made-up restaurant.</li>
         <li>A practice call with Priya, an AI playing a prospect, scored by a coach.</li>
         <li>The same quick check again.</li>
       </ol>
-      <p className="text-stone-700">
-        You need Chrome or Edge on a laptop, headphones with a microphone, and a quiet room. It’s fine
-        to get stuck: that’s what the pilot is for. Say what you’re thinking as you go, if Tony is
-        with you.
+      <p className="m-0">
+        You need Chrome or Edge on a laptop, headphones with a microphone, and a quiet room. It’s fine to get stuck:
+        that’s what the pilot is for. Say what you’re thinking as you go, if Tony is with you.
       </p>
-      <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-700">
-        <p className="font-medium text-stone-900">What’s recorded</p>
-        <p>
-          Your answers, how long each step takes, what you predict and play in the lab, and the audio
-          and transcripts of your calls with Juniper and Priya. They’re filed under your pilot code,
-          not your name. Tony uses them to improve the lab and to report how the pilot went, without
-          your name. Ask him to delete them at any time.
+      <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-5 text-sm leading-relaxed">
+        <p className="m-0 font-semibold text-fg">What’s recorded</p>
+        <p className="m-0">
+          Your answers, how long each step takes, what you predict and play in the lab, and the audio and transcripts of
+          your calls with Juniper and Priya. They’re filed under your pilot code, not your name. Tony uses them to
+          improve the lab and to report how the pilot went, without your name. Ask him to delete them at any time.
         </p>
       </div>
-      <label className="flex items-start gap-2 text-sm">
+      <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-fg">
         <input
           type="checkbox"
           checked={agreed}
           onChange={(event) => setAgreed(event.target.checked)}
-          className="mt-0.5 accent-accent"
+          className="size-4 accent-accent"
         />
         I agree to this being recorded.
       </label>
-      <button
-        type="button"
-        onClick={onAgree}
-        disabled={!agreed}
-        className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
-      >
-        Start step 1
-      </button>
+      <div>
+        <Button variant="primary" onClick={onAgree} disabled={!agreed}>
+          Start step 1
+        </Button>
+      </div>
     </section>
   );
 }
@@ -198,20 +191,14 @@ function NextStep(props: {
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-4 rounded-xl border border-stone-200 bg-white p-5">
-      <h2 className="text-xl font-semibold">{props.title}</h2>
-      <p className="text-stone-700">{props.children}</p>
+    <section className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6">
+      <h2 className="display m-0 text-2xl">{props.title}</h2>
+      <p className="m-0 text-base leading-relaxed">{props.children}</p>
       <div className="flex flex-wrap gap-2">
-        <Link href={props.href} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white">
+        <ButtonLink href={props.href} variant="primary">
           {props.linkText}
-        </Link>
-        <button
-          type="button"
-          onClick={props.onDone}
-          className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium"
-        >
-          {props.doneText}
-        </button>
+        </ButtonLink>
+        <Button onClick={props.onDone}>{props.doneText}</Button>
       </div>
     </section>
   );
@@ -224,34 +211,34 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
   const after = checks.after?.answers ?? [];
   const mark = (answers: number[], qi: number) =>
     answers[qi] === undefined ? '–' : `${letter(answers[qi])} ${answers[qi] === CHECK_QUESTIONS[qi].answer ? '✓' : '✗'}`;
+  const th = 'px-3 py-2.5 font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-subtle';
 
   return (
-    <section className="space-y-6">
-      <p className="text-lg text-stone-800">That’s everything. Thank you!</p>
+    <section className="flex flex-col gap-7">
+      <p className="m-0 text-lg text-fg">That’s everything. Thank you!</p>
       {checks.before && checks.after && (
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Your answers</h2>
-          <p className="text-sm text-stone-600">
-            Before the lab you got {checkScore(before)} of {CHECK_QUESTIONS.length}; after it,{' '}
-            {checkScore(after)}.
+        <div className="flex flex-col gap-3">
+          <h2 className="display m-0 text-2xl">Your answers</h2>
+          <p className="m-0 text-sm">
+            Before the lab you got {checkScore(before)} of {CHECK_QUESTIONS.length}; after it, {checkScore(after)}.
           </p>
-          <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-stone-200 bg-stone-50 text-xs text-stone-600">
+          <div className="overflow-x-auto rounded-lg border border-line">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead className="border-b border-line bg-surface">
                 <tr>
-                  <th scope="col" className="px-3 py-2 font-medium">Question</th>
-                  <th scope="col" className="px-3 py-2 font-medium">Before</th>
-                  <th scope="col" className="px-3 py-2 font-medium">After</th>
-                  <th scope="col" className="px-3 py-2 font-medium">Answer</th>
+                  <th scope="col" className={th}>Question</th>
+                  <th scope="col" className={th}>Before</th>
+                  <th scope="col" className={th}>After</th>
+                  <th scope="col" className={th}>Answer</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-line">
                 {CHECK_QUESTIONS.map((q, qi) => (
                   <tr key={q.question}>
-                    <td className="px-3 py-2 text-stone-700">{q.question}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{mark(before, qi)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{mark(after, qi)}</td>
-                    <td className="px-3 py-2 text-stone-700">
+                    <td className="px-3 py-2.5">{q.question}</td>
+                    <td className="px-3 py-2.5 font-mono whitespace-nowrap text-fg">{mark(before, qi)}</td>
+                    <td className="px-3 py-2.5 font-mono whitespace-nowrap text-fg">{mark(after, qi)}</td>
+                    <td className="px-3 py-2.5">
                       ({letter(q.answer)}) {q.options[q.answer]}
                     </td>
                   </tr>
@@ -262,7 +249,7 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
         </div>
       )}
       <form
-        className="space-y-2"
+        className="flex flex-col gap-2.5"
         onSubmit={(event) => {
           event.preventDefault();
           if (!feedback.trim()) return;
@@ -270,7 +257,7 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
           setSent(true);
         }}
       >
-        <label htmlFor="feedback" className="block font-medium">
+        <label htmlFor="feedback" className="font-semibold text-fg">
           Anything confusing, or anything you’d change? (optional)
         </label>
         <textarea
@@ -280,18 +267,16 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
           maxLength={2000}
           rows={4}
           disabled={sent}
-          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm disabled:bg-stone-50"
+          className="w-full rounded border border-line bg-page px-3 py-2.5 text-sm text-fg disabled:opacity-60"
         />
         {sent ? (
-          <p className="text-sm text-stone-600">Sent. Thanks.</p>
+          <p className="m-0 text-sm text-subtle">Sent. Thanks.</p>
         ) : (
-          <button
-            type="submit"
-            disabled={!feedback.trim()}
-            className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium disabled:opacity-40"
-          >
-            Send
-          </button>
+          <div>
+            <Button type="submit" disabled={!feedback.trim()}>
+              Send
+            </Button>
+          </div>
         )}
       </form>
     </section>

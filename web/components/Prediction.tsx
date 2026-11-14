@@ -1,5 +1,8 @@
 'use client';
 
+import { Button } from '@/components/ui/Button';
+import { cx } from '@/components/ui/cx';
+
 /** "Predict" step shared by every section: pick an answer, then lock it in. */
 export function Prediction(props: {
   /** Unique per section; names the radio group. A fixed name, not useId, so the
@@ -15,37 +18,39 @@ export function Prediction(props: {
   const { question, options, choice, locked } = props;
 
   return (
-    <fieldset className="space-y-3 rounded-xl bg-stone-50 p-4" disabled={locked}>
+    <fieldset className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0" disabled={locked}>
       <legend className="sr-only">Predict</legend>
-      <p className="text-sm">
-        <span className="font-semibold">Predict. </span>
-        {question}
-      </p>
-      <div className="space-y-1.5">
-        {options.map((option, index) => (
-          <label key={option} className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name={`${props.name}-prediction`}
-              checked={choice === index}
-              onChange={() => props.onChoose(index)}
-              className="accent-accent"
-            />
-            {option}
-          </label>
-        ))}
+      <p className="m-0 text-[15px] leading-relaxed text-fg">{question}</p>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {options.map((option, index) => {
+          const chosen = choice === index;
+          return (
+            <label
+              key={option}
+              className={cx(
+                'flex min-h-12 items-center gap-2.5 rounded-md border px-3.5 py-2.5 text-sm leading-snug transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent',
+                chosen ? 'border-accent-line bg-accent-soft text-fg' : 'border-line text-body',
+                locked ? (chosen ? '' : 'opacity-60') : 'cursor-pointer hover:border-subtle',
+              )}
+            >
+              <input
+                type="radio"
+                name={`${props.name}-prediction`}
+                checked={chosen}
+                onChange={() => props.onChoose(index)}
+                className="size-4 shrink-0 accent-accent"
+              />
+              {option}
+            </label>
+          );
+        })}
       </div>
-      {!locked ? (
-        <button
-          type="button"
-          onClick={props.onLock}
-          disabled={choice === null}
-          className="rounded-lg bg-stone-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
-        >
-          Lock in my prediction
-        </button>
-      ) : (
-        <p className="text-sm text-stone-600">Locked in.</p>
+      {!locked && (
+        <div>
+          <Button variant="primary" onClick={props.onLock} disabled={choice === null}>
+            Lock in my prediction
+          </Button>
+        </div>
       )}
     </fieldset>
   );

@@ -12,7 +12,8 @@ Built so far (slices 1 to 3 and 5 of the build, and the tools for slice 4's pilo
 - The test caller, a prediction question for each section, and LiveKit's per-turn timing on the page.
 - **The practice call:** a discovery call with Priya, an AI prospect, scored on the lab's six-item rubric by an LLM judge, with a coach voice that talks the learner through the result.
 - **The pilot:** a check before and after the lab (five questions and three ratings), a page that walks a participant through the four steps, a record of each participant's session, and a results page. [`pilot/facilitator-guide.md`](pilot/facilitator-guide.md) says how to run it.
-- **Hosting:** the lab runs at tonyt908.com/livekitlab for the people it's sent to, with the agent on LiveKit Cloud.
+- **The overview and the write-up:** a front page that replays a recorded run of Experiment 1, and a page on how the lab is built, in LiveKit's brand like the rest of the site (see [The design](#the-design)).
+- **Hosting:** the site runs at tonyt908.com/livekitlab for the people it's sent to, with the agent on LiveKit Cloud.
 
 Still to come: running the pilot with two or three people who don't know LiveKit, and fixing what they get stuck on.
 
@@ -21,7 +22,8 @@ Still to come: running the pilot with two or three people who don't know LiveKit
 | Folder | What it is |
 | --- | --- |
 | `agent/` | Juniper and Priya, a Python agent on the LiveKit Agents framework (1.8), with tests for the scoring rules and the Dockerfile LiveKit Cloud builds |
-| `web/` | The lab, practice-call and pilot pages (Next.js, exported as static files, using `livekit-client` and LiveKit's React components), and the API, a Cloudflare Worker in `web/worker` |
+| `web/` | The overview, lab, practice-call, pilot and how-it's-built pages (Next.js, exported as static files, using `livekit-client` and LiveKit's React components), and the API, a Cloudflare Worker in `web/worker` |
+| `web/scripts/capture-server.mjs` | Saves recorded test-caller runs for the overview's replay, in development only |
 | `pilot/` | The facilitator guide for the pilot |
 | `scripts/make_clips_livekit.py` | Makes the test-caller clips for Experiments 1 and 2 with a natural voice from LiveKit Inference |
 | `scripts/make_clips_exp34.py` | Makes the café booking, the café loop and Experiment 4's question, with Deepgram's own API |
@@ -49,11 +51,11 @@ You need a LiveKit Cloud project and a Deepgram account. The free plans are enou
    pnpm dev
    ```
 
-4. Open http://localhost:3100/livekitlab/ and press **Call Juniper**. Use headphones. The practice call is at `/livekitlab/practice/`, the pilot at `/livekitlab/pilot/` and its results at `/livekitlab/pilot/results/`.
+4. Open http://localhost:3100/livekitlab/lab/ and press **Call Juniper**. Use headphones. The overview is at `/livekitlab/`, how it's built at `/livekitlab/build/`, the practice call at `/livekitlab/practice/`, the pilot at `/livekitlab/pilot/` and its results at `/livekitlab/pilot/results/`.
 
 Calls need the access code. Open a page with `?code=` and the code once, or type it into the box the page shows. For local testing, `.env.test.local` can set throwaway `LAB_ACCESS_CODE` and `LAB_ADMIN_CODE` values that apply only to `pnpm dev`.
 
-The agent doesn't reload when its code changes: stop it and start it again. To check the scoring rules without keys or a network, run `.venv\Scripts\python -m pytest` in `agent`.
+The agent doesn't reload when its code changes: stop it and start it again. To check the scoring rules without keys or a network, run `.venv\Scripts\python -m pytest` in `agent`. `pnpm test` in `web` checks how the timeline places each turn, also without keys.
 
 ## How it works
 
@@ -70,11 +72,11 @@ The agent doesn't reload when its code changes: stop it and start it again. To c
 | 3. Noise | The caller's audio as it comes in | ai-coustics Voice Focus S (`QUAIL_VF_S`) voice isolation | The filter is set once, in the room's audio input options, and its `enabled` flag turns it on and off. While off it passes audio through untouched and isn't billed |
 | 4. Model | `google/gemma-4-31b-it` | `xai/grok-4.20-0309-reasoning` | `Agent.update_options(llm=...)` on the running agent; a new Juniper after a handoff gets the same model |
 
-Before each test-caller run, `lab.reset` hands off to a fresh Juniper with an empty conversation and the original instructions, so the two runs compare fairly. Every lab RPC returns the same state: the switches and the restaurant in use.
+Before each test-caller run, `lab.reset` hands off to a fresh Juniper with an empty conversation and the original instructions, so the two runs compare fairly. Every lab RPC returns the same state: the switches, the restaurant in use and the agent's clock (`now`).
 
 **The test caller.** `web/lib/labMic.ts` publishes one microphone track fed by a Web Audio mixer. Test-caller clips play straight into that track, so the agent hears exactly the same audio on both settings. The learner's real microphone joins the mix only for "try it yourself."
 
-**The timing.** After every turn, the agent sends the page what was said, whether the reply was cut off, and LiveKit's per-turn metrics (`end_of_turn_delay`, `transcription_delay`, `llm_node_ttft`, `tts_node_ttfb`, `e2e_latency`) on the `lab.events` text stream. These are measured on the agent; what the learner hears also includes network time.
+**The timing.** After every turn, the agent sends the page what was said, whether the reply was cut off, and LiveKit's per-turn metrics (`end_of_turn_delay`, `transcription_delay`, `llm_node_ttft`, `tts_node_ttfb`, `e2e_latency`) on the `lab.events` text stream. These are measured on the agent; what the learner hears also includes network time. Each turn also carries when its speech started and stopped (`started_speaking_at`, `stopped_speaking_at`, on the agent's clock), which the page uses to draw it on the run's timeline.
 
 **The practice call.** The practice page asks the API for a room with `{"mode": "practice"}`, and the API puts it in the agent dispatch's metadata. The same worker reads it and runs Priya (`agent/src/prospect.py`) instead of Juniper.
 
@@ -98,9 +100,21 @@ Before each test-caller run, `lab.reset` hands off to a fresh Juniper with an em
 - **Results.** `/livekitlab/pilot/results/` shows everything recorded, one participant at a time. It takes the admin code, can delete a participant's data, and can download it all as JSON.
 - **The check.** It covers what the lab teaches today (`web/lib/check.ts`): the lab guide's questions 1 and 2, plus three new ones on Make it your own, what LiveKit builds itself, and the turn-taking discovery question. The answers are 1c, 2a, 3b, 4c, 5a.
 
+## The design
+
+The pages follow LiveKit's brand kit (livekit.com/brand): near-black `#070707` with cyan `#1FD5F9` by default, and near-white `#FDFDFC` with blue `#002CF2` behind the theme switch in the header. The greys and the status colours are the ones livekit.com uses, and every text colour passes WCAG AA on its background. The colours are CSS variables in `web/app/globals.css`, mapped into Tailwind with `@theme inline`; a small script in `<head>` applies a saved theme before the page paints.
+
+- **Type.** Public Sans, LiveKit's body face, for reading (`next/font/google`, fetched at build time). Headings use it at weight 300 with tight tracking, in place of Everett, LiveKit's display face, which is licensed. Labels, times and code use Commit Mono 1.143 (SIL Open Font License), converted from the release's OTF files to woff2 in `web/app/fonts`, with the licence beside them.
+- **The mark.** The site has its own "Seller Lab" mark: a caller's turn and the agent's reply, offset. LiveKit's wordmark and symbol aren't used, and the footer says the site is an independent project.
+- **The conversation timeline** (`web/components/ConversationTimeline.tsx`, `web/lib/timeline.ts`). Each test-caller run is drawn on one time axis with the other setting's run: the clip's real waveform as dots on the caller's lane, and Juniper thinking and speaking on its own lane, with cut-offs, stalls and long pauses marked. It grows live during a run. The page times the clips and Juniper's state changes on its own clock, the agent reports when each turn's speech started and stopped on its clock, and a quick `lab.get_state` before each run measures the difference.
+  - Where a reply ends is where a listener stopped hearing it. When a reply is cut off, LiveKit pauses it first and reports it stopped only when it gives up the turn, about a second later (4.10 s against 5.33 s in the run on the overview). So the capsules follow the state changes, and the agent's turns say which one was cut off.
+  - Experiment 2's runs line up on the first "uh-huh", because the "uh-huh"s wait for Juniper to start speaking.
+  - An agent from before 15 Nov 2026 doesn't report speech times. The timeline still draws from the state changes, but without cut-off marks.
+- **The replay.** The overview plays a real recording of Experiment 1 on both settings: the test clip and Juniper's voice, as the caller heard them. To record it again, start the agent locally, run `node scripts/capture-server.mjs` in `web` next to `pnpm dev`, open http://localhost:3100/livekitlab/lab/?capture, call Juniper and play Experiment 1's test caller on both settings. Each finished run is saved to `web/lib/replays/` (the timeline, the run's events and the clip's peaks) and `web/public/replay/` (the recording, a 24 kHz WAV). The capture code is only in development builds.
+
 ## The hosted lab
 
-The lab runs at https://tonyt908.com/livekitlab/ for the people it's sent to. Nothing on tonyt908.com links to it.
+The site runs at https://tonyt908.com/livekitlab/ for the people it's sent to, and the lab itself at https://tonyt908.com/livekitlab/lab/. Nothing on tonyt908.com links to them. Links sent before the overview existed open it instead of the lab; it keeps their access code, and its first button goes to the lab.
 
 - **The pages and the API.** A Cloudflare Worker, `livekit-seller-lab`, serves both. Its route, `tonyt908.com/livekitlab*`, takes precedence over the site's own Worker for those paths only. The pages are Next.js's static export, staged under `dist/livekitlab`, and only `/livekitlab/api/*` runs the Worker's code.
 - **The agent.** It runs on LiveKit Cloud as agent `CA_Meq4CxJofW4Q` in `us-east` (`agent/livekit.toml`). On the free plan it can sleep when idle, and the first call can then take up to 20 seconds; the pages say so.
@@ -122,6 +136,8 @@ cd ..\agent
 lk agent deploy       # after agent code changes; needs LIVEKIT_URL, LIVEKIT_API_KEY and LIVEKIT_API_SECRET set
 lk agent update-secrets --secrets DEEPGRAM_API_KEY=...   # when the Deepgram key changes
 ```
+
+The hosted agent needs one `lk agent deploy` after 15 Nov 2026's change, which reports when each turn's speech started and stopped; until then the hosted lab's timelines draw without cut-off marks.
 
 ## The test-caller clips
 

@@ -30,6 +30,7 @@ import contextlib
 import json
 import logging
 import os
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -223,9 +224,14 @@ async def run_juniper_lab(ctx: JobContext, record: bool = False) -> None:
     send = make_sender(ctx)
 
     def state() -> str:
-        """What every lab RPC returns: the current switches and restaurant."""
+        """What every lab RPC returns: the current switches and restaurant.
+
+        `now` is the agent's clock, so the page can line up the speech times the
+        agent reports with its own (it measures the difference from a quick RPC).
+        """
         return json.dumps(
             {
+                "now": time.time(),
                 "settings": asdict(settings),
                 "persona": {
                     "name": persona.name,

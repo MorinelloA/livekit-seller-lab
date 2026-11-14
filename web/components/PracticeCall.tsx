@@ -1,11 +1,15 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import { type RemoteParticipant, Room, RoomEvent } from 'livekit-client';
 import { AccessCodeForm } from '@/components/AccessCodeForm';
+import { AgentBars } from '@/components/AgentBars';
 import { PilotBanner } from '@/components/PilotBanner';
+import { Callout, Eyebrow, inputClass, Pill, Points } from '@/components/ui/Bits';
+import { Button } from '@/components/ui/Button';
+import { cx } from '@/components/ui/cx';
+import { Icon } from '@/components/ui/Icon';
 import { AccessCodeError } from '@/lib/access';
 import { logPilot, requestRoom } from '@/lib/pilot';
 import {
@@ -250,26 +254,25 @@ export function PracticeCall() {
 
   return (
     <RoomContext.Provider value={room ?? undefined}>
-      <main className="mx-auto max-w-5xl space-y-8 px-5 py-10">
-        {access.pilot && <PilotBanner pilot={access.pilot} page="practice" />}
-        <header className="space-y-3">
-          <p className="text-sm font-medium tracking-wide text-accent uppercase">
-            <Link href="/" className="hover:underline">
-              Seller Lab 1
-            </Link>{' '}
-            · Prove it
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">The practice call</h1>
-          <p className="max-w-2xl text-stone-600">
-            An 8 to 10 minute discovery call with Priya, an AI voice agent playing a buyer. It’s
-            scored on what this lab teaches, not on general sales skills. Use headphones.
+      <main id="main" className="mx-auto max-w-[1200px] px-5 sm:px-10">
+        {access.pilot && (
+          <div className="pt-6">
+            <PilotBanner pilot={access.pilot} page="practice" />
+          </div>
+        )}
+        <header className="flex flex-col gap-[18px] pt-14 pb-10 sm:pt-16">
+          <Eyebrow>Seller Lab 1 · Prove it</Eyebrow>
+          <h1 className="display text-[clamp(34px,4vw,52px)] leading-[1.08]">The practice call</h1>
+          <p className="max-w-[680px] text-[17px] leading-[1.7] tracking-[0.01em]">
+            An 8 to 10 minute discovery call with Priya, an AI voice agent playing a buyer. It’s scored on what this lab
+            teaches, not on general sales skills. Use headphones.
           </p>
         </header>
 
-        <div className="grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
           <Briefing />
 
-          <section aria-label="The call" className="space-y-4">
+          <section aria-label="The call" className="flex min-w-0 flex-col gap-4">
             {access.ready && !access.hasCode && <AccessCodeForm onSave={access.saveCode} />}
             <CallBar
               phase={phase}
@@ -286,34 +289,21 @@ export function PracticeCall() {
               onCallAgain={() => void callAgain()}
             />
 
-            {(error || notice) && (
-              <p
-                role="status"
-                className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-              >
-                {error ?? notice}
-              </p>
-            )}
+            {(error || notice) && <Callout>{error ?? notice}</Callout>}
 
             {phase === 'scoring' && (
-              <p
-                role="status"
-                className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm"
-              >
-                <span className="size-2.5 animate-pulse rounded-full bg-accent" aria-hidden />
+              <p role="status" className="m-0 flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-fg">
+                <span className="size-2.5 animate-pulse rounded-full bg-ok" aria-hidden />
                 Your coach is scoring the call. This takes a few seconds.
               </p>
             )}
             {phase === 'empty' && (
-              <p role="status" className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm">
-                There’s nothing to score yet: you didn’t say anything to Priya. Call her again when
-                you’re ready.
-              </p>
+              <Callout tone="info">
+                There’s nothing to score yet: you didn’t say anything to Priya. Call her again when you’re ready.
+              </Callout>
             )}
             {phase === 'failed' && (
-              <p role="status" className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm">
-                The call couldn’t be scored this time. Call Priya again to try once more.
-              </p>
+              <Callout tone="info">The call couldn’t be scored this time. Call Priya again to try once more.</Callout>
             )}
             {phase === 'scored' && scorecard && <ScorecardView card={scorecard} totals={totals} />}
 
@@ -322,9 +312,7 @@ export function PracticeCall() {
             {connected && phase !== 'scoring' && (
               <TypeBox
                 value={typed}
-                placeholder={
-                  phase === 'live' ? 'Or type what you’d say to Priya' : 'Ask your coach about the scorecard'
-                }
+                placeholder={phase === 'live' ? 'Or type what you’d say to Priya' : 'Ask your coach about the scorecard'}
                 onChange={setTyped}
                 onSend={() => void sendTyped()}
               />
@@ -333,9 +321,7 @@ export function PracticeCall() {
         </div>
 
         {!access.pilot && (
-          <footer className="border-t border-stone-200 pt-4 text-xs text-stone-500">
-            Calls in this lab aren’t recorded. Each one ends on its own after 15 minutes.
-          </footer>
+          <p className="mt-10 mb-0 text-xs text-subtle">Calls in this lab aren’t recorded. Each one ends on its own after 15 minutes.</p>
         )}
       </main>
       {room && <RoomAudioRenderer />}
@@ -343,45 +329,63 @@ export function PracticeCall() {
   );
 }
 
+/** Priya's details split out of the brief, for a quick read before the call. */
 function Briefing() {
   return (
-    <aside className="space-y-6 md:sticky md:top-6 md:self-start">
-      <section className="space-y-2 rounded-xl border border-stone-200 bg-white p-5">
-        <h2 className="text-lg font-semibold">Who you’re calling</h2>
-        <p className="text-stone-700">{BRIEF}</p>
-        <p className="text-sm text-stone-500">
+    <aside aria-label="Briefing" className="flex flex-col gap-7 lg:sticky lg:top-6 lg:self-start">
+      <section aria-labelledby="who-title" className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6">
+        <Eyebrow as="h2" id="who-title" className="text-[11px]">
+          Who you’re calling
+        </Eyebrow>
+        <div className="flex items-center gap-3.5">
+          <span
+            aria-hidden
+            className="flex size-12 shrink-0 items-center justify-center rounded-full border border-accent-line bg-raised font-mono text-[15px] font-bold text-fg"
+          >
+            PR
+          </span>
+          <div className="flex flex-col">
+            <span className="text-lg font-semibold text-fg">Priya Raman</span>
+            <span className="text-sm">CTO and co-founder, Fluento</span>
+          </div>
+        </div>
+        <p className="m-0 text-sm leading-relaxed text-fg">{BRIEF}</p>
+        <p className="m-0 border-t border-line pt-3.5 text-[13px] leading-relaxed text-subtle">
           She knows much more than this, and shares it only when you ask good questions.
         </p>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">How the call works</h2>
-        <ul className="list-disc space-y-1.5 pl-5 text-sm text-stone-700">
+      <section aria-labelledby="how-title" className="flex flex-col gap-3">
+        <h2 id="how-title" className="m-0 text-lg font-medium text-fg">
+          How the call works
+        </h2>
+        <ul className="m-0 flex list-disc flex-col gap-2 pl-[18px] text-sm leading-relaxed">
           <li>Talk as you would on a real call. No microphone? Type your side instead.</li>
           <li>
-            Expect technical questions. “I don’t know, let me bring in our engineer” is a good answer;
-            making something up fails the call.
+            Expect technical questions. “I don’t know, let me bring in our engineer” is a good answer; making something up
+            fails the call.
           </li>
           <li>
-            When you’re done, press <strong>End the call and get feedback</strong>. A coach scores the
-            call and talks you through it.
+            When you’re done, press <strong className="font-semibold text-fg">End the call and get feedback</strong>. A
+            coach scores the call and talks you through it.
           </li>
           <li>A pass is {PASS_MARK} of 12 points, with no made-up answers.</li>
         </ul>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">What’s scored</h2>
-        <p className="text-sm text-stone-500">
-          Up to 2 points each. Every point rests on something said in the call.
-        </p>
-        <ol className="space-y-2 text-sm">
+      <section aria-labelledby="rubric-title" className="flex flex-col gap-3">
+        <h2 id="rubric-title" className="m-0 text-lg font-medium text-fg">
+          What’s scored
+        </h2>
+        <p className="m-0 text-[13px] leading-relaxed text-subtle">Up to 2 points each. Every point rests on something said in the call.</p>
+        <ol className="m-0 flex list-none flex-col border-t border-line p-0">
           {RUBRIC.map((item) => (
-            <li key={item.id}>
-              <span className="font-medium">
-                {item.id}. {item.title}.
-              </span>{' '}
-              <span className="text-stone-700">{item.full}</span>
+            <li key={item.id} className="grid grid-cols-[28px_minmax(0,1fr)] gap-x-2 border-b border-line py-3 text-sm leading-relaxed">
+              <span className="font-mono text-subtle">{item.id}</span>
+              <span>
+                <span className="font-semibold text-fg">{item.title}. </span>
+                {item.full}
+              </span>
             </li>
           ))}
         </ol>
@@ -420,115 +424,118 @@ function CallBar(props: {
           : slowJoin
             ? 'Waiting for Priya to join. After a quiet spell this can take up to 20 seconds.'
             : 'Waiting for Priya to join…';
-  const secondary = 'rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium disabled:opacity-50';
-  const primary = 'rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white disabled:opacity-60';
 
   return (
-    <div className="space-y-2 rounded-xl border border-stone-200 bg-white px-4 py-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="flex items-center gap-2 text-sm" aria-live="polite">
-          <span
-            className={`size-2.5 rounded-full ${connected && agentPresent ? 'bg-emerald-500' : connected ? 'bg-amber-400' : 'bg-stone-300'}`}
-            aria-hidden
-          />
-          {label}
-        </span>
-        {(live || over) && (
-          <span className="text-sm text-stone-500 tabular-nums">
-            <span className="sr-only">Call length </span>
-            {clock(elapsed)}
-          </span>
-        )}
-        <span className="ml-auto flex flex-wrap gap-2">
+    <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface py-3 pr-3 pl-4">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {connected && agentPresent ? (
+            <AgentBars tone={over ? 'ok' : 'accent'} />
+          ) : (
+            <span aria-hidden className={cx('size-2.5 shrink-0 rounded-full', connected ? 'animate-pulse bg-warn' : 'bg-subtle')} />
+          )}
+          <div className="flex min-w-0 flex-col">
+            <span className="text-sm font-semibold text-fg" aria-live="polite">
+              {label}
+            </span>
+            {(live || over) && (
+              <span className="font-mono text-[11px] text-subtle tabular-nums">
+                <span className="sr-only">Call length </span>
+                {over ? `Call ended · ${clock(elapsed)}` : clock(elapsed)}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="ml-auto flex flex-wrap gap-2">
           {connected && (live || phase === 'scored') && (
-            <button type="button" onClick={props.onToggleMic} aria-pressed={micOn} className={secondary}>
+            <Button onClick={props.onToggleMic} aria-pressed={micOn}>
+              <Icon name="mic" className="size-4" />
               {micOn ? 'Mute' : 'Use my microphone'}
-            </button>
+            </Button>
           )}
           {(phase === 'idle' || phase === 'connecting') && (
-            <button type="button" onClick={props.onCall} disabled={phase === 'connecting'} className={primary}>
+            <Button variant="primary" onClick={props.onCall} disabled={phase === 'connecting'}>
+              <Icon name="phone" className="size-4" />
               Call Priya
-            </button>
+            </Button>
           )}
           {live && (
-            <button type="button" onClick={props.onFinish} disabled={!agentPresent} className={primary}>
+            <Button variant="primary" onClick={props.onFinish} disabled={!agentPresent}>
               End the call and get feedback
-            </button>
+            </Button>
           )}
           {(phase === 'scored' || phase === 'empty' || phase === 'failed') && (
-            <button type="button" onClick={props.onCallAgain} className={primary}>
+            <Button variant="primary" onClick={props.onCallAgain}>
               Call Priya again
-            </button>
+            </Button>
           )}
           {connected && (
-            <button type="button" onClick={props.onLeave} className={secondary}>
+            <Button variant={live ? 'danger' : 'secondary'} onClick={props.onLeave}>
               {live ? 'Leave without feedback' : 'Leave'}
-            </button>
+            </Button>
           )}
-        </span>
+        </div>
       </div>
-      {live && elapsed >= WRAP_UP_AFTER_S && (
-        <p className="text-sm text-amber-800">Time to book the next step and wrap up.</p>
-      )}
+      {live && elapsed >= WRAP_UP_AFTER_S && <p className="m-0 text-sm text-warn">Time to book the next step and wrap up.</p>}
     </div>
   );
 }
 
 function ScorecardView({ card, totals }: { card: Scorecard; totals: number[] }) {
-  const verdict = card.passed
-    ? 'Pass'
-    : card.bluff
-      ? 'Not a pass: a made-up answer'
-      : `Not a pass yet: ${card.passMark} needed`;
+  const verdict = card.passed ? 'Pass' : card.bluff ? 'Not a pass: a made-up answer' : `Not a pass yet: ${card.passMark} needed`;
   return (
-    <section
-      aria-labelledby="scorecard-title"
-      className="space-y-4 rounded-xl border border-stone-200 bg-white p-5"
-    >
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 id="scorecard-title" className="text-xl font-semibold">
-          Your scorecard
-        </h2>
-        <p className="text-2xl font-semibold tabular-nums">
-          {card.total} of {card.max}
-        </p>
-        <p
-          className={`rounded-full px-2.5 py-0.5 text-sm font-medium ${card.passed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'}`}
+    <section aria-labelledby="scorecard-title" className="rounded-lg border border-line bg-surface">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-line px-6 pt-6 pb-5">
+        <div className="flex flex-col gap-2">
+          <Eyebrow as="span" className="text-[11px]">
+            Your scorecard
+          </Eyebrow>
+          <h2 id="scorecard-title" className="m-0 flex items-baseline gap-3 text-fg">
+            <span className="display text-[64px] leading-none tracking-[-0.03em] tabular-nums">{card.total}</span>
+            <span className="text-[22px] font-light text-subtle">of {card.max}</span>
+          </h2>
+        </div>
+        <span
+          className={cx(
+            'inline-flex min-h-8 items-center gap-2 rounded-full border px-3 text-sm font-semibold',
+            card.passed ? 'border-ok/40 bg-ok-soft text-ok' : 'border-bad-line bg-bad-soft text-bad',
+          )}
         >
+          <Icon name={card.passed ? 'check' : 'x'} className="size-3.5" strokeWidth={1.8} />
           {verdict}
-        </p>
+        </span>
       </header>
 
-      <figure className="space-y-1">
-        <figcaption className="text-sm font-medium text-stone-500">What your coach said</figcaption>
-        <blockquote className="border-l-4 border-accent pl-3 text-stone-800">{card.coach}</blockquote>
+      <figure className="m-0 flex flex-col gap-2.5 border-b border-line px-6 py-5">
+        <figcaption className="eyebrow text-[11px] text-ok">What your coach said</figcaption>
+        <blockquote className="display m-0 text-xl leading-normal">{card.coach}</blockquote>
       </figure>
 
       {card.bluff && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
-          At {card.bluff.time} you said “{card.bluff.quote}” That isn’t true of LiveKit, or isn’t
-          something you could know, so the call can’t pass, whatever the total. “I don’t know, let me
-          bring in our engineer” would have kept the points.
-        </p>
+        <Callout tone="bad" role="note" className="mx-6 mt-5">
+          At <span className="font-mono">{card.bluff.time}</span> you said “{card.bluff.quote}” That isn’t true of LiveKit,
+          or isn’t something you could know, so the call can’t pass, whatever the total. “I don’t know, let me bring in our
+          engineer” would have kept the points.
+        </Callout>
       )}
 
-      <ol className="divide-y divide-stone-100">
-        {card.items.map((item) => (
-          <li key={item.id} className="flex gap-4 py-3">
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="font-medium">
+      <ol className="m-0 list-none px-6 py-2">
+        {card.items.map((item, i) => (
+          <li key={item.id} className={cx('flex gap-4 py-3.5', i > 0 && 'border-t border-line')}>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <p className="m-0 text-[15px] font-semibold text-fg">
                 {item.id}. {item.title}
               </p>
               {item.quote ? (
-                <p className="text-sm text-stone-700">
-                  “{item.quote}” <span className="text-stone-400 tabular-nums">{item.time}</span>
+                <p className="m-0 text-sm leading-relaxed">
+                  “{item.quote}” <span className="font-mono text-xs text-subtle tabular-nums">{item.time}</span>
                 </p>
               ) : (
-                <p className="text-sm text-stone-400">Nothing in the call earned points here.</p>
+                <p className="m-0 text-sm text-subtle">Nothing in the call earned points here.</p>
               )}
               {item.improve && (
-                <p className="text-sm">
-                  <span className="font-medium text-accent">Next time: </span>
+                <p className="m-0 text-sm leading-relaxed">
+                  <span className="font-semibold text-accent">Next time: </span>
                   {item.improve}
                 </p>
               )}
@@ -539,24 +546,16 @@ function ScorecardView({ card, totals }: { card: Scorecard; totals: number[] }) 
       </ol>
 
       {totals.length > 1 && (
-        <p className="text-sm text-stone-500">
-          Your calls so far: {totals.join(', ')} of {card.max}.
+        <p className="m-0 flex flex-wrap items-center gap-2 border-t border-line px-6 py-4 text-sm text-subtle">
+          Your calls so far:
+          {totals.map((total, i) => (
+            <Pill key={i} tone={i === totals.length - 1 ? 'accent' : 'neutral'}>
+              {total} of {card.max}
+            </Pill>
+          ))}
         </p>
       )}
     </section>
-  );
-}
-
-function Points({ score }: { score: number }) {
-  return (
-    <span className="flex shrink-0 gap-1 self-start pt-1.5" role="img" aria-label={`${score} of 2 points`}>
-      {[0, 1].map((i) => (
-        <span
-          key={i}
-          className={`size-3 rounded-full ${i < score ? 'bg-accent' : 'border border-stone-300 bg-white'}`}
-        />
-      ))}
-    </span>
   );
 }
 
@@ -570,31 +569,29 @@ function Transcript({ turns, live }: { turns: PracticeTurn[]; live: boolean }) {
   }, [turns.length]);
 
   return (
-    <section aria-labelledby="transcript-title" className="space-y-2">
-      <h2 id="transcript-title" className="text-lg font-semibold">
+    <section aria-labelledby="transcript-title" className="flex flex-col gap-2.5">
+      <h2 id="transcript-title" className="m-0 text-lg font-medium text-fg">
         Transcript
       </h2>
       {ordered.length === 0 ? (
-        <p className="text-sm text-stone-500">
-          {live ? 'Say hello. What you and Priya say shows up here.' : 'Nothing was said.'}
-        </p>
+        <p className="m-0 text-sm text-subtle">{live ? 'Say hello. What you and Priya say shows up here.' : 'Nothing was said.'}</p>
       ) : (
         <ol
           ref={listRef}
           role="log"
-          className="max-h-96 space-y-2 overflow-y-auto rounded-xl border border-stone-200 bg-white p-4 text-sm"
+          className="m-0 flex max-h-96 list-none flex-col gap-2.5 overflow-y-auto rounded-lg border border-line bg-surface px-[18px] py-4 text-sm"
         >
           {ordered.map((turn) => {
             const who = turn.role === 'user' ? 'You' : (turn.agent ?? 'Priya');
-            const color = who === 'You' ? '' : who === 'Coach' ? 'text-emerald-700' : 'text-accent';
+            const color = who === 'You' ? 'text-fg' : who === 'Coach' ? 'text-ok' : 'text-accent';
             return (
-              <li key={turn.id} className="grid grid-cols-[3rem_minmax(0,1fr)] gap-2">
-                <span className="text-stone-400 tabular-nums">{clock(turn.createdAt - turn.callStartedAt)}</span>
-                <p className="leading-snug">
-                  <span className={`font-medium ${color}`}>{who}: </span>
-                  <span className="text-stone-700">{turn.text || '(nothing heard)'}</span>
+              <li key={turn.id} className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-2">
+                <span className="font-mono text-xs leading-[21px] text-subtle tabular-nums">{clock(turn.createdAt - turn.callStartedAt)}</span>
+                <p className="m-0 leading-relaxed">
+                  <span className={cx('font-semibold', color)}>{who}: </span>
+                  {turn.text || '(nothing heard)'}
                   {turn.interrupted && (
-                    <span className="ml-1 rounded bg-amber-100 px-1 text-xs text-amber-800">cut off</span>
+                    <span className="ml-1.5 rounded-sm bg-warn-soft px-1.5 font-mono text-[11px] text-warn">cut off</span>
                   )}
                 </p>
               </li>
@@ -606,12 +603,7 @@ function Transcript({ turns, live }: { turns: PracticeTurn[]; live: boolean }) {
   );
 }
 
-function TypeBox(props: {
-  value: string;
-  placeholder: string;
-  onChange: (value: string) => void;
-  onSend: () => void;
-}) {
+function TypeBox(props: { value: string; placeholder: string; onChange: (value: string) => void; onSend: () => void }) {
   return (
     <form
       className="flex gap-2"
@@ -630,15 +622,11 @@ function TypeBox(props: {
         maxLength={MAX_TYPED_CHARS}
         placeholder={props.placeholder}
         autoComplete="off"
-        className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm"
+        className={cx(inputClass, 'min-w-0 flex-1')}
       />
-      <button
-        type="submit"
-        disabled={!props.value.trim()}
-        className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-      >
+      <Button type="submit" disabled={!props.value.trim()}>
         Send
-      </button>
+      </Button>
     </form>
   );
 }

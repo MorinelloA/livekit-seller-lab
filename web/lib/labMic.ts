@@ -13,7 +13,23 @@
  *   learner's own voice is coming in: voice isolation keeps the loudest nearby
  *   voice, so with nobody talking into the microphone, a café voice would count
  *   as the caller (a real caller's phone is much closer to their mouth).
+ * - In development, it can also record a run as a listener hears it (the clips
+ *   and Juniper's voice) for the overview's replay. See scripts/capture-server.mjs.
  */
+
+/** A clip that has started: when (performance.now()), how long it runs (seconds), and when it's over. */
+export interface PlayingClip {
+  startedAt: number;
+  duration: number;
+  ended: Promise<void>;
+}
+
+interface Capture {
+  input: GainNode;
+  processor: ScriptProcessorNode;
+  agent: MediaStreamAudioSourceNode | null;
+  chunks: Float32Array[];
+}
 
 // Above this level (RMS, 0 to 1, about -40 dBFS) the microphone counts as the
 // learner talking. The café keeps playing this long after they stop.
@@ -35,6 +51,9 @@ export class LabMic {
   private wantMic = false;
   private held = false;
   private readonly clips = new Map<string, AudioBuffer>();
+  /** Finishers for clips still playing, so closing mid-clip never leaves a run waiting. */
+  private readonly endings = new Set<() => void>();
+  private capture: Capture | null = null;
 
   constructor() {
     this.context = new AudioContext({ sampleRate: 48_000 });
@@ -93,22 +112,77 @@ export class LabMic {
     if (held) this.cafeGain.gain.setTargetAtTime(0, this.context.currentTime, 0.02);
   }
 
-  async playClip(url: string): Promise<void> {
+  /** Starts a clip and says when it started, for the timeline. `ended` settles when it finishes or the mic closes. */
+  async startClip(url: string): Promise<PlayingClip> {
     const buffer = await this.loadClip(url);
     const source = this.context.createBufferSource();
     source.buffer = buffer;
     source.connect(this.destination);
     source.connect(this.context.destination);
-    await new Promise<void>((resolve) => {
-      source.onended = () => resolve();
-      source.start();
+    if (this.capture) source.connect(this.capture.input);
+    let finish: () => void = () => undefined;
+    const ended = new Promise<void>((resolve) => {
+      finish = () => {
+        this.endings.delete(finish);
+        source.disconnect();
+        resolve();
+      };
     });
-    source.disconnect();
+    source.onended = finish;
+    this.endings.add(finish);
+    source.start();
+    return { startedAt: performance.now(), duration: buffer.duration, ended };
+  }
+
+  async playClip(url: string): Promise<void> {
+    await (await this.startClip(url)).ended;
+  }
+
+  /**
+   * Development only: records what a listener hears, the clips plus the
+   * agent's voice, until stopCapture(). The agent's track must also be playing
+   * through an audio element (RoomAudioRenderer), or Chrome feeds silence.
+   */
+  startCapture(agentTrack: MediaStreamTrack | null): void {
+    this.stopCapture();
+    const input = this.context.createGain();
+    // A script processor is deprecated but tiny, and this never ships to visitors.
+    const processor = this.context.createScriptProcessor(4096, 1, 1);
+    const chunks: Float32Array[] = [];
+    processor.onaudioprocess = (event) => chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+    input.connect(processor);
+    // It only runs while connected to an output; its output stays silent.
+    processor.connect(this.context.destination);
+    const agent = agentTrack ? this.context.createMediaStreamSource(new MediaStream([agentTrack])) : null;
+    agent?.connect(input);
+    this.capture = { input, processor, agent, chunks };
+  }
+
+  /** Stops recording and returns the samples (mono, at the context's rate), or null if nothing was recording. */
+  stopCapture(): { samples: Float32Array; sampleRate: number } | null {
+    const capture = this.capture;
+    if (!capture) return null;
+    this.capture = null;
+    capture.processor.onaudioprocess = null;
+    capture.agent?.disconnect();
+    capture.input.disconnect();
+    capture.processor.disconnect();
+    const length = capture.chunks.reduce((n, chunk) => n + chunk.length, 0);
+    const samples = new Float32Array(length);
+    let offset = 0;
+    for (const chunk of capture.chunks) {
+      samples.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return { samples, sampleRate: this.context.sampleRate };
   }
 
   async close(): Promise<void> {
     if (this.cafeTimer) clearInterval(this.cafeTimer);
     this.cafeSource?.stop();
+    this.stopCapture();
+    // A clip cut off by closing never fires onended; settle it so its run can end.
+    [...this.endings].forEach((finish) => finish());
     this.micStream?.getTracks().forEach((t) => t.stop());
     this.track.stop();
     if (this.context.state !== 'closed') await this.context.close();
@@ -133,7 +207,9 @@ export class LabMic {
     if (cached) return cached;
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Couldn't load ${url}. Run the clip scripts in scripts/ to create the test-caller clips.`);
+      throw new Error(
+        `Couldn't load ${url}. Run scripts/make_clips_livekit.py and scripts/make_clips_exp34.py to create the test-caller clips.`,
+      );
     }
     const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
     this.clips.set(url, buffer);

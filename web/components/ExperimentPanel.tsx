@@ -1,9 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
+import { ConversationTimeline, type TimelineRun, TimelineLegend } from '@/components/ConversationTimeline';
+import { PauseParts } from '@/components/PauseParts';
 import { Prediction } from '@/components/Prediction';
+import { Eyebrow, Segmented } from '@/components/ui/Bits';
+import { Button } from '@/components/ui/Button';
+import { cx } from '@/components/ui/cx';
+import { Icon } from '@/components/ui/Icon';
 import { CAFE_BOOKING_LINE, DEFAULT_MODE_LABELS, type Experiment, type ExperimentId } from '@/lib/experiments';
 import { isTurn, type LoggedEvent, type LoggedTurn, type Mode } from '@/lib/protocol';
+import { type RunTimeline, TIMELINE_SECONDS } from '@/lib/timeline';
 
 export interface RunState {
   id: string;
@@ -13,9 +20,42 @@ export interface RunState {
 export interface RunView {
   state?: RunState;
   events: LoggedEvent[];
+  timeline?: RunTimeline;
 }
 
 const MODES: Mode[] = ['baseline', 'enhanced'];
+
+/** "Experiment 1: Knowing when you're done" → "Knowing when you're done". */
+const headline = (title: string) => title.replace(/^Experiment \d+:\s*/, '');
+
+type StepState = 'done' | 'current' | 'upcoming';
+
+function Step({ n, state, label, note, children }: { n: number; state: StepState; label: string; note?: string; children: ReactNode }) {
+  return (
+    <li className="flex gap-4 border-t border-line px-5 py-6 sm:px-7">
+      <span
+        aria-hidden
+        className={cx(
+          'mt-[-3px] flex size-7 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold',
+          state === 'done' && 'bg-accent text-on-accent',
+          state === 'current' && 'border-[1.5px] border-accent text-accent',
+          state === 'upcoming' && 'border-[1.5px] border-line text-subtle',
+        )}
+      >
+        {state === 'done' ? <Icon name="check" className="size-3.5" strokeWidth={2} /> : n}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-3.5">
+        <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="eyebrow text-[11px] text-subtle">
+            Step {n} · {label}
+          </span>
+          {note && <span className="font-mono text-xs text-subtle">{note}</span>}
+        </p>
+        {children}
+      </div>
+    </li>
+  );
+}
 
 export function ExperimentPanel(props: {
   experiment: Experiment;
@@ -36,172 +76,263 @@ export function ExperimentPanel(props: {
 
   const labels = experiment.modeLabels ?? DEFAULT_MODE_LABELS;
   const bothRan = MODES.every((mode) => runs[mode].state?.status === 'done');
+  const anyRunning = MODES.some((mode) => runs[mode].state?.status === 'running');
   const showAnswer = locked && (revealed || bothRan);
   const { prediction, card } = experiment;
 
+  const timelineRuns: TimelineRun[] = MODES.flatMap((mode) => {
+    const view = runs[mode];
+    return view.timeline && view.state
+      ? [{ key: view.state.id, label: labels[mode], tone: mode, timeline: view.timeline, events: view.events }]
+      : [];
+  });
+  const turnsFor = (mode: Mode) => runs[mode].events.filter(isTurn);
+
   return (
-    <section className="space-y-6 rounded-2xl border border-stone-200 bg-white p-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold tracking-tight">{experiment.title}</h2>
-        <p className="text-stone-600">{experiment.lead}</p>
-        <dl className="grid gap-1 text-sm text-stone-600 sm:grid-cols-2">
+    <section
+      id={`experiment-${experiment.id}`}
+      aria-labelledby={`experiment-${experiment.id}-title`}
+      className="scroll-mt-6 rounded-lg border border-line bg-surface"
+    >
+      <div className="flex flex-col gap-3.5 px-5 pt-7 pb-6 sm:px-7">
+        <Eyebrow tone="accent" className="text-[11px]">
+          Experiment {experiment.id} · {experiment.switchName}
+        </Eyebrow>
+        <h2 id={`experiment-${experiment.id}-title`} className="display text-[30px] leading-[1.15]">
+          {headline(experiment.title)}
+        </h2>
+        <p className="max-w-[680px] text-base leading-[1.7]">{experiment.lead}</p>
+        <dl className="mt-1.5 grid gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-2">
           {MODES.map((mode) => (
-            <div key={mode}>
-              <dt className="inline font-medium text-stone-900">{labels[mode]}: </dt>
-              <dd className="inline">{experiment.settings[mode]}</dd>
+            <div key={mode} className="flex flex-col gap-1 bg-page px-4 py-3">
+              <dt className={cx('eyebrow text-[11px]', mode === 'enhanced' ? 'text-accent' : 'text-subtle')}>{labels[mode]}</dt>
+              <dd className="m-0 text-sm leading-normal text-fg">{experiment.settings[mode]}</dd>
             </div>
           ))}
         </dl>
       </div>
 
-      <Prediction
-        name={`experiment-${experiment.id}`}
-        question={prediction.question}
-        options={prediction.options}
-        choice={choice}
-        locked={locked}
-        onChoose={setChoice}
-        onLock={() => {
-          setLocked(true);
-          if (choice !== null) props.onPredict?.(prediction.options[choice], choice === prediction.expected);
-        }}
-      />
+      <ol className="m-0 list-none p-0">
+        <Step n={1} state={locked ? 'done' : 'current'} label="Predict" note={locked ? 'Locked in' : undefined}>
+          <Prediction
+            name={`experiment-${experiment.id}`}
+            question={prediction.question}
+            options={prediction.options}
+            choice={choice}
+            locked={locked}
+            onChoose={setChoice}
+            onLock={() => {
+              setLocked(true);
+              if (choice !== null) props.onPredict?.(prediction.options[choice], choice === prediction.expected);
+            }}
+          />
+        </Step>
 
-      <div className="space-y-3">
-        <p className="text-sm">
-          <span className="font-semibold">Run it. </span>
-          {experiment.testCaller}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {MODES.map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => props.onRun(mode)}
-              disabled={!canRun || !locked}
-              className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium hover:border-accent disabled:opacity-40"
-            >
-              Play test caller: {labels[mode]}
-            </button>
-          ))}
-        </div>
-        {!locked && <p className="text-xs text-stone-500">Lock in a prediction first.</p>}
-        <div className="grid gap-3 md:grid-cols-2">
-          {MODES.map((mode) => (
-            <RunResult key={mode} experimentId={experiment.id} label={labels[mode]} view={runs[mode]} />
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-sm">
-          <span className="font-semibold">Try it yourself. </span>
-          {experiment.tryYourself} Turn on “Use my voice” above, then pick a setting:
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-lg border border-stone-300 p-0.5" role="group" aria-label={experiment.switchName}>
+        <Step
+          n={2}
+          state={bothRan ? 'done' : locked ? 'current' : 'upcoming'}
+          label="Run the test caller"
+          note={bothRan ? 'Both runs done' : anyRunning ? 'The test caller is on the line' : undefined}
+        >
+          <p className="m-0 text-[15px] leading-relaxed">{experiment.testCaller}</p>
+          <div className="flex flex-wrap gap-2">
             {MODES.map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => props.onSetMode(mode)}
-                disabled={!canRun}
-                aria-pressed={currentMode === mode}
-                className={`rounded-md px-3 py-1 text-sm disabled:opacity-40 ${
-                  currentMode === mode ? 'bg-stone-900 text-white' : 'text-stone-700'
-                }`}
-              >
-                {labels[mode]}
-              </button>
+              <Button key={mode} onClick={() => props.onRun(mode)} disabled={!canRun || !locked}>
+                <Icon name="play" className="size-3" />
+                Play test caller: {labels[mode]}
+              </Button>
             ))}
           </div>
-          {cafe && (
-            <button
-              type="button"
-              onClick={cafe.onToggle}
-              disabled={!canRun}
-              aria-pressed={cafe.on}
-              className={`rounded-lg border px-3 py-1 text-sm font-medium disabled:opacity-40 ${
-                cafe.on ? 'border-accent bg-accent-soft text-accent' : 'border-stone-300 bg-white'
-              }`}
-            >
-              {cafe.on ? 'Café noise is on' : 'Café noise'}
-            </button>
-          )}
-        </div>
-        <p className="text-sm text-stone-600">
-          <span className="font-semibold text-stone-900">Listen for. </span>
-          {experiment.listenFor}
-        </p>
-      </div>
+          {!locked && <p className="m-0 text-[13px] text-subtle">Lock in a prediction first.</p>}
 
-      {showAnswer ? (
-        <div className="space-y-3 rounded-xl border border-accent/30 bg-accent-soft p-4">
-          <p className="text-sm">
-            <span className="font-semibold">Expected: </span>
-            {prediction.options[prediction.expected]}.{' '}
-            {choice === prediction.expected
-              ? 'That’s what you predicted.'
-              : `You predicted: ${prediction.options[choice ?? 0]}.`}
+          {timelineRuns.length > 0 && (
+            <div className="rounded-md border border-line bg-page">
+              <div className="overflow-hidden px-4 pt-4 pb-1.5 sm:px-[18px]">
+                <ConversationTimeline
+                  runs={timelineRuns}
+                  minSeconds={TIMELINE_SECONDS[experiment.id]}
+                  showOverlap={experiment.id === 1}
+                  title={`Experiment ${experiment.id}, both settings on one time axis`}
+                />
+              </div>
+              <div className="px-4 pt-1.5 pb-4 sm:px-[18px]">
+                <TimelineLegend overlap={experiment.id === 1} stalls={experiment.id === 2} />
+              </div>
+            </div>
+          )}
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {MODES.map((mode) => (
+              <RunResult key={mode} experimentId={experiment.id} label={labels[mode]} tone={mode} view={runs[mode]} />
+            ))}
+          </div>
+
+          {experiment.id === 4 && (turnsFor('baseline').length > 0 || turnsFor('enhanced').length > 0) && (
+            <PauseParts
+              runs={MODES.map((mode) => ({ label: labels[mode], tone: mode, turns: turnsFor(mode) }))}
+            />
+          )}
+        </Step>
+
+        <Step n={3} state={bothRan ? 'current' : 'upcoming'} label="Try it yourself">
+          <p className="m-0 text-[15px] leading-relaxed">
+            {experiment.tryYourself} Turn on “Use my voice” in the call bar, then pick a setting:
           </p>
-          <ul className="space-y-2 text-sm">
-            <li><span className="font-semibold">What the customer says: </span>{card.customerSays}</li>
-            <li><span className="font-semibold">What’s actually happening: </span>{card.happening}</li>
-            <li><span className="font-semibold">What LiveKit does: </span>{card.livekitDoes}</li>
-            <li><span className="font-semibold">Ask this: </span>{card.askThis}</li>
-          </ul>
-        </div>
-      ) : (
-        locked && (
-          <button
-            type="button"
-            onClick={() => setRevealed(true)}
-            className="text-sm font-medium text-accent underline underline-offset-4"
-          >
-            Show the answer now
-          </button>
-        )
-      )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Segmented
+              label={experiment.switchName}
+              options={MODES.map((mode) => ({ value: mode, label: labels[mode] }))}
+              value={canRun ? currentMode : null}
+              onChange={props.onSetMode}
+              disabled={!canRun}
+            />
+            {cafe && (
+              <Button
+                onClick={cafe.onToggle}
+                disabled={!canRun}
+                aria-pressed={cafe.on}
+                className={cafe.on ? 'border-accent-line bg-accent-soft text-accent' : undefined}
+              >
+                <Icon name="cafe" className="size-4" />
+                {cafe.on ? 'Café noise is on' : 'Café noise'}
+              </Button>
+            )}
+          </div>
+          <p className="m-0 text-sm leading-relaxed">
+            <span className="font-semibold text-fg">Listen for. </span>
+            {experiment.listenFor}
+          </p>
+        </Step>
+
+        <Step n={4} state={showAnswer ? 'done' : 'upcoming'} label="Take it to a call">
+          {showAnswer ? (
+            <>
+              <p className="m-0 flex items-start gap-2 text-sm leading-normal text-fg">
+                <Icon
+                  name={choice === prediction.expected ? 'check' : 'info'}
+                  className={cx('mt-0.5 size-4 shrink-0', choice === prediction.expected ? 'text-ok' : 'text-subtle')}
+                />
+                <span>
+                  <span className="font-semibold">Expected: </span>
+                  {prediction.options[prediction.expected]}.{' '}
+                  {choice === prediction.expected
+                    ? 'That’s what you predicted.'
+                    : `You predicted: ${prediction.options[choice ?? 0]}.`}
+                </span>
+              </p>
+              <div className="overflow-hidden rounded-lg border border-accent-line">
+                <dl className="m-0 grid gap-px bg-line md:grid-cols-3">
+                  <CardPart title="What the customer says" emphasis>
+                    {card.customerSays}
+                  </CardPart>
+                  <CardPart title="What’s actually happening">{card.happening}</CardPart>
+                  <CardPart title="What LiveKit does">{card.livekitDoes}</CardPart>
+                </dl>
+                <div className="flex flex-col gap-2.5 border-t border-accent-line bg-accent-soft px-5 pt-5 pb-6">
+                  <Eyebrow tone="accent" className="text-[11px]">
+                    Ask this
+                  </Eyebrow>
+                  <p className="display m-0 text-[clamp(19px,2.1vw,24px)] leading-[1.35] [text-wrap:pretty]">{card.askThis}</p>
+                </div>
+              </div>
+            </>
+          ) : locked ? (
+            <div>
+              <Button variant="quiet" onClick={() => setRevealed(true)}>
+                Show the answer now
+              </Button>
+            </div>
+          ) : (
+            <p className="m-0 text-[13px] text-subtle">The answer and the question to ask open once both runs are done.</p>
+          )}
+        </Step>
+      </ol>
     </section>
   );
 }
 
-function RunResult({ experimentId, label, view }: { experimentId: ExperimentId; label: string; view: RunView }) {
-  const turns = view.events.filter(isTurn);
-  const status = view.state?.status;
-
+function CardPart({ title, emphasis, children }: { title: string; emphasis?: boolean; children: ReactNode }) {
   return (
-    <div className="space-y-2 rounded-xl border border-stone-200 p-3" aria-live="polite">
-      <p className="text-sm font-semibold">{label}</p>
-      {!status && <p className="text-sm text-stone-500">Not run yet.</p>}
-      {status === 'running' && <p className="text-sm text-stone-500">The test caller is on the line…</p>}
-      {status === 'failed' && <p className="text-sm text-amber-700">This run didn’t finish. Try it again.</p>}
-      {status === 'done' && <Summary experimentId={experimentId} turns={turns} events={view.events} />}
-      <TurnList turns={turns} />
+    <div className="flex flex-col gap-2 bg-surface p-[18px]">
+      <dt className="eyebrow text-[11px] text-subtle">{title}</dt>
+      <dd className={cx('m-0 text-sm leading-relaxed', emphasis ? 'text-fg' : 'text-body')}>{children}</dd>
     </div>
   );
 }
 
+function RunResult({
+  experimentId,
+  label,
+  tone,
+  view,
+}: {
+  experimentId: ExperimentId;
+  label: string;
+  tone: Mode;
+  view: RunView;
+}) {
+  const turns = view.events.filter(isTurn);
+  const status = view.state?.status;
+
+  return (
+    <div className="flex flex-col gap-3 rounded-md border border-line p-[18px]" aria-live="polite">
+      <p className={cx('eyebrow m-0 text-[11px]', tone === 'enhanced' ? 'text-accent' : 'text-subtle')}>{label}</p>
+      {!status && <p className="m-0 text-sm text-subtle">Not run yet.</p>}
+      {status === 'running' && <p className="m-0 text-sm text-subtle">The test caller is on the line…</p>}
+      {status === 'failed' && <p className="m-0 text-sm text-warn">This run didn’t finish. Try it again.</p>}
+      {status === 'done' && <Summary experimentId={experimentId} turns={turns} events={view.events} />}
+      {turns.length > 0 && (
+        <div className="border-t border-line pt-3">
+          <TurnList turns={turns} markExtra={experimentId === 3} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const words = (text: string) => text.toLowerCase().match(/[a-z0-9']+/g) ?? [];
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** A caller's line with the words that aren't in the café booking marked: the café said them. */
+function MarkedLine({ text }: { text: string }) {
+  const booking = new Set(words(CAFE_BOOKING_LINE));
+  return (
+    <>
+      {text.split(/(\s+)/).map((part, i) => {
+        const word = part.toLowerCase().match(/[a-z0-9']+/)?.[0];
+        return word && !booking.has(word) ? (
+          <mark key={i} className="rounded-sm bg-warn-soft px-0.5 text-warn">
+            {part}
+          </mark>
+        ) : (
+          part
+        );
+      })}
+    </>
+  );
+}
+
 /** The conversation from one run, with Juniper's cut-off replies marked. */
-export function TurnList({ turns }: { turns: LoggedTurn[] }) {
+export function TurnList({ turns, markExtra = false }: { turns: LoggedTurn[]; markExtra?: boolean }) {
   if (turns.length === 0) return null;
   return (
-    <ol className="space-y-1 text-sm">
+    <ol className="m-0 flex list-none flex-col gap-2 p-0 text-[13px] leading-normal">
       {turns.map((turn) => (
-        <li key={turn.id} className="leading-snug">
-          <span className="font-medium">{turn.role === 'user' ? 'Caller' : (turn.agent ?? 'Juniper')}: </span>
-          <span className="text-stone-700">{turn.text || '(nothing heard)'}</span>
+        <li key={turn.id}>
+          <span className={cx('font-semibold', turn.role === 'user' ? 'text-fg' : 'text-accent')}>
+            {turn.role === 'user' ? 'Caller' : (turn.agent ?? 'Juniper')}:{' '}
+          </span>
+          <span>
+            {!turn.text ? '(nothing heard)' : markExtra && turn.role === 'user' ? <MarkedLine text={turn.text} /> : turn.text}
+          </span>
           {turn.interrupted && (
-            <span className="ml-1 rounded bg-amber-100 px-1 text-xs text-amber-800">cut off</span>
+            <span className="ml-1.5 rounded-sm bg-warn-soft px-1.5 font-mono text-[11px] text-warn">cut off</span>
           )}
         </li>
       ))}
     </ol>
   );
 }
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
-const words = (text: string) => text.toLowerCase().match(/[a-z0-9']+/g) ?? [];
 
 function Summary({
   experimentId,
@@ -213,6 +344,7 @@ function Summary({
   events: LoggedEvent[];
 }) {
   const callerTurns = turns.filter((t) => t.role === 'user');
+  const line = 'm-0 text-sm leading-relaxed text-fg';
 
   if (experimentId === 1) {
     // What the caller had said by the time Juniper first answered, and how
@@ -224,9 +356,9 @@ function Summary({
       .join(' ');
     const replies = turns.filter((t) => t.role === 'assistant');
     const cutOff = replies.filter((t) => t.interrupted).length;
-    if (!before) return <p className="text-sm text-stone-500">Juniper didn’t hear the caller.</p>;
+    if (!before) return <p className="m-0 text-sm text-subtle">Juniper didn’t hear the caller.</p>;
     return (
-      <p className="text-sm">
+      <p className={line}>
         Before its first answer, Juniper heard: “{before}” It started answering {replies.length}{' '}
         {replies.length === 1 ? 'time' : 'times'}
         {cutOff > 0 ? ` and was cut off ${cutOff} ${cutOff === 1 ? 'time' : 'times'}.` : ' and was never cut off.'}
@@ -239,9 +371,9 @@ function Summary({
     const booking = new Set(words(CAFE_BOOKING_LINE));
     const heard = callerTurns.map((t) => t.text.trim()).join(' ');
     const extra = words(heard).filter((w) => !booking.has(w));
-    if (!heard) return <p className="text-sm text-stone-500">Juniper didn’t hear the caller.</p>;
+    if (!heard) return <p className="m-0 text-sm text-subtle">Juniper didn’t hear the caller.</p>;
     return (
-      <p className="text-sm">
+      <p className={line}>
         {extra.length === 0
           ? 'Juniper heard only the caller.'
           : `Juniper heard ${plural(extra.length, 'word')} nobody said to it: “${extra.join(' ')}.”`}
@@ -254,14 +386,13 @@ function Summary({
     const answer = turns.find((t) => t.role === 'assistant');
     const pause = answer?.metrics.e2e_latency;
     const llm = answer?.metrics.llm_node_ttft;
-    if (!answer) return <p className="text-sm text-stone-500">Juniper didn’t answer.</p>;
+    if (!answer) return <p className="m-0 text-sm text-subtle">Juniper didn’t answer.</p>;
     if (pause == null || llm == null) {
-      return <p className="text-sm text-stone-500">Juniper answered, but no timing came back for that turn.</p>;
+      return <p className="m-0 text-sm text-subtle">Juniper answered, but no timing came back for that turn.</p>;
     }
     return (
-      <p className="text-sm">
-        The pause before Juniper’s answer was {pause.toFixed(2)} s. The LLM’s first words took {llm.toFixed(2)} s
-        of it.
+      <p className={line}>
+        The pause before Juniper’s answer was {pause.toFixed(2)} s. The LLM’s first words took {llm.toFixed(2)} s of it.
       </p>
     );
   }
@@ -283,7 +414,7 @@ function Summary({
   const stops = stalls + fullStops;
   const heardQuestion = callerTurns.some((t) => /vegetarian/i.test(t.text));
   return (
-    <p className="text-sm">
+    <p className={line}>
       Juniper stopped for “uh-huh” {stops} {stops === 1 ? 'time' : 'times'}
       {stalls > 0
         ? stalls === stops

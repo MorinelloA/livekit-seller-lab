@@ -73,13 +73,17 @@ def limit_session(
 
 
 # Per-turn timing from LiveKit's MetricsReport. The first two arrive on the
-# caller's turns, the rest on the agent's.
+# caller's turns, the next three on the agent's. Both kinds carry when the
+# speech started and stopped (Unix seconds on the agent's clock), which the
+# page uses to draw each turn where it happened on its timeline.
 METRIC_KEYS = (
     "end_of_turn_delay",
     "transcription_delay",
     "llm_node_ttft",
     "tts_node_ttfb",
     "e2e_latency",
+    "started_speaking_at",
+    "stopped_speaking_at",
 )
 
 Sender = Callable[[str, dict[str, Any]], None]

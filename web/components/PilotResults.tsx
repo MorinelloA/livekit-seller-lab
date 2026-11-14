@@ -1,7 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { Callout, Eyebrow, inputClass } from '@/components/ui/Bits';
+import { Button } from '@/components/ui/Button';
+import { cx } from '@/components/ui/cx';
 import { CHECK_QUESTIONS, CHECK_RATINGS, letter } from '@/lib/check';
 import { withBase } from '@/lib/paths';
 import type { StoredEvent } from '@/lib/pilot';
@@ -9,6 +11,9 @@ import { type CheckResult, type ParticipantSummary, sinceStart, summarize } from
 
 const ADMIN_KEY = 'lab.adminCode';
 type Data = Record<string, StoredEvent[]>;
+
+const th = 'px-3 py-2.5 font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-subtle whitespace-nowrap';
+const td = 'px-3 py-2.5';
 
 /** Tony's view of the pilot: everything recorded, one participant at a time. */
 export function PilotResults() {
@@ -77,15 +82,10 @@ export function PilotResults() {
     : [];
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 px-5 py-10">
-      <header className="space-y-3">
-        <p className="text-sm font-medium tracking-wide text-accent uppercase">
-          <Link href="/" className="hover:underline">
-            Seller Lab 1
-          </Link>{' '}
-          · Pilot results
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Pilot results</h1>
+    <main id="main" className="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 pt-14 sm:px-10 sm:pt-16">
+      <header className="flex flex-col gap-4">
+        <Eyebrow>Seller Lab 1 · Pilot results</Eyebrow>
+        <h1 className="display text-[clamp(34px,4vw,48px)] leading-[1.08]">Pilot results</h1>
       </header>
 
       {!admin ? (
@@ -96,48 +96,34 @@ export function PilotResults() {
             if (input.trim()) setAdmin(input.trim());
           }}
         >
-          <label className="space-y-1 text-sm">
-            <span className="block font-medium">Admin code (LAB_ADMIN_CODE in .env.local)</span>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-fg">
+            Admin code (LAB_ADMIN_CODE in .env.local)
             <input
               type="password"
               value={input}
               onChange={(event) => setInput(event.target.value)}
               autoComplete="off"
-              className="w-72 rounded-lg border border-stone-300 bg-white px-3 py-1.5 font-mono text-sm"
+              className={cx(inputClass, 'w-72 font-mono font-normal')}
             />
           </label>
-          <button type="submit" className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white">
+          <Button type="submit" variant="primary">
             Show results
-          </button>
+          </Button>
         </form>
       ) : (
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => void load(admin)}
-            disabled={loading}
-            className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-          >
+          <Button onClick={() => void load(admin)} disabled={loading}>
             {loading ? 'Loading…' : 'Reload'}
-          </button>
-          <button
-            type="button"
-            onClick={download}
-            disabled={!data}
-            className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-          >
+          </Button>
+          <Button onClick={download} disabled={!data}>
             Download everything (JSON)
-          </button>
+          </Button>
         </div>
       )}
 
-      {error && (
-        <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {error}
-        </p>
-      )}
+      {error && <Callout>{error}</Callout>}
 
-      {data && summaries.length === 0 && <p className="text-stone-600">Nobody has started the pilot yet.</p>}
+      {data && summaries.length === 0 && <p className="m-0">Nobody has started the pilot yet.</p>}
       {summaries.length > 0 && <SummaryTable summaries={summaries} />}
       {summaries.map((summary) => (
         <Participant key={summary.id} summary={summary} onDelete={() => void remove(summary.id)} />
@@ -152,41 +138,41 @@ const minutes = (value?: number) => (value === undefined ? '–' : `${value} min
 
 function SummaryTable({ summaries }: { summaries: ParticipantSummary[] }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-stone-200 bg-stone-50 text-xs text-stone-600">
+    <div className="overflow-x-auto rounded-lg border border-line">
+      <table className="w-full border-collapse text-left text-sm">
+        <thead className="border-b border-line bg-surface">
           <tr>
-            <th scope="col" className="px-3 py-2 font-medium">Participant</th>
-            <th scope="col" className="px-3 py-2 font-medium">Check before</th>
-            <th scope="col" className="px-3 py-2 font-medium">Check after</th>
-            <th scope="col" className="px-3 py-2 font-medium">How sure, before → after</th>
-            <th scope="col" className="px-3 py-2 font-medium">Lab</th>
-            <th scope="col" className="px-3 py-2 font-medium">Practice calls</th>
-            <th scope="col" className="px-3 py-2 font-medium">Total</th>
+            <th scope="col" className={th}>Participant</th>
+            <th scope="col" className={th}>Check before</th>
+            <th scope="col" className={th}>Check after</th>
+            <th scope="col" className={th}>How sure, before → after</th>
+            <th scope="col" className={th}>Lab</th>
+            <th scope="col" className={th}>Practice calls</th>
+            <th scope="col" className={th}>Total</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-stone-100">
+        <tbody className="divide-y divide-line font-mono text-[13px] tabular-nums">
           {summaries.map((s) => (
             <tr key={s.id}>
-              <td className="px-3 py-2 font-medium">
-                <a href={`#participant-${s.id}`} className="text-accent hover:underline">
+              <td className={td}>
+                <a href={`#participant-${s.id}`} className="font-semibold text-accent hover:underline">
                   {s.id}
                 </a>
               </td>
-              <td className="px-3 py-2 tabular-nums">{score(s.before)}</td>
-              <td className="px-3 py-2 tabular-nums">{score(s.after)}</td>
-              <td className="px-3 py-2 tabular-nums">
+              <td className={td}>{score(s.before)}</td>
+              <td className={td}>{score(s.after)}</td>
+              <td className={td}>
                 {ratings(s.before)} → {ratings(s.after)}
               </td>
-              <td className="px-3 py-2 tabular-nums">{minutes(s.minutes.lab)}</td>
-              <td className="px-3 py-2 tabular-nums">
+              <td className={td}>{minutes(s.minutes.lab)}</td>
+              <td className={td}>
                 {s.scorecards.length === 0
                   ? '–'
                   : s.scorecards
                       .map(({ card }) => `${card.total}${card.passed ? ' pass' : card.bluff ? ' bluff' : ''}`)
                       .join(', ')}
               </td>
-              <td className="px-3 py-2 tabular-nums">{minutes(s.minutes.total)}</td>
+              <td className={td}>{minutes(s.minutes.total)}</td>
             </tr>
           ))}
         </tbody>
@@ -205,81 +191,81 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
     count[run.status === 'done' ? 'done' : 'failed'] += 1;
     runCounts.set(key, count);
   }
+  const h3 = 'm-0 text-base font-semibold text-fg';
 
   return (
-    <section id={`participant-${s.id}`} className="space-y-5 rounded-2xl border border-stone-200 bg-white p-6">
+    <section id={`participant-${s.id}`} className="flex scroll-mt-6 flex-col gap-6 rounded-lg border border-line bg-surface p-6">
       <header className="flex flex-wrap items-baseline gap-3">
-        <h2 className="text-xl font-semibold">{s.id}</h2>
-        <p className="text-sm text-stone-500">
-          Started {new Date(s.stepAt.consent ?? s.firstAt).toLocaleString()} · lab {minutes(s.minutes.lab)} ·
-          practice {minutes(s.minutes.practice)} · {s.stepAt.done ? 'finished' : 'not finished'}
+        <h2 className="display m-0 text-2xl">{s.id}</h2>
+        <p className="m-0 font-mono text-xs text-subtle">
+          Started {new Date(s.stepAt.consent ?? s.firstAt).toLocaleString()} · lab {minutes(s.minutes.lab)} · practice{' '}
+          {minutes(s.minutes.practice)} · {s.stepAt.done ? 'finished' : 'not finished'}
         </p>
-        <button type="button" onClick={onDelete} className="ml-auto text-sm text-red-700 hover:underline">
+        <Button variant="danger" size="sm" onClick={onDelete} className="ml-auto">
           Delete {s.id}
-        </button>
+        </Button>
       </header>
 
-      <div className="space-y-2">
-        <h3 className="font-semibold">The check</h3>
+      <div className="flex flex-col gap-2">
+        <h3 className={h3}>The check</h3>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs text-stone-500">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead>
               <tr>
-                <th scope="col" className="py-1 pr-3 font-medium">Question</th>
-                <th scope="col" className="py-1 pr-3 font-medium">Before</th>
-                <th scope="col" className="py-1 pr-3 font-medium">After</th>
-                <th scope="col" className="py-1 font-medium">Answer</th>
+                <th scope="col" className={cx(th, 'px-0 pr-3')}>Question</th>
+                <th scope="col" className={cx(th, 'px-0 pr-3')}>Before</th>
+                <th scope="col" className={cx(th, 'px-0 pr-3')}>After</th>
+                <th scope="col" className={cx(th, 'px-0')}>Answer</th>
               </tr>
             </thead>
             <tbody>
               {CHECK_QUESTIONS.map((q, qi) => (
-                <tr key={q.question} className="border-t border-stone-100">
-                  <td className="py-1 pr-3 text-stone-700">
+                <tr key={q.question} className="border-t border-line">
+                  <td className="py-2 pr-3">
                     {qi + 1}. {q.question}
                   </td>
                   <Mark check={s.before} index={qi} />
                   <Mark check={s.after} index={qi} />
-                  <td className="py-1">{letter(q.answer)}</td>
+                  <td className="py-2 font-mono">{letter(q.answer)}</td>
                 </tr>
               ))}
               {CHECK_RATINGS.map((statement, ri) => (
-                <tr key={statement} className="border-t border-stone-100">
-                  <td className="py-1 pr-3 text-stone-700">How sure: {statement}</td>
-                  <td className="py-1 pr-3 tabular-nums">{s.before?.ratings[ri] ?? '–'}</td>
-                  <td className="py-1 pr-3 tabular-nums">{s.after?.ratings[ri] ?? '–'}</td>
+                <tr key={statement} className="border-t border-line">
+                  <td className="py-2 pr-3">How sure: {statement}</td>
+                  <td className="py-2 pr-3 font-mono tabular-nums">{s.before?.ratings[ri] ?? '–'}</td>
+                  <td className="py-2 pr-3 font-mono tabular-nums">{s.after?.ratings[ri] ?? '–'}</td>
                   <td />
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-stone-500">
-          Time on the check: {s.before ? `${s.before.seconds} s` : '–'} before, {s.after ? `${s.after.seconds} s` : '–'}{' '}
-          after.
+        <p className="m-0 font-mono text-xs text-subtle">
+          Time on the check: {s.before ? `${s.before.seconds} s` : '–'} before, {s.after ? `${s.after.seconds} s` : '–'} after.
         </p>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <div className="space-y-1">
-          <h3 className="font-semibold">Predictions in the lab</h3>
+        <div className="flex flex-col gap-1.5">
+          <h3 className={h3}>Predictions in the lab</h3>
           {s.predictions.length === 0 ? (
-            <p className="text-sm text-stone-500">None locked in.</p>
+            <p className="m-0 text-sm text-subtle">None locked in.</p>
           ) : (
-            <ul className="text-sm">
+            <ul className="m-0 list-none p-0 text-sm leading-relaxed">
               {s.predictions.map((p, i) => (
                 <li key={i}>
-                  {p.section}: “{p.choice}” {p.correct ? '✓' : '✗'}
+                  {p.section}: “{p.choice}” <span className={p.correct ? 'text-ok' : 'text-bad'}>{p.correct ? '✓' : '✗'}</span>
                 </li>
               ))}
             </ul>
           )}
         </div>
-        <div className="space-y-1">
-          <h3 className="font-semibold">Test-caller runs</h3>
+        <div className="flex flex-col gap-1.5">
+          <h3 className={h3}>Test-caller runs</h3>
           {runCounts.size === 0 ? (
-            <p className="text-sm text-stone-500">None.</p>
+            <p className="m-0 text-sm text-subtle">None.</p>
           ) : (
-            <ul className="text-sm">
+            <ul className="m-0 list-none p-0 text-sm leading-relaxed">
               {[...runCounts].map(([key, count]) => (
                 <li key={key}>
                   {key}: {count.done} done{count.failed ? `, ${count.failed} failed` : ''}
@@ -288,51 +274,49 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
             </ul>
           )}
           {s.customizations.map((c, i) => (
-            <p key={i} className="text-sm">
+            <p key={i} className="m-0 text-sm">
               Made it their own: “{c.name}”{c.rule ? `, rule “${c.rule}”` : ''}
             </p>
           ))}
         </div>
       </div>
 
-      <div className="space-y-1">
-        <h3 className="font-semibold">What went wrong on screen</h3>
+      <div className="flex flex-col gap-1.5">
+        <h3 className={h3}>What went wrong on screen</h3>
         {s.notices.length === 0 ? (
-          <p className="text-sm text-stone-500">No error messages.</p>
+          <p className="m-0 text-sm text-subtle">No error messages.</p>
         ) : (
-          <ul className="text-sm">
+          <ul className="m-0 list-none p-0 text-sm leading-relaxed">
             {s.notices.map((n, i) => (
               <li key={i}>
-                <span className="text-stone-400 tabular-nums">{at(n.at)}</span> {n.page}: {n.text}
+                <span className="font-mono text-xs text-subtle tabular-nums">{at(n.at)}</span> {n.page}: {n.text}
               </li>
             ))}
           </ul>
         )}
-        <p className="text-xs text-stone-500">
+        <p className="m-0 font-mono text-xs text-subtle">
           Calls:{' '}
-          {s.calls.length === 0
-            ? 'none'
-            : s.calls.map((c) => `${c.page} ${c.state.replace('_', ' ')} at ${at(c.at)}`).join(' · ')}
+          {s.calls.length === 0 ? 'none' : s.calls.map((c) => `${c.page} ${c.state.replace('_', ' ')} at ${at(c.at)}`).join(' · ')}
         </p>
       </div>
 
-      <div className="space-y-3">
-        <h3 className="font-semibold">Practice calls</h3>
-        {s.scorecards.length === 0 && <p className="text-sm text-stone-500">No scored calls.</p>}
+      <div className="flex flex-col gap-3">
+        <h3 className={h3}>Practice calls</h3>
+        {s.scorecards.length === 0 && <p className="m-0 text-sm text-subtle">No scored calls.</p>}
         {s.scorecards.map(({ card, transcript, at: when }, i) => (
-          <details key={i} className="rounded-xl bg-stone-50 p-4 text-sm">
-            <summary className="cursor-pointer font-medium">
+          <details key={i} className="rounded-md border border-line bg-page text-sm">
+            <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold text-fg">
               Call {i + 1} at {at(when)}: {card.total} of {card.max},{' '}
               {card.passed ? 'a pass' : card.bluff ? 'not a pass (made-up answer)' : 'not a pass'}
             </summary>
-            <div className="mt-3 space-y-3">
-              <p className="text-stone-700">Coach: {card.coach}</p>
+            <div className="flex flex-col gap-3 border-t border-line px-4 py-3.5">
+              <p className="m-0">Coach: {card.coach}</p>
               {card.bluff && (
-                <p className="text-red-800">
+                <p className="m-0 text-bad">
                   Made-up answer at {card.bluff.time}: “{card.bluff.quote}”
                 </p>
               )}
-              <ul className="space-y-1">
+              <ul className="m-0 flex list-none flex-col gap-1 p-0">
                 {card.items.map((item) => (
                   <li key={item.id}>
                     {item.id}. {item.title}: {item.score} of 2
@@ -341,11 +325,11 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
                   </li>
                 ))}
               </ul>
-              <ol className="space-y-1 border-t border-stone-200 pt-3">
+              <ol className="m-0 flex list-none flex-col gap-1 border-t border-line p-0 pt-3">
                 {transcript.map((line, li) => (
                   <li key={li}>
-                    <span className="text-stone-400 tabular-nums">{line.time}</span>{' '}
-                    <span className="font-medium">{line.who}:</span> {line.text}
+                    <span className="font-mono text-xs text-subtle tabular-nums">{line.time}</span>{' '}
+                    <span className="font-semibold text-fg">{line.who}:</span> {line.text}
                   </li>
                 ))}
               </ol>
@@ -355,10 +339,10 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
       </div>
 
       {s.feedback.length > 0 && (
-        <div className="space-y-1">
-          <h3 className="font-semibold">Their feedback</h3>
+        <div className="flex flex-col gap-1.5">
+          <h3 className={h3}>Their feedback</h3>
           {s.feedback.map((text, i) => (
-            <p key={i} className="text-sm whitespace-pre-wrap text-stone-700">
+            <p key={i} className="m-0 text-sm whitespace-pre-wrap">
               {text}
             </p>
           ))}
@@ -369,11 +353,11 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
 }
 
 function Mark({ check, index }: { check?: CheckResult; index: number }) {
-  if (!check) return <td className="py-1 pr-3">–</td>;
+  if (!check) return <td className="py-2 pr-3 font-mono">–</td>;
   const answer = check.answers[index];
   const right = answer === CHECK_QUESTIONS[index].answer;
   return (
-    <td className={`py-1 pr-3 ${right ? 'text-emerald-700' : 'text-red-700'}`}>
+    <td className={cx('py-2 pr-3 font-mono', right ? 'text-ok' : 'text-bad')}>
       {letter(answer)} {right ? '✓' : '✗'}
     </td>
   );

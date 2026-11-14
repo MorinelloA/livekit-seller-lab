@@ -8,7 +8,8 @@
     "build": "next build && node scripts/stage.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p worker",
     "secrets:live": "node scripts/push-secrets.mjs",
-    "deploy:live": "pnpm build && wrangler deploy"
+    "deploy:live": "pnpm build && wrangler deploy",
+    "test": "node --test lib/"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.24",

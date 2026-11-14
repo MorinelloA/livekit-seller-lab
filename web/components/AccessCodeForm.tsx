@@ -1,6 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { inputClass } from '@/components/ui/Bits';
+import { Button } from '@/components/ui/Button';
+import { cx } from '@/components/ui/cx';
+import { Icon } from '@/components/ui/Icon';
 
 /** Shown when this browser has no access code, or the one it has was turned down. */
 export function AccessCodeForm({ onSave }: { onSave: (code: string) => void }) {
@@ -8,16 +12,17 @@ export function AccessCodeForm({ onSave }: { onSave: (code: string) => void }) {
 
   return (
     <form
-      className="space-y-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3"
+      className="flex flex-col gap-3 rounded-lg border border-warn/60 bg-warn-soft p-4 sm:flex-row sm:items-end"
       onSubmit={(event) => {
         event.preventDefault();
         if (value.trim()) onSave(value);
       }}
     >
-      <label htmlFor="access-code" className="block text-sm text-amber-950">
-        Calls in this lab need an access code. It’s in the link you were sent, after “code=”.
-      </label>
-      <div className="flex gap-2">
+      <label htmlFor="access-code" className="flex min-w-0 flex-1 flex-col gap-2 text-sm text-fg">
+        <span className="flex gap-2.5">
+          <Icon name="info" className="mt-0.5 size-4 shrink-0 text-warn" />
+          Calls in this lab need an access code. It’s in the link you were sent, after “code=”.
+        </span>
         <input
           id="access-code"
           value={value}
@@ -25,16 +30,12 @@ export function AccessCodeForm({ onSave }: { onSave: (code: string) => void }) {
           autoComplete="off"
           spellCheck={false}
           placeholder="xxxx-xxxx-xxxx"
-          className="w-48 rounded-lg border border-amber-300 bg-white px-3 py-1.5 font-mono text-sm"
+          className={cx(inputClass, 'max-w-xs font-mono')}
         />
-        <button
-          type="submit"
-          disabled={!value.trim()}
-          className="rounded-lg bg-stone-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
-        >
-          Save the code
-        </button>
-      </div>
+      </label>
+      <Button type="submit" variant="primary" disabled={!value.trim()}>
+        Save the code
+      </Button>
     </form>
   );
 }

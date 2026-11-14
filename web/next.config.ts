@@ -6,6 +6,7 @@ import type { NextConfig } from 'next';
 // Wrangler, and Next forwards /livekitlab/api to it.
 const BASE_PATH = '/livekitlab';
 const API_PORT = process.env.LAB_API_PORT ?? '8790';
+const CAPTURE_PORT = process.env.CAPTURE_PORT ?? '8799';
 const exporting = process.env.NODE_ENV === 'production';
 
 const nextConfig: NextConfig = {
@@ -21,6 +22,8 @@ const nextConfig: NextConfig = {
         async rewrites() {
           return [
             { source: '/api/:path*', destination: `http://127.0.0.1:${API_PORT}${BASE_PATH}/api/:path*` },
+            // Recording runs for the overview's replay: scripts/capture-server.mjs.
+            { source: '/dev-capture/:path*', destination: `http://127.0.0.1:${CAPTURE_PORT}/:path*` },
           ];
         },
         async redirects() {

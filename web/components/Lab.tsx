@@ -5,13 +5,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import { type RemoteParticipant, Room, RoomEvent, Track } from 'livekit-client';
 import { AccessCodeForm } from '@/components/AccessCodeForm';
+import { CallDock, type CallStatus } from '@/components/CallDock';
 import { ExperimentPanel, type RunState } from '@/components/ExperimentPanel';
+import { LabOutline } from '@/components/LabOutline';
 import { MakeItYourOwn } from '@/components/MakeItYourOwn';
 import { PilotBanner } from '@/components/PilotBanner';
 import { TurnLog } from '@/components/TurnLog';
+import { Eyebrow } from '@/components/ui/Bits';
+import { ButtonLink } from '@/components/ui/Button';
 import { AccessCodeError } from '@/lib/access';
 import { CLIPS, EXPERIMENTS, type ExperimentId } from '@/lib/experiments';
 import { LabMic } from '@/lib/labMic';
+import { withBase } from '@/lib/paths';
+import { loadPeaks, type Peaks } from '@/lib/peaks';
 import { logPilot, reachStep, requestRoom } from '@/lib/pilot';
 import {
   AGENT_STATE_ATTRIBUTE,
@@ -27,9 +33,10 @@ import {
   RPC_RESET,
   RPC_SET_SETTINGS,
 } from '@/lib/protocol';
+import { encodeWav, firstSoundMs, type ReplayRun } from '@/lib/replay';
+import { type ClipKey, RunRecorder, type RunTimeline, speechRuns } from '@/lib/timeline';
 import { useLabAccess } from '@/lib/useLabAccess';
 
-type Status = 'idle' | 'connecting' | 'connected' | 'error';
 type RunKey = `${ExperimentId}-${Mode}`;
 
 // Production settings, except voice isolation: it's billed by the minute, so the
@@ -47,6 +54,12 @@ const SLOW_JOIN_MS = 6_000;
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
+class CallEnded extends Error {
+  constructor() {
+    super('The call ended before the run finished.');
+  }
+}
 
 /** Each experiment changes one setting and keeps the others as they are by default. */
 function settingsFor(experiment: ExperimentId, mode: Mode): LabSettings {
@@ -67,13 +80,52 @@ function modeOf(experiment: ExperimentId, settings: LabSettings): Mode {
 }
 
 /** The test caller's clip for experiments 3 and 4, which play one clip each. */
-const SINGLE_CLIP: Partial<Record<ExperimentId, string>> = { 3: CLIPS.cafeBooking, 4: CLIPS.saturday };
+const SINGLE_CLIP: Partial<Record<ExperimentId, ClipKey>> = { 3: 'cafeBooking', 4: 'saturday' };
+
+/**
+ * Development only: saves a finished run, with a recording of it, for the
+ * overview's replay. Needs `?capture` on the lab's address and
+ * scripts/capture-server.mjs running.
+ */
+async function saveCapture(
+  name: string,
+  timeline: RunTimeline,
+  events: LoggedEvent[],
+  recording: { samples: Float32Array; sampleRate: number } | null,
+): Promise<void> {
+  const peaks: Partial<Record<ClipKey, Peaks>> = {};
+  for (const clip of timeline.clips) peaks[clip.clip] ??= await loadPeaks(clip.clip);
+  // Line the recording up with the run's clock on the caller's first word.
+  const first = timeline.clips[0];
+  const firstPeaks = first ? peaks[first.clip] : undefined;
+  const firstWord = firstPeaks ? speechRuns(firstPeaks.values, firstPeaks.step)[0] : undefined;
+  const heardAt = recording ? firstSoundMs(recording.samples, recording.sampleRate) : null;
+  const offsetMs = first && firstWord && heardAt !== null ? first.start + firstWord.start * 1000 - heardAt : null;
+  const { t0Perf: _live, ...saved } = timeline;
+  const replay: ReplayRun = {
+    v: 1,
+    capturedAt: new Date().toISOString(),
+    timeline: saved,
+    events,
+    peaks,
+    audio: recording && offsetMs !== null ? { src: `/replay/${name}.wav`, offsetMs: Math.round(offsetMs) } : null,
+  };
+  if (recording && replay.audio) {
+    await fetch(withBase(`/dev-capture/${name}.wav`), { method: 'POST', body: encodeWav(recording.samples, recording.sampleRate) });
+  }
+  await fetch(withBase(`/dev-capture/${name}.json`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(replay, null, 1),
+  });
+  console.info(`Saved ${name} for the replay.`);
+}
 
 export function Lab() {
   const access = useLabAccess();
   const { rejectCode } = access;
   const [room, setRoom] = useState<Room | null>(null);
-  const [status, setStatus] = useState<Status>('idle');
+  const [status, setStatus] = useState<CallStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [agentPresent, setAgentPresent] = useState(false);
@@ -82,11 +134,13 @@ export function Lab() {
   const [settings, setSettings] = useState<LabSettings>(DEFAULT_SETTINGS);
   const [events, setEvents] = useState<LoggedEvent[]>([]);
   const [runs, setRuns] = useState<Partial<Record<RunKey, RunState>>>({});
+  const [timelines, setTimelines] = useState<Record<string, RunTimeline>>({});
   const [persona, setPersona] = useState<LabPersona | null>(null);
   const [bookingRun, setBookingRun] = useState<RunState | undefined>();
   const [busy, setBusy] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [cafeOn, setCafeOn] = useState(false);
+  const [predicted, setPredicted] = useState<string[]>([]);
 
   const roomRef = useRef<Room | null>(null);
   const micRef = useRef<LabMic | null>(null);
@@ -96,6 +150,17 @@ export function Lab() {
   const activeRunRef = useRef<string | null>(null);
   const lastActivityRef = useRef(0);
   const repliesRef = useRef(0);
+  const eventsRef = useRef<LoggedEvent[]>([]);
+  const recorderRef = useRef<{ id: string; recorder: RunRecorder } | null>(null);
+  // The agent's clock minus the page's, from the quickest round trip so far.
+  const skewRef = useRef<{ skewMs: number; rttMs: number } | null>(null);
+  const captureRef = useRef(false);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      captureRef.current = new URLSearchParams(window.location.search).has('capture');
+    }
+  }, []);
 
   /** Shows a problem on the page, and notes it for the pilot. */
   const showNotice = useCallback((text: string) => {
@@ -103,12 +168,25 @@ export function Lab() {
     logPilot({ kind: 'notice', page: 'lab', text });
   }, []);
 
-  const noteAgentState = useCallback((state: string) => {
-    if (state !== agentStateRef.current) lastActivityRef.current = Date.now();
-    agentStateRef.current = state;
-    setAgentState(state);
-    stateWaiters.current.forEach((check) => check());
+  /** Copies the recorder's timeline to the page. */
+  const publishTimeline = useCallback(() => {
+    const active = recorderRef.current;
+    if (active) setTimelines((prev) => ({ ...prev, [active.id]: active.recorder.snapshot() }));
   }, []);
+
+  const noteAgentState = useCallback(
+    (state: string) => {
+      if (state !== agentStateRef.current) lastActivityRef.current = Date.now();
+      agentStateRef.current = state;
+      setAgentState(state);
+      if (recorderRef.current && state) {
+        recorderRef.current.recorder.state(state);
+        publishTimeline();
+      }
+      stateWaiters.current.forEach((check) => check());
+    },
+    [publishTimeline],
+  );
 
   const findAgent = useCallback(
     (r: Room) => {
@@ -138,16 +216,25 @@ export function Lab() {
     [],
   );
 
-  /** Resolves once the agent has been listening, with no new turns, for quietMs. */
-  const waitForQuiet = useCallback(async (quietMs: number, timeoutMs: number) => {
-    const started = Date.now();
-    while (Date.now() - started < timeoutMs) {
-      const listening = agentStateRef.current === 'listening';
-      if (listening && Date.now() - lastActivityRef.current >= quietMs) return true;
-      await sleep(200);
-    }
-    return false;
+  /** Throws if the learner left the call, so a run stops at once instead of timing out. */
+  const stillOnCall = useCallback(() => {
+    if (!roomRef.current) throw new CallEnded();
   }, []);
+
+  /** Resolves once the agent has been listening, with no new turns, for quietMs. */
+  const waitForQuiet = useCallback(
+    async (quietMs: number, timeoutMs: number) => {
+      const started = Date.now();
+      while (Date.now() - started < timeoutMs) {
+        stillOnCall();
+        const listening = agentStateRef.current === 'listening';
+        if (listening && Date.now() - lastActivityRef.current >= quietMs) return true;
+        await sleep(200);
+      }
+      return false;
+    },
+    [stillOnCall],
+  );
 
   /**
    * After the caller finishes: wait for Juniper's answer, then for the call to go
@@ -159,10 +246,11 @@ export function Lab() {
     lastActivityRef.current = Date.now();
     const started = Date.now();
     while (repliesRef.current === repliesBefore && Date.now() - started < 15_000) {
+      stillOnCall();
       await sleep(200);
     }
     await waitForQuiet(2_500, 30_000);
-  }, [waitForQuiet]);
+  }, [stillOnCall, waitForQuiet]);
 
   const handleEvent = useCallback(
     (event: LabEvent) => {
@@ -175,7 +263,9 @@ export function Lab() {
         return;
       }
       if (event.type === 'turn' && event.role === 'assistant') repliesRef.current += 1;
-      setEvents((prev) => [...prev, { ...event, runId: activeRunRef.current, receivedAt: Date.now() }]);
+      const logged = { ...event, runId: activeRunRef.current, receivedAt: Date.now() };
+      eventsRef.current = [...eventsRef.current, logged];
+      setEvents(eventsRef.current);
     },
     [showNotice],
   );
@@ -196,6 +286,17 @@ export function Lab() {
     return next;
   }, []);
 
+  /** Reads the agent's clock with a quick RPC, to place its speech times on the page's timeline. */
+  const measureSkew = useCallback(async () => {
+    const sent = Date.now();
+    const state = await callAgent(RPC_GET_STATE, {});
+    const received = Date.now();
+    if (typeof state.now !== 'number') return;
+    const rttMs = received - sent;
+    const skewMs = state.now * 1000 - (sent + received) / 2;
+    if (!skewRef.current || rttMs < skewRef.current.rttMs) skewRef.current = { skewMs, rttMs };
+  }, [callAgent]);
+
   const disconnect = useCallback(async () => {
     const r = roomRef.current;
     const mic = micRef.current;
@@ -203,6 +304,7 @@ export function Lab() {
     roomRef.current = null;
     micRef.current = null;
     agentRef.current = null;
+    skewRef.current = null;
     setRoom(null);
     setAgentPresent(false);
     setPersona(null);
@@ -316,39 +418,98 @@ export function Lab() {
     [callAgent, showNotice],
   );
 
+  /** Starts recording a run's timeline (and, in development with ?capture, its audio). */
+  const startRecording = useCallback(
+    (id: string, experiment: ExperimentId | 0, mode: Mode | null) => {
+      const recorder = new RunRecorder({
+        experiment,
+        mode,
+        skewMs: skewRef.current?.skewMs ?? null,
+        state: agentStateRef.current,
+      });
+      recorderRef.current = { id, recorder };
+      publishTimeline();
+      if (captureRef.current) {
+        const track = agentRef.current?.getTrackPublication(Track.Source.Microphone)?.track?.mediaStreamTrack ?? null;
+        micRef.current?.startCapture(track);
+      }
+      return recorder;
+    },
+    [publishTimeline],
+  );
+
+  /** Plays one clip into the call and marks it on the run's timeline. */
+  const play = useCallback(
+    async (recorder: RunRecorder, clip: ClipKey) => {
+      const mic = micRef.current;
+      if (!mic) throw new CallEnded();
+      const playing = await mic.startClip(CLIPS[clip]);
+      recorder.clip(clip, playing.startedAt, playing.duration);
+      publishTimeline();
+      await playing.ended;
+      stillOnCall();
+    },
+    [publishTimeline, stillOnCall],
+  );
+
+  /** Ends the run's recording; saves it for the replay when capturing. */
+  const stopRecording = useCallback(
+    (id: string, status: 'done' | 'failed', name: string | null) => {
+      const active = recorderRef.current;
+      if (!active || active.id !== id) return;
+      active.recorder.finish(status);
+      publishTimeline();
+      recorderRef.current = null;
+      const recording = micRef.current?.stopCapture() ?? null;
+      if (process.env.NODE_ENV === 'development' && captureRef.current && status === 'done' && name) {
+        const runEvents = eventsRef.current.filter((e) => e.runId === id);
+        saveCapture(name, active.recorder.snapshot(), runEvents, recording).catch((err) =>
+          console.warn('The replay capture wasn’t saved. Is scripts/capture-server.mjs running?', err),
+        );
+      }
+    },
+    [publishTimeline],
+  );
+
   const runTestCaller = useCallback(
     async (experiment: ExperimentId, mode: Mode) => {
-      const mic = micRef.current;
-      if (!mic) return;
+      if (!micRef.current) return;
       const key: RunKey = `${experiment}-${mode}`;
       const id = crypto.randomUUID();
       const section = `Experiment ${experiment}`;
+      let outcome: 'done' | 'failed' = 'failed';
       setBusy(true);
       setNotice(null);
       setRuns((prev) => ({ ...prev, [key]: { id, status: 'running' } }));
-      mic.setHold(true);
+      micRef.current.setHold(true);
       try {
         await callAgent(RPC_SET_SETTINGS, settingsFor(experiment, mode));
         await callAgent(RPC_RESET, {});
         activeRunRef.current = id;
         await waitForAgentState(['listening'], 8_000);
+        await measureSkew().catch(() => undefined);
+        const recorder = startRecording(id, experiment, mode);
         await sleep(300);
+        stillOnCall();
         const clip = SINGLE_CLIP[experiment];
         if (clip) {
-          await mic.playClip(clip);
+          await play(recorder, clip);
         } else if (experiment === 1) {
-          await mic.playClip(CLIPS.tableBooking);
+          await play(recorder, 'tableBooking');
         } else {
-          await mic.playClip(CLIPS.menuQuestion);
+          await play(recorder, 'menuQuestion');
           if (!(await waitForAgentState(['speaking'], 15_000))) {
+            stillOnCall();
             throw new Error('Juniper didn’t start answering the menu question.');
           }
-          for (const clip of [CLIPS.uhHuh, CLIPS.uhHuh, CLIPS.vegetarian]) {
+          for (const next of ['uhHuh', 'uhHuh', 'vegetarian'] as const) {
             await sleep(2_500);
-            await mic.playClip(clip);
+            stillOnCall();
+            await play(recorder, next);
           }
         }
         await waitForAnswer();
+        outcome = 'done';
         setRuns((prev) => ({ ...prev, [key]: { id, status: 'done' } }));
         logPilot({ kind: 'run', section, mode, status: 'done' });
       } catch (err) {
@@ -356,12 +517,13 @@ export function Lab() {
         logPilot({ kind: 'run', section, mode, status: 'failed' });
         showNotice(message(err));
       } finally {
+        stopRecording(id, outcome, `exp${experiment}-${mode}`);
         activeRunRef.current = null;
-        mic.setHold(false);
+        micRef.current?.setHold(false);
         setBusy(false);
       }
     },
-    [callAgent, showNotice, waitForAgentState, waitForAnswer],
+    [callAgent, measureSkew, play, showNotice, startRecording, stillOnCall, stopRecording, waitForAgentState, waitForAnswer],
   );
 
   /** Calls the agent with the page marked busy, and shows any error. Returns whether it worked. */
@@ -397,20 +559,24 @@ export function Lab() {
 
   /** The test caller books a table with whatever restaurant Juniper is playing now. */
   const runBooking = useCallback(async () => {
-    const mic = micRef.current;
-    if (!mic) return;
+    if (!micRef.current) return;
     const id = crypto.randomUUID();
     const section = 'Make it your own: test caller’s booking';
+    let outcome: 'done' | 'failed' = 'failed';
     setBusy(true);
     setNotice(null);
     setBookingRun({ id, status: 'running' });
-    mic.setHold(true);
+    micRef.current.setHold(true);
     try {
       activeRunRef.current = id;
       await waitForAgentState(['listening'], 8_000);
+      await measureSkew().catch(() => undefined);
+      const recorder = startRecording(id, 0, null);
       await sleep(300);
-      await mic.playClip(CLIPS.tableBooking);
+      stillOnCall();
+      await play(recorder, 'tableBooking');
       await waitForAnswer();
+      outcome = 'done';
       setBookingRun({ id, status: 'done' });
       logPilot({ kind: 'run', section, status: 'done' });
     } catch (err) {
@@ -418,203 +584,149 @@ export function Lab() {
       logPilot({ kind: 'run', section, status: 'failed' });
       showNotice(message(err));
     } finally {
+      stopRecording(id, outcome, null);
       activeRunRef.current = null;
-      mic.setHold(false);
+      micRef.current?.setHold(false);
       setBusy(false);
     }
-  }, [showNotice, waitForAgentState, waitForAnswer]);
+  }, [measureSkew, play, showNotice, startRecording, stillOnCall, stopRecording, waitForAgentState, waitForAnswer]);
 
   const ready = status === 'connected' && agentPresent;
-  const predict = (section: string) => (choice: string, correct: boolean) =>
+  const predict = (section: string) => (choice: string, correct: boolean) => {
+    setPredicted((prev) => (prev.includes(section) ? prev : [...prev, section]));
     logPilot({ kind: 'prediction', section, choice, correct });
+  };
+  const viewOf = (state: RunState | undefined) => ({
+    state,
+    events: state ? events.filter((e) => e.runId === state.id) : [],
+    timeline: state ? timelines[state.id] : undefined,
+  });
+  const bothDone = (id: ExperimentId) =>
+    runs[`${id}-baseline`]?.status === 'done' && runs[`${id}-enhanced`]?.status === 'done';
 
   return (
     <RoomContext.Provider value={room ?? undefined}>
-      <main className="mx-auto max-w-4xl space-y-8 px-5 py-10">
-        {access.pilot && <PilotBanner pilot={access.pilot} page="lab" />}
+      <main id="main" className="mx-auto max-w-[1200px] px-5 sm:px-10">
+        {access.pilot && (
+          <div className="pt-6">
+            <PilotBanner pilot={access.pilot} page="lab" />
+          </div>
+        )}
 
-        <header className="space-y-3">
-          <p className="text-sm font-medium tracking-wide text-accent uppercase">Seller Lab 1</p>
-          <h1 className="text-3xl font-semibold tracking-tight">Why real-time voice AI is hard</h1>
-          <p className="max-w-2xl text-stone-600">
-            Juniper is a LiveKit voice agent that answers the phone for a made-up restaurant. First
-            you make it your own. Then each experiment plays a recorded test caller through two
-            settings, so you hear the difference with the same input, and you try it with your own
-            voice. Use headphones.
+        <header className="flex flex-col gap-[18px] pt-14 pb-10 sm:pt-16">
+          <Eyebrow>Seller Lab 1 · The lab</Eyebrow>
+          <h1 className="display text-[clamp(34px,4vw,52px)] leading-[1.08]">Why real-time voice AI is hard</h1>
+          <p className="max-w-[700px] text-[17px] leading-[1.7] tracking-[0.01em]">
+            Juniper is a LiveKit voice agent that answers the phone for a made-up restaurant. First you make it your
+            own. Then each experiment plays a recorded test caller through two settings, so you hear the difference
+            with the same input, and you try it with your own voice. Use headphones.
           </p>
-          <p className="text-sm text-stone-600">
+          <p className="m-0 text-[15px] text-subtle">
             At the end, put it to work on{' '}
-            <Link
-              href="/practice/"
-              onClick={() => reachStep('practice')}
-              className="font-medium text-accent hover:underline"
-            >
+            <Link href="/practice/" onClick={() => reachStep('practice')} className="font-semibold text-accent hover:underline">
               a scored practice call
             </Link>
             .
           </p>
         </header>
 
-        {access.ready && !access.hasCode && <AccessCodeForm onSave={access.saveCode} />}
+        {access.ready && !access.hasCode && (
+          <div className="pb-8">
+            <AccessCodeForm onSave={access.saveCode} />
+          </div>
+        )}
 
-        <ConnectionBar
+        <div className="lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10">
+          <LabOutline
+            items={[
+              {
+                id: 'make-it-your-own',
+                label: 'Make it your own',
+                done: predicted.includes('Make it your own') && bookingRun?.status === 'done',
+              },
+              ...EXPERIMENTS.map((experiment) => ({
+                id: `experiment-${experiment.id}`,
+                label: `${experiment.id} · ${experiment.title.replace(/^Experiment \d+:\s*/, '')}`,
+                done: predicted.includes(`Experiment ${experiment.id}`) && bothDone(experiment.id),
+              })),
+              { id: 'prove-it', label: 'Prove it: the practice call', done: false },
+              { id: 'every-turn', label: 'Every turn, measured', done: false },
+            ]}
+          />
+
+          <div className="flex min-w-0 flex-col gap-5">
+            <MakeItYourOwn
+              persona={persona}
+              canAct={ready && !busy}
+              run={viewOf(bookingRun)}
+              onApply={applyPersona}
+              onRestore={restorePersona}
+              onPlayBooking={() => void runBooking()}
+              onLoad={loadState}
+              onPredict={predict('Make it your own')}
+            />
+
+            {EXPERIMENTS.map((experiment) => (
+              <ExperimentPanel
+                key={experiment.id}
+                experiment={experiment}
+                currentMode={modeOf(experiment.id, settings)}
+                runs={{
+                  baseline: viewOf(runs[`${experiment.id}-baseline`]),
+                  enhanced: viewOf(runs[`${experiment.id}-enhanced`]),
+                }}
+                canRun={ready && !busy}
+                onRun={(mode) => void runTestCaller(experiment.id, mode)}
+                onSetMode={(mode) => void setMode(experiment.id, mode)}
+                onPredict={predict(`Experiment ${experiment.id}`)}
+                cafe={experiment.id === 3 ? { on: cafeOn, onToggle: () => void toggleCafe() } : undefined}
+              />
+            ))}
+
+            <section
+              id="prove-it"
+              aria-labelledby="prove-it-title"
+              className="flex scroll-mt-6 flex-wrap items-center gap-x-6 gap-y-4 rounded-lg border border-line p-6"
+            >
+              <div className="flex min-w-0 flex-[1_1_380px] flex-col gap-1.5">
+                <h2 id="prove-it-title" className="m-0 text-xl font-normal text-fg">
+                  Prove it: the practice call
+                </h2>
+                <p className="m-0 text-sm leading-relaxed">
+                  An 8 to 10 minute discovery call with Priya, an AI voice agent playing a buyer. It’s scored on what this
+                  lab teaches, and a coach talks you through the result.
+                </p>
+              </div>
+              <ButtonLink href="/practice/" variant="primary" onClick={() => reachStep('practice')}>
+                Go to the practice call
+              </ButtonLink>
+            </section>
+
+            <TurnLog events={events} />
+
+            {!access.pilot && (
+              <p className="m-0 text-xs text-subtle">Calls in this lab aren’t recorded. Each one ends on its own after 40 minutes.</p>
+            )}
+          </div>
+        </div>
+
+        <CallDock
           status={status}
-          ready={ready}
+          hasRoom={room !== null}
           agentPresent={agentPresent}
           agentState={agentState}
           slowJoin={slowJoin}
           settings={settings}
+          persona={persona ? (persona.custom ? persona.name : 'The original Juniper') : null}
           micOn={micOn}
           busy={busy}
-          onConnect={connect}
-          onDisconnect={disconnect}
-          onToggleMic={toggleMic}
+          message={error ?? notice}
+          onConnect={() => void connect()}
+          onDisconnect={() => void disconnect()}
+          onToggleMic={() => void toggleMic()}
         />
-
-        {(error || notice) && (
-          <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            {error ?? notice}
-          </p>
-        )}
-
-        <MakeItYourOwn
-          persona={persona}
-          canAct={ready && !busy}
-          run={{
-            state: bookingRun,
-            events: bookingRun ? events.filter((e) => e.runId === bookingRun.id) : [],
-          }}
-          onApply={applyPersona}
-          onRestore={restorePersona}
-          onPlayBooking={() => void runBooking()}
-          onLoad={loadState}
-          onPredict={predict('Make it your own')}
-        />
-
-        {EXPERIMENTS.map((experiment) => {
-          const view = (mode: Mode) => {
-            const state = runs[`${experiment.id}-${mode}`];
-            return { state, events: state ? events.filter((e) => e.runId === state.id) : [] };
-          };
-          return (
-            <ExperimentPanel
-              key={experiment.id}
-              experiment={experiment}
-              currentMode={modeOf(experiment.id, settings)}
-              runs={{ baseline: view('baseline'), enhanced: view('enhanced') }}
-              canRun={ready && !busy}
-              onRun={(mode) => void runTestCaller(experiment.id, mode)}
-              onSetMode={(mode) => void setMode(experiment.id, mode)}
-              onPredict={predict(`Experiment ${experiment.id}`)}
-              cafe={experiment.id === 3 ? { on: cafeOn, onToggle: () => void toggleCafe() } : undefined}
-            />
-          );
-        })}
-
-        <section className="space-y-2 rounded-xl border border-stone-200 bg-white p-5">
-          <h2 className="text-xl font-semibold">Prove it: the practice call</h2>
-          <p className="text-stone-600">
-            An 8 to 10 minute discovery call with Priya, an AI voice agent playing a buyer. It’s scored
-            on what this lab teaches, and a coach talks you through the result.
-          </p>
-          <Link
-            href="/practice/"
-            onClick={() => reachStep('practice')}
-            className="inline-block rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white"
-          >
-            Go to the practice call
-          </Link>
-        </section>
-
-        <TurnLog events={events} />
-
-        {!access.pilot && (
-          <footer className="border-t border-stone-200 pt-4 text-xs text-stone-500">
-            Calls in this lab aren’t recorded. Each one ends on its own after 40 minutes.
-          </footer>
-        )}
       </main>
       {room && <RoomAudioRenderer />}
     </RoomContext.Provider>
-  );
-}
-
-const MODE_LABEL: Record<Mode, string> = { baseline: 'Baseline', enhanced: 'Enhanced' };
-
-function ConnectionBar(props: {
-  status: Status;
-  ready: boolean;
-  agentPresent: boolean;
-  agentState: string;
-  slowJoin: boolean;
-  settings: LabSettings;
-  micOn: boolean;
-  busy: boolean;
-  onConnect: () => void;
-  onDisconnect: () => void;
-  onToggleMic: () => void;
-}) {
-  const { status, ready, agentPresent, agentState, slowJoin, settings, micOn, busy } = props;
-  const connected = status === 'connected';
-  const label = !connected
-    ? status === 'connecting'
-      ? 'Connecting…'
-      : 'Not connected'
-    : agentPresent
-      ? `Juniper is ${agentState || 'joining'}`
-      : slowJoin
-        ? 'Waiting for Juniper to join. After a quiet spell this can take up to 20 seconds.'
-        : 'Waiting for Juniper to join…';
-
-  return (
-    <section className="flex flex-wrap items-center gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3">
-      <span className="flex items-center gap-2 text-sm" aria-live="polite">
-        <span
-          className={`size-2.5 shrink-0 rounded-full ${ready ? 'bg-emerald-500' : connected ? 'bg-amber-400' : 'bg-stone-300'}`}
-          aria-hidden
-        />
-        {label}
-      </span>
-      {connected && (
-        <span className="text-sm text-stone-500">
-          Turn detection: {MODE_LABEL[settings.turn_detection]} · Interruptions:{' '}
-          {MODE_LABEL[settings.interruptions]} · Voice isolation: {settings.noise === 'enhanced' ? 'on' : 'off'} ·
-          Model: {settings.model === 'reasoning' ? 'reasoning' : 'fast'}
-        </span>
-      )}
-      <span className="ml-auto flex gap-2">
-        {connected && (
-          <button
-            type="button"
-            onClick={props.onToggleMic}
-            disabled={busy}
-            aria-pressed={micOn}
-            className={`rounded-lg border px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${
-              micOn ? 'border-accent bg-accent-soft text-accent' : 'border-stone-300 bg-white'
-            }`}
-          >
-            {micOn ? 'Your microphone is on' : 'Use my voice'}
-          </button>
-        )}
-        {connected ? (
-          <button
-            type="button"
-            onClick={props.onDisconnect}
-            className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium"
-          >
-            Leave
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={props.onConnect}
-            disabled={status === 'connecting'}
-            className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white disabled:opacity-60"
-          >
-            Call Juniper
-          </button>
-        )}
-      </span>
-    </section>
   );
 }
