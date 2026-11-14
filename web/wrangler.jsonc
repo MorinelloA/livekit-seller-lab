@@ -1,0 +1,27 @@
+// The hosted lab: the exported pages under /livekitlab, and the API in
+// worker/index.ts. Deploy with `pnpm deploy:live`. The route sends
+// tonyt908.com/livekitlab to this Worker; the rest of tonyt908.com stays with
+// the site's own Worker.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "livekit-seller-lab",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "tonyt908.com/livekitlab*", "zone_name": "tonyt908.com" }],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // Only the API runs the Worker. Pages and clips are served as plain files.
+    "run_worker_first": ["/livekitlab/api/*"],
+    "not_found_handling": "404-page"
+  },
+  "kv_namespaces": [{ "binding": "LAB", "id": "9ffc473f7df14061a12db4b7f7c1cc61" }],
+  "vars": {
+    "AGENT_NAME": "juniper-lab",
+    "DAILY_SESSION_LIMIT": "40"
+  },
+  "observability": { "enabled": true }
+}

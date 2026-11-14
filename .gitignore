@@ -1,0 +1,28 @@
+# Secrets
+.env.local
+.env*.local
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+.ruff_cache/
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cloudflare
+.wrangler/
+dist/
+.dev.vars*
+
+.next-dev/

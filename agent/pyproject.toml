@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seller-lab-agent"
+version = "0.1.0"
+description = "Juniper, the voice agent behind Seller Lab 1: Why Real-Time Voice AI Is Hard"
+requires-python = ">=3.10, <3.15"
+dependencies = [
+    "livekit-agents[deepgram]~=1.8",
+    "livekit-plugins-ai-coustics~=0.3",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[tool.setuptools]
+py-modules = []
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "B", "A", "C4", "UP", "SIM", "RUF"]
+ignore = ["E501"]
+# Curly quotes are on purpose: quotes from a transcript are matched without them.
+allowed-confusables = ["‘", "’", "“", "”"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
