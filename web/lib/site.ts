@@ -1,6 +1,6 @@
 /** Who built the lab, for the credit line. Add links here and they appear in the footer. */
 export const AUTHOR = {
-  name: 'Tony',
+  name: 'Tony Morinello',
   links: [] as { label: string; href: string }[],
 };
 
