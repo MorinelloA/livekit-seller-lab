@@ -4,7 +4,7 @@ import { Wordmark } from './Wordmark';
 export function SiteFooter() {
   return (
     <footer className="mt-28 border-t border-line-soft">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap justify-between gap-8 px-5 pt-10 pb-14 sm:px-10">
+      <div className="page-column flex flex-wrap justify-between gap-8 pt-10 pb-14">
         <div className="flex max-w-[560px] flex-col gap-3.5">
           <span className="text-fg">
             <Wordmark />

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Replay, type ReplayEntry } from '@/components/overview/Replay';
-import { Eyebrow } from '@/components/ui/Bits';
+import { brandCase, Eyebrow } from '@/components/ui/Bits';
 import { ButtonLink } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import type { LoggedEvent, LoggedTurn } from '@/lib/protocol';
@@ -139,7 +139,7 @@ const DECISIONS = [
 export default function OverviewPage() {
   return (
     <main id="main">
-      <section className="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 pt-20 pb-14 sm:px-10 sm:pt-24">
+      <section className="page-column flex flex-col gap-6 pt-20 pb-14 sm:pt-24">
         <Eyebrow>Seller Lab 1 · A hands-on lab for new LiveKit sellers</Eyebrow>
         <h1 className="display m-0 max-w-[920px] text-[clamp(40px,5.4vw,68px)] leading-[1.04]">
           Why real-time voice AI is <span className="text-accent">hard</span>
@@ -159,11 +159,11 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      <section aria-labelledby="replay-title" className="mx-auto max-w-[1200px] px-5 sm:px-10">
+      <section aria-labelledby="replay-title" className="page-column">
         <Replay entries={RUNS} />
       </section>
 
-      <section aria-labelledby="inside-title" className="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 pt-24 sm:px-10">
+      <section aria-labelledby="inside-title" className="page-column flex flex-col gap-8 pt-24">
         <SectionHead eyebrow="What’s inside" id="inside-title" title="Two things to try, and a pilot that checks whether they teach" />
         <div className="grid gap-4 md:grid-cols-3">
           {PARTS.map((part) => (
@@ -181,7 +181,7 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      <section aria-labelledby="results-title" className="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 pt-24 sm:px-10">
+      <section aria-labelledby="results-title" className="page-column flex flex-col gap-8 pt-24">
         <SectionHead eyebrow="What the live runs showed" id="results-title" title="Same clips, two runs per setting, on LiveKit Cloud" />
         <div className="overflow-x-auto rounded-lg border border-line">
           <table className="w-full min-w-[760px] border-collapse text-left text-[15px] leading-relaxed">
@@ -230,7 +230,7 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      <section aria-labelledby="build-title" className="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 pt-24 sm:px-10">
+      <section aria-labelledby="build-title" className="page-column flex flex-col gap-8 pt-24">
         <SectionHead eyebrow="How it’s built" id="build-title" title="One Python worker plays every voice in the lab" />
         <ol aria-label="How a call travels" className="m-0 flex list-none flex-wrap gap-2 p-0">
           {PATH.map((hop) => (
@@ -238,7 +238,7 @@ export default function OverviewPage() {
               key={hop.name}
               className={`flex flex-[1_1_180px] flex-col gap-1.5 rounded-lg border bg-surface px-[18px] py-4 ${hop.accent ? 'border-accent-line' : 'border-line'}`}
             >
-              <span className={`eyebrow text-[11px] ${hop.accent ? 'text-accent' : 'text-subtle'}`}>{hop.name}</span>
+              <span className={`eyebrow-sm ${hop.accent ? 'text-accent' : 'text-subtle'}`}>{brandCase(hop.name)}</span>
               <span className="text-sm leading-normal text-fg">{hop.detail}</span>
             </li>
           ))}

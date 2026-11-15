@@ -255,7 +255,7 @@ export function PracticeCall() {
 
   return (
     <RoomContext.Provider value={room ?? undefined}>
-      <main id="main" className="mx-auto max-w-[1200px] px-5 sm:px-10">
+      <main id="main" className="page-column">
         {access.pilot && (
           <div className="pt-6">
             <PilotBanner pilot={access.pilot} page="practice" />

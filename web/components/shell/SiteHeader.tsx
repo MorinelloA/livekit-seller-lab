@@ -15,7 +15,7 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-line-soft">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-8 px-5 sm:px-10">
+      <div className="page-column flex flex-wrap items-center gap-x-8">
         <Link href="/" aria-label="Seller Lab, overview" className="flex min-h-16 items-center text-fg">
           <Wordmark />
         </Link>
@@ -31,7 +31,7 @@ export function SiteHeader() {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={cx(
-                  'inline-flex min-h-11 shrink-0 items-center whitespace-nowrap transition-colors',
+                  'hit inline-flex min-h-11 shrink-0 items-center whitespace-nowrap transition-colors',
                   active ? 'text-fg shadow-[inset_0_-2px_0_var(--accent)]' : 'text-subtle hover:text-fg',
                 )}
               >

@@ -82,7 +82,7 @@ export function PilotResults() {
     : [];
 
   return (
-    <main id="main" className="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 pt-14 sm:px-10 sm:pt-16">
+    <main id="main" className="page-column flex flex-col gap-8 pt-14 sm:pt-16">
       <header className="flex flex-col gap-4">
         <Eyebrow>Seller Lab 1 · Pilot results</Eyebrow>
         <h1 className="display text-[clamp(34px,4vw,48px)] leading-[1.08]">Pilot results</h1>

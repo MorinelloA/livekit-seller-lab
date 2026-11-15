@@ -112,7 +112,7 @@ function Feature({ id, eyebrow, title, intro, children }: { id: string; eyebrow:
 
 export default function BuildPage() {
   return (
-    <main id="main" className="mx-auto max-w-[1200px] px-5 sm:px-10">
+    <main id="main" className="page-column">
       <section className="flex max-w-[820px] flex-col gap-5 pt-20 pb-12 sm:pt-24">
         <Eyebrow>How it’s built</Eyebrow>
         <h1 className="display m-0 text-[clamp(36px,4.6vw,60px)] leading-[1.06]">What happens after you press Call Juniper</h1>
