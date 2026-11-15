@@ -31,7 +31,8 @@ export function PilotBanner({ pilot, page }: { pilot: string; page: 'lab' | 'pra
         <span className="font-mono text-xs font-bold tracking-[0.12em] uppercase">Pilot · {pilot}</span>
         {' · '}
         {early ? 'Start with step 1, the check before the lab.' : STEP_LABEL[page]}
-        {!early && <span className="text-body"> Your calls are recorded for the pilot.</span>}
+        {/* From consent on, every call is recorded, so the banner says so from then. */}
+        {progress.consent && <span className="text-body"> Your calls are recorded for the pilot.</span>}
       </p>
       <span className="ml-auto">
         {early ? (
