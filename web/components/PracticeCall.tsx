@@ -61,6 +61,8 @@ export function PracticeCall() {
   const [room, setRoom] = useState<Room | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string | null>(null);
+  // A turned-down access code's reason, shown under the code's field rather than in the call bar.
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [agentPresent, setAgentPresent] = useState(false);
   const [agentState, setAgentState] = useState('');
@@ -179,8 +181,12 @@ export function PracticeCall() {
         .catch(() => showNotice('Your microphone isn’t available, so type your side of the call below.'));
     } catch (err) {
       setPhase('idle');
-      if (err instanceof AccessCodeError) rejectCode();
-      setError(message(err));
+      if (err instanceof AccessCodeError) {
+        rejectCode();
+        setCodeError(message(err));
+      } else {
+        setError(message(err));
+      }
       logPilot({ kind: 'notice', page: 'practice', text: message(err) });
     }
   }, [disconnect, findAgent, rejectCode, showNotice]);
@@ -292,10 +298,12 @@ export function PracticeCall() {
           <section aria-label="The call" className="flex min-w-0 flex-col gap-4">
             {access.ready && !access.hasCode && (
               <AccessCodeForm
+                error={codeError}
                 onSave={(code) => {
                   access.saveCode(code);
                   // The old code's error no longer applies.
                   setError(null);
+                  setCodeError(null);
                   // The form goes away, so focus moves on to the call.
                   requestAnimationFrame(() => document.getElementById('call-button')?.focus());
                 }}

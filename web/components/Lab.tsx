@@ -128,6 +128,8 @@ export function Lab() {
   const [room, setRoom] = useState<Room | null>(null);
   const [status, setStatus] = useState<CallStatus>('idle');
   const [error, setError] = useState<string | null>(null);
+  // A turned-down access code's reason, shown under the code's field rather than in the call bar.
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [agentPresent, setAgentPresent] = useState(false);
   const [agentState, setAgentState] = useState('');
@@ -395,8 +397,12 @@ export function Lab() {
       }
       await mic.close();
       setStatus('error');
-      if (err instanceof AccessCodeError) rejectCode();
-      setError(message(err));
+      if (err instanceof AccessCodeError) {
+        rejectCode();
+        setCodeError(message(err));
+      } else {
+        setError(message(err));
+      }
       logPilot({ kind: 'notice', page: 'lab', text: message(err) });
     }
   }, [disconnect, findAgent, handleEvent, rejectCode]);
@@ -655,10 +661,12 @@ export function Lab() {
         {access.ready && !access.hasCode && (
           <div className="pb-8">
             <AccessCodeForm
+              error={codeError}
               onSave={(code) => {
                 access.saveCode(code);
                 // The old code's error no longer applies.
                 setError(null);
+                setCodeError(null);
                 // The form goes away, so focus moves on to the call.
                 requestAnimationFrame(() => document.getElementById('call-button')?.focus());
               }}

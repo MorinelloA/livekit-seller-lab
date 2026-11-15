@@ -63,6 +63,7 @@ export function Field({
   hint,
   error,
   className,
+  labelClassName,
   children,
 }: {
   id: string;
@@ -70,11 +71,13 @@ export function Field({
   hint?: ReactNode;
   error?: ReactNode;
   className?: string;
+  /** In place of the kit's 13px semibold label, for a label that's a sentence. */
+  labelClassName?: string;
   children: ReactNode;
 }) {
   return (
     <div className={cx('flex min-w-0 flex-col gap-1.5', className)}>
-      <label htmlFor={id} className="text-small font-semibold text-fg">
+      <label htmlFor={id} className={labelClassName ?? 'text-small font-semibold text-fg'}>
         {label}
       </label>
       {children}
