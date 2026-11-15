@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p worker",
     "secrets:live": "node scripts/push-secrets.mjs",
     "deploy:live": "pnpm build && wrangler deploy",
-    "test": "node --test lib/"
+    "test": "node --test lib/ worker/"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.24",
