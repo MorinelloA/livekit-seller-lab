@@ -171,7 +171,11 @@ function SummaryTable({ summaries }: { summaries: ParticipantSummary[] }) {
           {summaries.map((s) => (
             <tr key={s.id}>
               <td className={td}>
-                <a href={`#participant-${s.id}`} className="font-semibold text-accent hover:underline">
+                <a
+                  href={`#participant-${s.id}`}
+                  // 44px each way: a code like "P2" is narrower than a fingertip.
+                  className="inline-flex min-h-11 min-w-11 items-center font-semibold text-accent hover:underline"
+                >
                   {s.id}
                 </a>
               </td>
@@ -212,7 +216,8 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
   return (
     <section id={`participant-${s.id}`} className="flex scroll-mt-6 flex-col gap-6 rounded-lg border border-line bg-surface p-6">
       <header className="flex flex-wrap items-baseline gap-3">
-        <h2 className="display m-0 text-2xl">{s.id}</h2>
+        {/* A code is one long word: it can break anywhere rather than run off a phone's screen. */}
+        <h2 className="display m-0 min-w-0 text-2xl wrap-anywhere">{s.id}</h2>
         <p className="m-0 font-mono text-xs text-subtle">
           Started {new Date(s.stepAt.consent ?? s.firstAt).toLocaleString()} · lab {minutes(s.minutes.lab)} · practice{' '}
           {minutes(s.minutes.practice)} · {s.stepAt.done ? 'finished' : 'not finished'}
