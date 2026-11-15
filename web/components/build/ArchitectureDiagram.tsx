@@ -84,7 +84,7 @@ export function ArchitectureDiagram() {
                 rx={8}
                 className={card.accent ? 'fill-surface stroke-accent-line' : 'fill-surface stroke-line'}
               />
-              <text x={card.x + card.w / 2} y={top} textAnchor="middle" className="fill-fg font-sans text-[14px] font-semibold">
+              <text x={card.x + card.w / 2} y={top} textAnchor="middle" className="fill-fg font-sans text-sm font-semibold">
                 {card.title}
               </text>
               {card.lines.map((line, i) => (
@@ -93,7 +93,7 @@ export function ArchitectureDiagram() {
                   x={card.x + card.w / 2}
                   y={top + (i + 1) * lineHeight}
                   textAnchor="middle"
-                  className="fill-body font-sans text-[14px]"
+                  className="fill-body font-sans text-sm"
                 >
                   {line}
                 </text>
@@ -107,7 +107,7 @@ export function ArchitectureDiagram() {
             x={label.x}
             y={label.y}
             textAnchor={label.anchor ?? 'middle'}
-            className={`font-mono text-[12px] ${label.accent ? 'fill-accent' : 'fill-subtle'}`}
+            className={`font-mono text-xs ${label.accent ? 'fill-accent' : 'fill-subtle'}`}
           >
             {label.text}
           </text>

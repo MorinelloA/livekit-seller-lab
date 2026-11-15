@@ -28,7 +28,7 @@ export function PilotBanner({ pilot, page }: { pilot: string; page: 'lab' | 'pra
       className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-accent-line bg-accent-soft px-4 py-2 text-sm text-fg"
     >
       <p className="m-0 py-2">
-        <span className="font-mono text-xs font-bold tracking-[0.12em] uppercase">Pilot · {pilot}</span>
+        <span className="font-mono text-xs font-bold tracking-pill uppercase">Pilot · {pilot}</span>
         {' · '}
         {early ? 'Start with step 1, the check before the lab.' : STEP_LABEL[page]}
         {/* From consent on, every call is recorded, so the banner says so from then. */}

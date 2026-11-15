@@ -77,7 +77,7 @@ export function PilotHub() {
     <main id="main" className={MAIN}>
       <header className="flex flex-col gap-4">
         <Eyebrow>Seller Lab 1 · Pilot{pilot ? ` · ${pilot}` : ''}</Eyebrow>
-        <h1 className="display text-[clamp(34px,4vw,48px)] leading-[1.08]">
+        <h1 className="display text-page-title leading-page">
           {step === 'before' || step === 'after' ? 'Quick check' : 'Trying out Seller Lab 1'}
         </h1>
       </header>
@@ -148,7 +148,7 @@ function StepList({ step }: { step: Step }) {
               now ? 'border-accent-line bg-accent-soft text-fg' : 'border-line text-subtle',
             )}
           >
-            <span className="flex items-center gap-1.5 font-mono text-[11px] tracking-[0.12em] uppercase">
+            <span className="flex items-center gap-1.5 font-mono text-label tracking-pill uppercase">
               {done && <Icon name="check" className="size-3.5 text-accent" strokeWidth={2} />}
               Step {i + 1}
               {done ? ' · done' : ''}
@@ -234,7 +234,7 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
   const after = checks.after?.answers ?? [];
   const mark = (answers: number[], qi: number) =>
     answers[qi] === undefined ? '–' : `${letter(answers[qi])} ${answers[qi] === CHECK_QUESTIONS[qi].answer ? '✓' : '✗'}`;
-  const th = 'px-3 py-2.5 font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-subtle';
+  const th = 'px-3 py-2.5 font-mono text-label font-bold tracking-pill uppercase text-subtle';
 
   return (
     <section className="flex flex-col gap-7">

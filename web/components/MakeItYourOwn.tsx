@@ -62,10 +62,10 @@ export function MakeItYourOwn(props: {
     >
       <div className="flex flex-col gap-3 px-5 pt-7 pb-6 sm:px-7">
         <Eyebrow size="sm">Start here</Eyebrow>
-        <h2 id="make-it-your-own-title" className="display text-heading leading-[1.15]">
+        <h2 id="make-it-your-own-title" className="display text-heading leading-heading">
           {copy.title}
         </h2>
-        <p className="max-w-[680px] text-base leading-[1.7]">{copy.lead}</p>
+        <p className="max-w-[680px] text-base leading-reading">{copy.lead}</p>
       </div>
 
       <div className="flex flex-col gap-4 border-t border-line px-5 py-6 sm:px-7">

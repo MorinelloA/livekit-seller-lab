@@ -11,7 +11,7 @@ export function Wordmark({ className }: { className?: string }) {
         <rect x="2" y="6" width="11" height="3.5" rx="1.75" className="fill-subtle" />
         <rect x="9" y="12.5" width="11" height="3.5" rx="1.75" className="fill-accent" />
       </svg>
-      <span className="text-base font-semibold tracking-[-0.01em]">Seller Lab</span>
+      <span className="text-base font-semibold tracking-title">Seller Lab</span>
     </span>
   );
 }

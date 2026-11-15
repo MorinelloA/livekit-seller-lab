@@ -46,7 +46,7 @@ function Step({ n, state, label, note, children }: { n: number; state: StepState
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-3.5">
         <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="eyebrow text-[11px] text-subtle">
+          <span className="eyebrow-sm text-subtle">
             Step {n} · {label}
           </span>
           {note && <span className="font-mono text-xs text-subtle">{note}</span>}
@@ -101,17 +101,17 @@ export function ExperimentPanel(props: {
       className="scroll-mt-6 rounded-lg border border-line bg-surface"
     >
       <div className="flex flex-col gap-3.5 px-5 pt-7 pb-6 sm:px-7">
-        <Eyebrow tone="accent" className="text-[11px]">
+        <Eyebrow tone="accent" size="sm">
           Experiment {experiment.id} · {experiment.switchName}
         </Eyebrow>
-        <h2 id={`experiment-${experiment.id}-title`} className="display text-[30px] leading-[1.15]">
+        <h2 id={`experiment-${experiment.id}-title`} className="display text-heading leading-heading">
           {headline(experiment.title)}
         </h2>
-        <p className="max-w-[680px] text-base leading-[1.7]">{experiment.lead}</p>
+        <p className="max-w-[680px] text-base leading-reading">{experiment.lead}</p>
         <dl className="mt-1.5 grid gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-2">
           {MODES.map((mode) => (
             <div key={mode} className="flex flex-col gap-1 bg-page px-4 py-3">
-              <dt className={cx('eyebrow text-[11px]', mode === 'enhanced' ? 'text-accent' : 'text-subtle')}>{labels[mode]}</dt>
+              <dt className={cx('eyebrow-sm', mode === 'enhanced' ? 'text-accent' : 'text-subtle')}>{labels[mode]}</dt>
               <dd className="m-0 text-sm leading-normal text-fg">{experiment.settings[mode]}</dd>
             </div>
           ))}
@@ -140,7 +140,7 @@ export function ExperimentPanel(props: {
           label="Run the test caller"
           note={bothRan ? 'Both runs done' : anyRunning ? 'The test caller is on the line' : undefined}
         >
-          <p className="m-0 text-[15px] leading-relaxed">{experiment.testCaller}</p>
+          <p className="m-0 text-card leading-relaxed">{experiment.testCaller}</p>
           <div className="flex flex-wrap gap-2">
             {MODES.map((mode) => (
               <Button key={mode} onClick={() => props.onRun(mode)} disabled={!canRun || !locked}>
@@ -149,7 +149,7 @@ export function ExperimentPanel(props: {
               </Button>
             ))}
           </div>
-          {!locked && <p className="m-0 text-[13px] text-subtle">Lock in a prediction first.</p>}
+          {!locked && <p className="m-0 text-small text-subtle">Lock in a prediction first.</p>}
 
           {timelineRuns.length > 0 && (
             <div className="rounded-md border border-line bg-page">
@@ -181,7 +181,7 @@ export function ExperimentPanel(props: {
         </Step>
 
         <Step n={3} state={bothRan ? 'current' : 'upcoming'} label="Try it yourself">
-          <p className="m-0 text-[15px] leading-relaxed">
+          <p className="m-0 text-card leading-relaxed">
             {experiment.tryYourself} Turn on “Use my voice” in the call bar, then pick a setting:
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -235,10 +235,10 @@ export function ExperimentPanel(props: {
                   <CardPart title="What LiveKit does">{card.livekitDoes}</CardPart>
                 </dl>
                 <div className="flex flex-col gap-2.5 border-t border-accent-line bg-accent-soft px-5 pt-5 pb-6">
-                  <Eyebrow tone="accent" className="text-[11px]">
+                  <Eyebrow tone="accent" size="sm">
                     Ask this
                   </Eyebrow>
-                  <p className="display m-0 text-[clamp(19px,2.1vw,24px)] leading-[1.35] [text-wrap:pretty]">{card.askThis}</p>
+                  <p className="display m-0 text-quote leading-[1.35] [text-wrap:pretty]">{card.askThis}</p>
                 </div>
               </div>
             </>
@@ -249,7 +249,7 @@ export function ExperimentPanel(props: {
               </Button>
             </div>
           ) : (
-            <p className="m-0 text-[13px] text-subtle">The answer and the question to ask open once both runs are done.</p>
+            <p className="m-0 text-small text-subtle">The answer and the question to ask open once both runs are done.</p>
           )}
         </Step>
       </ol>
@@ -282,7 +282,7 @@ function RunResult({
 
   return (
     <div className="flex flex-col gap-3 rounded-md border border-line p-[18px]">
-      <p className={cx('eyebrow m-0 text-[11px]', tone === 'enhanced' ? 'text-accent' : 'text-subtle')}>{label}</p>
+      <p className={cx('eyebrow-sm m-0', tone === 'enhanced' ? 'text-accent' : 'text-subtle')}>{label}</p>
       {!status && <p className="m-0 text-sm text-subtle">Not run yet.</p>}
       {status === 'running' && <p className="m-0 text-sm text-subtle">The test caller is on the line…</p>}
       {status === 'failed' && <p className="m-0 text-sm text-warn">This run didn’t finish. Try it again.</p>}
@@ -332,7 +332,7 @@ function MarkedLine({ text }: { text: string }) {
 export function TurnList({ turns, markExtra = false }: { turns: LoggedTurn[]; markExtra?: boolean }) {
   if (turns.length === 0) return null;
   return (
-    <ol className="m-0 flex list-none flex-col gap-2 p-0 text-[13px] leading-normal">
+    <ol className="m-0 flex list-none flex-col gap-2 p-0 text-small leading-normal">
       {turns.map((turn) => (
         <li key={turn.id}>
           <span className={cx('font-semibold', turn.role === 'user' ? 'text-fg' : 'text-accent')}>
@@ -342,7 +342,7 @@ export function TurnList({ turns, markExtra = false }: { turns: LoggedTurn[]; ma
             {!turn.text ? '(nothing heard)' : markExtra && turn.role === 'user' ? <MarkedLine text={turn.text} /> : turn.text}
           </span>
           {turn.interrupted && (
-            <span className="ml-1.5 rounded-sm bg-warn-soft px-1.5 font-mono text-[11px] text-warn">cut off</span>
+            <span className="ml-1.5 rounded-sm bg-warn-soft px-1.5 font-mono text-label text-warn">cut off</span>
           )}
         </li>
       ))}

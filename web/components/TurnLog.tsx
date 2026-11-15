@@ -13,8 +13,8 @@ function settingsText(settings: LabSettings): string {
   return parts.join(' / ');
 }
 
-const th = 'px-3 py-2.5 font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-subtle whitespace-nowrap';
-const num = 'px-3 py-2.5 font-mono text-[13px] tabular-nums whitespace-nowrap';
+const th = 'px-3 py-2.5 font-mono text-label font-bold tracking-pill uppercase text-subtle whitespace-nowrap';
+const num = 'px-3 py-2.5 font-mono text-small tabular-nums whitespace-nowrap';
 
 /** Every turn in the call, newest first, with LiveKit's own timing for it. */
 export function TurnLog({ events }: { events: LoggedEvent[] }) {
@@ -25,7 +25,7 @@ export function TurnLog({ events }: { events: LoggedEvent[] }) {
     <section id="every-turn" aria-labelledby="every-turn-title" className="flex scroll-mt-6 flex-col gap-4 pt-6">
       <div className="flex flex-col gap-2">
         <Eyebrow size="sm">LiveKit’s per-turn metrics</Eyebrow>
-        <h2 id="every-turn-title" className="display text-[30px] leading-[1.15]">
+        <h2 id="every-turn-title" className="display text-heading leading-heading">
           Every turn, measured
         </h2>
         <p className="max-w-[720px] text-sm leading-relaxed">
@@ -61,7 +61,7 @@ export function TurnLog({ events }: { events: LoggedEvent[] }) {
                   <td className="max-w-xs px-3 py-2.5">
                     {turn.text || '(nothing heard)'}
                     {turn.interrupted && (
-                      <span className="ml-1.5 rounded-sm bg-warn-soft px-1.5 font-mono text-[11px] text-warn">cut off</span>
+                      <span className="ml-1.5 rounded-sm bg-warn-soft px-1.5 font-mono text-label text-warn">cut off</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5 font-mono text-xs whitespace-nowrap text-subtle">{settingsText(turn.settings)}</td>

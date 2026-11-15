@@ -14,7 +14,7 @@ import { type CheckResult, type ParticipantSummary, sinceStart, summarize } from
 const ADMIN_KEY = 'lab.adminCode';
 type Data = Record<string, StoredEvent[]>;
 
-const th = 'px-3 py-2.5 font-mono text-[11px] font-bold tracking-[0.12em] uppercase text-subtle whitespace-nowrap';
+const th = 'px-3 py-2.5 font-mono text-label font-bold tracking-pill uppercase text-subtle whitespace-nowrap';
 const td = 'px-3 py-2.5';
 
 /** Tony's view of the pilot: everything recorded, one participant at a time. */
@@ -97,7 +97,7 @@ export function PilotResults() {
     <main id="main" className="page-column flex flex-col gap-8 pt-14 sm:pt-16">
       <header className="flex flex-col gap-4">
         <Eyebrow>Seller Lab 1 · Pilot results</Eyebrow>
-        <h1 className="display text-[clamp(34px,4vw,48px)] leading-[1.08]">Pilot results</h1>
+        <h1 className="display text-page-title leading-page">Pilot results</h1>
       </header>
 
       {!admin ? (
@@ -164,7 +164,7 @@ function SummaryTable({ summaries }: { summaries: ParticipantSummary[] }) {
             <th scope="col" className={th}>Total</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-line font-mono text-[13px] tabular-nums">
+        <tbody className="divide-y divide-line font-mono text-small tabular-nums">
           {summaries.map((s) => (
             <tr key={s.id}>
               <td className={td}>

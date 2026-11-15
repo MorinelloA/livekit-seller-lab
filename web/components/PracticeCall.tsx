@@ -286,8 +286,8 @@ export function PracticeCall() {
         )}
         <header className="flex flex-col gap-[18px] pt-14 pb-10 sm:pt-16">
           <Eyebrow>Seller Lab 1 · Prove it</Eyebrow>
-          <h1 className="display text-[clamp(34px,4vw,52px)] leading-[1.08]">The practice call</h1>
-          <p className="max-w-[680px] text-[17px] leading-[1.7] tracking-[0.01em]">
+          <h1 className="display text-page-title leading-page">The practice call</h1>
+          <p className="max-w-[680px] text-lead leading-reading tracking-body">
             An 8 to 10 minute discovery call with Priya, an AI voice agent playing a buyer. It’s scored on what this lab
             teaches, not on general sales skills. Use headphones.
           </p>
@@ -370,13 +370,13 @@ function Briefing() {
   return (
     <aside aria-label="Briefing" className="flex flex-col gap-7 lg:sticky lg:top-6 lg:self-start">
       <section aria-labelledby="who-title" className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6">
-        <Eyebrow as="h2" id="who-title" className="text-[11px]">
+        <Eyebrow as="h2" id="who-title" size="sm">
           Who you’re calling
         </Eyebrow>
         <div className="flex items-center gap-3.5">
           <span
             aria-hidden
-            className="flex size-12 shrink-0 items-center justify-center rounded-full border border-accent-line bg-raised font-mono text-[15px] font-bold text-fg"
+            className="flex size-12 shrink-0 items-center justify-center rounded-full border border-accent-line bg-raised font-mono text-card font-bold text-fg"
           >
             PR
           </span>
@@ -395,7 +395,7 @@ function Briefing() {
             </div>
           ))}
         </dl>
-        <p className="m-0 border-t border-line pt-3.5 text-[13px] leading-relaxed text-subtle">
+        <p className="m-0 border-t border-line pt-3.5 text-small leading-relaxed text-subtle">
           She knows much more than this, and shares it only when you ask good questions.
         </p>
       </section>
@@ -422,7 +422,7 @@ function Briefing() {
         <h2 id="rubric-title" className="m-0 text-lg font-medium text-fg">
           What’s scored
         </h2>
-        <p className="m-0 text-[13px] leading-relaxed text-subtle">Up to 2 points each. Every point rests on something said in the call.</p>
+        <p className="m-0 text-small leading-relaxed text-subtle">Up to 2 points each. Every point rests on something said in the call.</p>
         <ol className="m-0 flex list-none flex-col border-t border-line p-0">
           {RUBRIC.map((item) => (
             <li key={item.id} className="grid grid-cols-[28px_minmax(0,1fr)] gap-x-2 border-b border-line py-3 text-sm leading-relaxed">
@@ -513,7 +513,7 @@ function CallBar(props: {
               {announce}
             </span>
             {(live || over) && (
-              <span className="font-mono text-[11px] text-subtle tabular-nums">
+              <span className="font-mono text-label text-subtle tabular-nums">
                 <span className="sr-only">Call length </span>
                 {over ? `Call ended · ${clock(elapsed)}` : clock(elapsed)}
               </span>
@@ -572,13 +572,13 @@ function ScorecardView({ card, totals }: { card: Scorecard; totals: number[] }) 
     >
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-line px-6 pt-6 pb-5">
         <div className="flex flex-col gap-2">
-          <Eyebrow as="span" className="text-[11px]">
+          <Eyebrow as="span" size="sm">
             Your scorecard
           </Eyebrow>
           <h2 id="scorecard-title" className="m-0 flex items-baseline gap-3 text-fg">
             <span className="sr-only">Your scorecard: </span>
-            <span className="display text-[64px] leading-none tracking-[-0.03em] tabular-nums">{card.total}</span>
-            <span className="text-[22px] font-light text-subtle">of {card.max}</span>
+            <span className="display text-score leading-none tracking-score tabular-nums">{card.total}</span>
+            <span className="text-title font-light text-subtle">of {card.max}</span>
             <span className="sr-only">. {verdict}</span>
           </h2>
         </div>
@@ -594,7 +594,7 @@ function ScorecardView({ card, totals }: { card: Scorecard; totals: number[] }) 
       </header>
 
       <figure className="m-0 flex flex-col gap-2.5 border-b border-line px-6 py-5">
-        <figcaption className="eyebrow text-[11px] text-ok">What your coach said</figcaption>
+        <figcaption className="eyebrow-sm text-ok">What your coach said</figcaption>
         <blockquote className="display m-0 text-xl leading-normal">{card.coach}</blockquote>
       </figure>
 
@@ -610,7 +610,7 @@ function ScorecardView({ card, totals }: { card: Scorecard; totals: number[] }) 
         {card.items.map((item, i) => (
           <li key={item.id} className={cx('flex gap-4 py-3.5', i > 0 && 'border-t border-line')}>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <p className="m-0 text-[15px] font-semibold text-fg">
+              <p className="m-0 text-card font-semibold text-fg">
                 {item.id}. {item.title}
               </p>
               {item.quote ? (
@@ -680,7 +680,7 @@ function Transcript({ turns, live }: { turns: PracticeTurn[]; live: boolean }) {
                   <span className={cx('font-semibold', color)}>{who}: </span>
                   {turn.text || '(nothing heard)'}
                   {turn.interrupted && (
-                    <span className="ml-1.5 rounded-sm bg-warn-soft px-1.5 font-mono text-[11px] text-warn">cut off</span>
+                    <span className="ml-1.5 rounded-sm bg-warn-soft px-1.5 font-mono text-label text-warn">cut off</span>
                   )}
                 </p>
               </li>

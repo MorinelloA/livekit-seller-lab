@@ -36,7 +36,7 @@ export function KnowledgeCheck(props: {
         {CHECK_QUESTIONS.map((q, qi) => (
           <li key={q.question}>
             <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 p-0 text-[15px] leading-relaxed font-semibold text-fg">
+              <legend className="mb-2 p-0 text-card leading-relaxed font-semibold text-fg">
                 {qi + 1}. {q.question}
               </legend>
               {q.options.map((option, oi) => {

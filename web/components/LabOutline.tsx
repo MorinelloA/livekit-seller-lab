@@ -40,7 +40,7 @@ export function LabOutline({ items }: { items: OutlineItem[] }) {
   const current = useCurrentSection(items.map((item) => item.id));
   return (
     <nav aria-label="Lab outline" className="hidden lg:sticky lg:top-6 lg:flex lg:flex-col lg:gap-1 lg:self-start">
-      <Eyebrow className="mb-2 text-[11px]">Lab outline</Eyebrow>
+      <Eyebrow size="sm" className="mb-2">Lab outline</Eyebrow>
       {items.map((item) => {
         const here = item.id === current;
         return (

@@ -115,6 +115,19 @@
   --text-lead: 1.0625rem; /* 17px: lead paragraphs */
   --text-title: 1.375rem; /* 22px: card and section titles */
   --text-heading: 1.875rem; /* 30px: experiment headings */
+  --text-score: 4rem; /* 64px: the practice score */
+  --text-hero: clamp(2.5rem, 5.4vw, 4.25rem); /* the overview's headline, 40 to 68px */
+  --text-page-title: clamp(2.125rem, 4vw, 3.25rem); /* a page's h1, 34 to 52px (not text-page: that's the page colour) */
+  --text-feature: clamp(2.25rem, 4.6vw, 3.75rem); /* How it's built's h1, 36 to 60px */
+  --text-section: clamp(1.75rem, 3.2vw, 2.5rem); /* a section's h2, 28 to 40px */
+  --text-subsection: clamp(1.625rem, 2.8vw, 2.125rem); /* 26 to 34px */
+  --text-quote: clamp(1.1875rem, 2.1vw, 1.5rem); /* "Ask this", 19 to 24px */
+  --leading-reading: 1.7; /* body text */
+  --leading-heading: 1.15; /* section and experiment headings */
+  --leading-page: 1.08; /* a page's h1 */
+  --tracking-body: 0.01em;
+  --tracking-title: -0.01em;
+  --tracking-score: -0.03em;
   --container-page: 75rem; /* 1200px */
   --tracking-pill: 0.12em; /* pills and status tags */
   --tracking-chip: 0.06em; /* the call dock's settings chips */

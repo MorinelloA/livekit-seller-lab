@@ -643,13 +643,13 @@ export function Lab() {
 
         <header className="flex flex-col gap-[18px] pt-14 pb-10 sm:pt-16">
           <Eyebrow>Seller Lab 1 · The lab</Eyebrow>
-          <h1 className="display text-[clamp(34px,4vw,52px)] leading-[1.08]">Why real-time voice AI is hard</h1>
-          <p className="max-w-[700px] text-[17px] leading-[1.7] tracking-[0.01em]">
+          <h1 className="display text-page-title leading-page">Why real-time voice AI is hard</h1>
+          <p className="max-w-[700px] text-lead leading-reading tracking-body">
             Juniper is a LiveKit voice agent that answers the phone for a made-up restaurant. First you make it your
             own. Then each experiment plays a recorded test caller through two settings, so you hear the difference
             with the same input, and you try it with your own voice. Use headphones.
           </p>
-          <p className="m-0 text-[15px] text-subtle">
+          <p className="m-0 text-card text-subtle">
             At the end, put it to work on{' '}
             <Link href="/practice/" onClick={() => reachStep('practice')} className="font-semibold text-accent hover:underline">
               a scored practice call

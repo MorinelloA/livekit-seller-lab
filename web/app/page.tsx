@@ -41,7 +41,7 @@ function SectionHead({ eyebrow, title, id }: { eyebrow: string; title: string; i
   return (
     <div className="flex max-w-[760px] flex-col gap-3">
       <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 id={id} className="display m-0 text-[clamp(28px,3.2vw,40px)] leading-[1.15]">
+      <h2 id={id} className="display m-0 text-section leading-heading">
         {title}
       </h2>
     </div>
@@ -142,10 +142,10 @@ export default function OverviewPage() {
     <main id="main">
       <section className="page-column flex flex-col gap-6 pt-20 pb-14 sm:pt-24">
         <Eyebrow>Seller Lab 1 · A hands-on lab for new LiveKit sellers</Eyebrow>
-        <h1 className="display m-0 max-w-[920px] text-[clamp(40px,5.4vw,68px)] leading-[1.04]">
+        <h1 className="display m-0 max-w-[920px] text-hero leading-[1.04]">
           Why real-time voice AI is <span className="text-accent">hard</span>
         </h1>
-        <p className="m-0 max-w-[680px] text-lg leading-[1.7] tracking-[0.01em] [text-wrap:pretty]">
+        <p className="m-0 max-w-[680px] text-lg leading-reading tracking-body [text-wrap:pretty]">
           Juniper is a voice agent that answers the phone for a made-up restaurant. Each experiment plays it the same
           recorded caller twice: once on a baseline setting, once on LiveKit’s. You predict what will happen, hear the
           difference, try it with your own voice, and leave with the question to ask a customer.
@@ -169,9 +169,9 @@ export default function OverviewPage() {
         <div className="grid gap-4 md:grid-cols-3">
           {PARTS.map((part) => (
             <article key={part.eyebrow} className="flex flex-col gap-3.5 rounded-lg border border-line bg-surface p-7">
-              <Eyebrow className="text-[11px]">{part.eyebrow}</Eyebrow>
-              <h3 className="m-0 text-[22px] leading-snug font-normal tracking-[-0.01em] text-fg">{part.title}</h3>
-              <p className="m-0 text-[15px] leading-[1.7]">{part.body}</p>
+              <Eyebrow size="sm">{part.eyebrow}</Eyebrow>
+              <h3 className="m-0 text-title leading-snug font-normal tracking-title text-fg">{part.title}</h3>
+              <p className="m-0 text-card leading-reading">{part.body}</p>
               <p className="m-0 font-mono text-xs leading-relaxed text-subtle">{part.meta}</p>
               <ButtonLink href={part.href} variant="quiet" className="mt-auto self-start">
                 {part.cta}
@@ -185,16 +185,16 @@ export default function OverviewPage() {
       <section aria-labelledby="results-title" className="page-column flex flex-col gap-8 pt-24">
         <SectionHead eyebrow="What the live runs showed" id="results-title" title="Same clips, two runs per setting, on LiveKit Cloud" />
         <Scroller label="What the live runs showed" className="rounded-lg border border-line">
-          <table className="w-full min-w-[760px] border-collapse text-left text-[15px] leading-relaxed">
+          <table className="w-full min-w-[760px] border-collapse text-left text-card leading-relaxed">
             <thead className="bg-surface">
               <tr>
-                <th scope="col" className="w-[22%] border-b border-line px-5 py-3.5 eyebrow text-[11px] text-subtle">
+                <th scope="col" className="w-[22%] border-b border-line px-5 py-3.5 eyebrow-sm text-subtle">
                   Experiment
                 </th>
-                <th scope="col" className="border-b border-line px-5 py-3.5 eyebrow text-[11px] text-subtle">
+                <th scope="col" className="border-b border-line px-5 py-3.5 eyebrow-sm text-subtle">
                   Baseline
                 </th>
-                <th scope="col" className="border-b border-line px-5 py-3.5 eyebrow text-[11px] text-accent">
+                <th scope="col" className="border-b border-line px-5 py-3.5 eyebrow-sm text-accent">
                   Enhanced
                 </th>
               </tr>
@@ -215,15 +215,15 @@ export default function OverviewPage() {
         </Scroller>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="flex flex-col gap-2 rounded-lg border border-line p-6">
-            <Eyebrow className="text-[11px]">A cheaper judge</Eyebrow>
-            <p className="m-0 text-[15px] leading-[1.7]">
+            <Eyebrow size="sm">A cheaper judge</Eyebrow>
+            <p className="m-0 text-card leading-reading">
               On two saved practice calls, scored twice each, gpt-5.4-mini reached the same verdicts as gpt-5.5. It takes 2
               to 4 seconds instead of 4.5 to 6.5, and costs about a tenth as much. So it’s the judge now.
             </p>
           </div>
           <div className="flex flex-col gap-2 rounded-lg border border-line p-6">
-            <Eyebrow className="text-[11px]">The hosted lab, end to end</Eyebrow>
-            <p className="m-0 text-[15px] leading-[1.7]">
+            <Eyebrow size="sm">The hosted lab, end to end</Eyebrow>
+            <p className="m-0 text-card leading-reading">
               The cloud agent joined within 8 seconds. A typed practice call came back scored, with a quote and a time for
               each point, within 15 seconds of hanging up.
             </p>
@@ -248,7 +248,7 @@ export default function OverviewPage() {
           {DECISIONS.map((decision) => (
             <article key={decision.title} className="flex flex-col gap-2.5 rounded-lg border border-line p-6">
               <h3 className="m-0 text-lg leading-snug font-medium text-fg">{decision.title}</h3>
-              <p className="m-0 text-[15px] leading-[1.7]">{decision.body}</p>
+              <p className="m-0 text-card leading-reading">{decision.body}</p>
             </article>
           ))}
         </div>

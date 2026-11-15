@@ -96,8 +96,8 @@ export function Replay({ entries }: { entries: ReplayEntry[] }) {
     <div className="overflow-hidden rounded-lg border border-line bg-surface">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-5 py-5 sm:px-6">
         <div className="flex flex-col gap-1.5">
-          <Eyebrow className="text-[11px]">Experiment 1 · Turn detection</Eyebrow>
-          <h2 id="replay-title" className="m-0 text-[22px] leading-snug font-normal tracking-[-0.01em] text-fg">
+          <Eyebrow size="sm">Experiment 1 · Turn detection</Eyebrow>
+          <h2 id="replay-title" className="m-0 text-title leading-snug font-normal tracking-title text-fg">
             Same caller, two settings
           </h2>
         </div>
@@ -116,7 +116,7 @@ export function Replay({ entries }: { entries: ReplayEntry[] }) {
             <Icon name={playing ? 'pause' : 'play'} className="size-3" />
             {playing ? 'Pause' : `Play the ${mode === 'baseline' ? 'Baseline' : 'Enhanced'} call`}
           </Button>
-          <span className="font-mono text-[13px] text-subtle tabular-nums" aria-hidden>
+          <span className="font-mono text-small text-subtle tabular-nums" aria-hidden>
             {clock(playhead ?? 0)} / {clock(duration)}
           </span>
         </div>
@@ -140,7 +140,7 @@ export function Replay({ entries }: { entries: ReplayEntry[] }) {
         {entries.map((e) => (
           <div key={e.mode} className="flex flex-col gap-1.5 bg-surface px-5 py-5 sm:px-6">
             <p className={cx('eyebrow-sm m-0', e.mode === 'enhanced' ? 'text-accent' : 'text-subtle')}>{brandCase(e.label)}</p>
-            <p className="m-0 text-[15px] leading-relaxed text-body">{e.summary}</p>
+            <p className="m-0 text-card leading-relaxed text-body">{e.summary}</p>
           </div>
         ))}
       </div>

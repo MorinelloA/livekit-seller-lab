@@ -41,7 +41,7 @@ export function CodeBlock({ code, lang, file, note }: { code: string; lang: Lang
         {note && <span className="text-subtle">{note}</span>}
       </figcaption>
       <Scroller label={`Code: ${file}`}>
-        <pre className="m-0 w-max min-w-full px-[18px] py-4 font-mono text-[13px] leading-[1.7] text-fg">
+        <pre className="m-0 w-max min-w-full px-[18px] py-4 font-mono text-small leading-reading text-fg">
           <code>{highlight(code, lang)}</code>
         </pre>
       </Scroller>

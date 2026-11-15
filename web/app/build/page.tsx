@@ -94,17 +94,17 @@ const LIMITS = [
   { warn: false, text: 'RPC names and the rubric are copied by hand between Python and TypeScript.' },
 ];
 
-const th = 'border-b border-line px-4 py-3 eyebrow text-[11px] text-subtle whitespace-nowrap';
+const th = 'border-b border-line px-4 py-3 eyebrow-sm text-subtle whitespace-nowrap';
 
 function Feature({ id, eyebrow, title, intro, children }: { id: string; eyebrow: string; title: string; intro: ReactNode; children: ReactNode }) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className="grid scroll-mt-6 gap-x-12 gap-y-8 pb-24 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
       <div className="flex flex-col gap-3.5">
         <Eyebrow>{eyebrow}</Eyebrow>
-        <h2 id={`${id}-title`} className="display m-0 text-[clamp(26px,2.8vw,34px)] leading-[1.15]">
+        <h2 id={`${id}-title`} className="display m-0 text-subsection leading-heading">
           {title}
         </h2>
-        <div className="flex flex-col gap-3.5 text-base leading-[1.7]">{intro}</div>
+        <div className="flex flex-col gap-3.5 text-base leading-reading">{intro}</div>
       </div>
       <div className="flex min-w-0 flex-col gap-4">{children}</div>
     </section>
@@ -116,8 +116,8 @@ export default function BuildPage() {
     <main id="main" className="page-column">
       <section className="flex max-w-[820px] flex-col gap-5 pt-20 pb-12 sm:pt-24">
         <Eyebrow>How it’s built</Eyebrow>
-        <h1 className="display m-0 text-[clamp(36px,4.6vw,60px)] leading-[1.06]">What happens after you press Call Juniper</h1>
-        <p className="m-0 text-lg leading-[1.7] tracking-[0.01em] [text-wrap:pretty]">
+        <h1 className="display m-0 text-feature leading-[1.06]">What happens after you press Call Juniper</h1>
+        <p className="m-0 text-lg leading-reading tracking-body [text-wrap:pretty]">
           The pages are static files. A small Cloudflare Worker hands out rooms and never calls LiveKit’s API: the agent
           dispatch rides inside the join token. Everything you hear comes from one Python worker on LiveKit Cloud. It plays
           Juniper, Priya and the coach, and asks a separate model to score your practice call.
@@ -161,7 +161,7 @@ export default function BuildPage() {
             <tbody className="divide-y divide-line">
               {PROTOCOL.map((row) => (
                 <tr key={row.name}>
-                  <td className="px-4 py-3 font-mono text-[13px] whitespace-nowrap text-fg">{row.name}</td>
+                  <td className="px-4 py-3 font-mono text-small whitespace-nowrap text-fg">{row.name}</td>
                   <td className="px-4 py-3 font-mono text-xs whitespace-nowrap text-subtle">{row.kind}</td>
                   <td className="px-4 py-3">{row.does}</td>
                 </tr>
@@ -190,7 +190,7 @@ export default function BuildPage() {
         <ul className="m-0 flex list-none flex-col overflow-hidden rounded-lg border border-line p-0">
           {TUNING.map((item, i) => (
             <li key={item.label} className={`grid gap-x-6 gap-y-1.5 px-[18px] py-4 sm:grid-cols-[180px_minmax(0,1fr)] ${i ? 'border-t border-line' : ''}`}>
-              <span className="font-mono text-[13px] text-fg">{item.label}</span>
+              <span className="font-mono text-small text-fg">{item.label}</span>
               <span className="text-sm leading-relaxed">{item.text}</span>
             </li>
           ))}
@@ -218,7 +218,7 @@ export default function BuildPage() {
         }
       >
         <figure className="m-0 flex flex-col gap-3 rounded-lg border border-line bg-surface p-5">
-          <figcaption className="eyebrow text-[11px] text-subtle">Measured on a cut-off reply</figcaption>
+          <figcaption className="eyebrow-sm text-subtle">Measured on a cut-off reply</figcaption>
           <dl className="m-0 grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-2.5 text-sm">
             <dt>Juniper started speaking</dt>
             <dd className="m-0 text-right font-mono tabular-nums text-fg">2.65 s</dd>
@@ -229,7 +229,7 @@ export default function BuildPage() {
             <dt>The agent reported it stopped</dt>
             <dd className="m-0 text-right font-mono tabular-nums text-warn">5.33 s</dd>
           </dl>
-          <p className="m-0 border-t border-line pt-3 text-[13px] leading-relaxed text-subtle">
+          <p className="m-0 border-t border-line pt-3 text-small leading-relaxed text-subtle">
             Experiment 1, Baseline, recorded 14 Nov 2026. Times from the start of the test caller’s clip.
           </p>
         </figure>
@@ -287,13 +287,13 @@ export default function BuildPage() {
         }
       >
         <figure className="m-0 flex flex-col gap-3.5 rounded-lg border border-line p-5">
-          <figcaption className="eyebrow text-[11px] text-subtle">Time to score a call</figcaption>
+          <figcaption className="eyebrow-sm text-subtle">Time to score a call</figcaption>
           <div className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-x-4 gap-y-3">
-            <span className="font-mono text-[13px] text-subtle">gpt-5.5</span>
+            <span className="font-mono text-small text-subtle">gpt-5.5</span>
             <div className="relative h-3.5 rounded-full bg-fill">
               <span className="absolute inset-y-0 rounded-full bg-subtle" style={{ left: '64.3%', width: '28.6%' }} />
             </div>
-            <span className="font-mono text-[13px] text-fg">gpt-5.4-mini</span>
+            <span className="font-mono text-small text-fg">gpt-5.4-mini</span>
             <div className="relative h-3.5 rounded-full bg-fill">
               <span className="absolute inset-y-0 rounded-full bg-accent" style={{ left: '28.6%', width: '28.6%' }} />
             </div>
@@ -352,7 +352,7 @@ export default function BuildPage() {
         <dl className="m-0 grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2">
           {CONTROLS.map((control) => (
             <div key={control.name} className="flex flex-col gap-1 bg-page px-[18px] py-4">
-              <dt className="text-[15px] font-semibold text-fg">{control.name}</dt>
+              <dt className="text-card font-semibold text-fg">{control.name}</dt>
               <dd className="m-0 text-sm leading-relaxed">{control.text}</dd>
             </div>
           ))}
@@ -379,7 +379,7 @@ export default function BuildPage() {
         }
       >
         <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-5">
-          <p className="eyebrow m-0 text-[11px] text-subtle">What’s recorded, under the pilot code</p>
+          <p className="eyebrow-sm m-0 text-subtle">What’s recorded, under the pilot code</p>
           <ul className="m-0 grid list-none gap-x-6 gap-y-2 p-0 text-sm sm:grid-cols-2">
             {PILOT_RECORDS.map((item) => (
               <li key={item} className="flex gap-2">
@@ -403,7 +403,7 @@ export default function BuildPage() {
       >
         <ul className="m-0 flex list-none flex-col border-t border-line p-0">
           {LIMITS.map((limit) => (
-            <li key={limit.text} className="flex gap-3 border-b border-line py-3.5 text-[15px] leading-relaxed">
+            <li key={limit.text} className="flex gap-3 border-b border-line py-3.5 text-card leading-relaxed">
               <span aria-hidden className={`mt-2 size-2 shrink-0 rounded-full ${limit.warn ? 'bg-warn' : 'bg-subtle'}`} />
               {limit.text}
             </li>
@@ -411,7 +411,7 @@ export default function BuildPage() {
         </ul>
       </Feature>
 
-      <p className="m-0 text-[13px] leading-relaxed text-subtle">
+      <p className="m-0 text-small leading-relaxed text-subtle">
         Every number on this page comes from the README’s live runs or the code. The excerpts are read from the source when the
         site is built.
       </p>
