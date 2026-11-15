@@ -49,7 +49,8 @@ export function LabOutline({ items }: { items: OutlineItem[] }) {
             href={`#${item.id}`}
             aria-current={here ? 'location' : undefined}
             className={cx(
-              'flex min-h-10 items-center gap-2.5 rounded px-2.5 text-sm transition-colors',
+              // The kit draws outline links 40px tall; the touch area reaches 44px on a touch screen.
+              'hit flex min-h-10 items-center gap-2.5 rounded px-2.5 text-sm transition-colors',
               here ? 'bg-fill text-fg' : 'text-subtle hover:text-fg',
             )}
           >
