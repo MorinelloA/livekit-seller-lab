@@ -20,6 +20,22 @@ export function AccessCodeForm({ onSave, error }: { onSave: (code: string) => vo
     if (!error) return;
     formRef.current?.scrollIntoView({ block: 'center' });
     document.getElementById('access-code')?.focus({ preventScroll: true });
+    // On a phone the focus opens the keyboard, which can cover the reason under the field.
+    // Once the keyboard has settled, bring the reason back into view.
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    let settle = 0;
+    const reveal = () => {
+      window.clearTimeout(settle);
+      settle = window.setTimeout(() => document.getElementById('access-code-error')?.scrollIntoView({ block: 'nearest' }), 150);
+    };
+    viewport.addEventListener('resize', reveal);
+    const stop = window.setTimeout(() => viewport.removeEventListener('resize', reveal), 2000);
+    return () => {
+      window.clearTimeout(settle);
+      window.clearTimeout(stop);
+      viewport.removeEventListener('resize', reveal);
+    };
   }, [error]);
 
   return (
