@@ -8,7 +8,11 @@ type Size = 'md' | 'sm';
 // max-w-full and text-center: a label longer than the screen wraps inside the button
 // instead of pushing it off the side.
 const BASE =
-  'inline-flex max-w-full shrink-0 items-center justify-center gap-2 rounded text-center font-semibold transition-[background-color,border-color,color,filter] duration-150 disabled:cursor-not-allowed disabled:opacity-45';
+  'inline-flex max-w-full shrink-0 items-center justify-center gap-2 rounded text-center font-semibold transition-[background-color,border-color,color,filter] duration-150 disabled:cursor-not-allowed disabled:opacity-60';
+
+// Disabled, as the kit draws it ("Lock in a prediction first"): a neutral button with the
+// subtle ink, whatever its variant, so a disabled primary doesn't read as the next step.
+const DISABLED = 'disabled:border disabled:border-fill-line disabled:bg-fill disabled:text-subtle disabled:hover:brightness-100';
 
 const SIZES: Record<Size, string> = {
   md: 'min-h-11 px-4 text-sm',
@@ -25,7 +29,7 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 export function buttonClass(variant: Variant = 'secondary', size: Size = 'md', className?: string): string {
-  return cx(BASE, variant === 'quiet' ? undefined : SIZES[size], VARIANTS[variant], className);
+  return cx(BASE, variant === 'quiet' ? undefined : SIZES[size], VARIANTS[variant], variant === 'quiet' ? undefined : DISABLED, className);
 }
 
 type Styled = { variant?: Variant; size?: Size };
