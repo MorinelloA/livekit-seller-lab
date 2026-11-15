@@ -25,7 +25,8 @@ const VARIANTS: Record<Variant, string> = {
   primary: 'bg-accent text-on-accent hover:brightness-110 active:brightness-95',
   secondary: 'border border-fill-line bg-fill text-fg hover:border-subtle',
   danger: 'border border-bad-soft bg-bad-soft text-bad hover:border-bad-line',
-  quiet: 'min-h-11 px-0 text-sm text-accent underline underline-offset-4 hover:no-underline',
+  // As the kit draws a quiet link: the accent ink, underlined on hover.
+  quiet: 'min-h-11 px-0 text-sm text-accent underline-offset-4 hover:underline',
 };
 
 export function buttonClass(variant: Variant = 'secondary', size: Size = 'md', className?: string): string {

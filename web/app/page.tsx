@@ -173,7 +173,7 @@ export default function OverviewPage() {
               <h3 className="m-0 text-[22px] leading-snug font-normal tracking-[-0.01em] text-fg">{part.title}</h3>
               <p className="m-0 text-[15px] leading-[1.7]">{part.body}</p>
               <p className="m-0 font-mono text-xs leading-relaxed text-subtle">{part.meta}</p>
-              <ButtonLink href={part.href} variant="quiet" className="mt-auto self-start no-underline hover:underline">
+              <ButtonLink href={part.href} variant="quiet" className="mt-auto self-start">
                 {part.cta}
                 <Arrow />
               </ButtonLink>
