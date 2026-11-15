@@ -145,6 +145,10 @@
 
   body {
     @apply bg-page font-sans text-body antialiased;
+    /* A word too long for its box (a participant's code, a URL in feedback) wraps
+       instead of running out of it. break-word, not anywhere, so it doesn't shrink
+       the min-content width of rows of buttons. */
+    overflow-wrap: break-word;
   }
 
   ::selection {
