@@ -1,7 +1,6 @@
 import { Children, type ReactNode } from 'react';
 import { splitBrand } from '@/lib/text';
 import { cx } from './cx';
-import { fieldClass } from './Field';
 import { Icon } from './Icon';
 
 /**
@@ -144,9 +143,6 @@ export function Segmented<T extends string>({
     </div>
   );
 }
-
-/** @deprecated Use TextInput or TextArea from ./Field. */
-export const inputClass = fieldClass;
 
 /** A panel: LiveKit's raised card with a hairline border. */
 export function panelClass(className?: string): string {

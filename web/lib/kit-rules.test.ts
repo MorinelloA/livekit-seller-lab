@@ -36,6 +36,20 @@ test('colours come from the tokens in app/globals.css, never literals', () => {
   assert.deepEqual(found, [], 'Use a colour token (text-fg, bg-surface, border-line, …) from app/globals.css.');
 });
 
+test('text fields are the kit’s fields, not raw inputs', () => {
+  const found: string[] = [];
+  for (const file of FILES) {
+    if (/ui[\\/]Field\.tsx$/.test(file)) continue;
+    const source = readFileSync(file, 'utf8');
+    for (const tag of source.match(/<(input|textarea)\b[\s\S]*?\/?>/g) ?? []) {
+      // Radios and checkboxes are choices, drawn by their labels.
+      if (/^<input\b/.test(tag) && /type="(radio|checkbox)"/.test(tag)) continue;
+      found.push(`${relative(WEB, file).replace(/\\/g, '/')}: ${tag.replace(/\s+/g, ' ').slice(0, 60)}`);
+    }
+  }
+  assert.deepEqual(found, [], 'Use TextInput, TextArea or WrappingInput (components/ui/Field.tsx): a 3:1 edge, and 16px on touch screens.');
+});
+
 test('boxes that scroll sideways are Scrollers, so a keyboard can reach them', () => {
   // The header's nav scrolls on a phone, but its links take focus themselves.
   const found = offenders(/overflow-x-auto/, (file) => /ui[\\/]Scroller\.tsx$|shell[\\/]SiteHeader\.tsx$/.test(file));
