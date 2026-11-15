@@ -5,6 +5,7 @@ import { KnowledgeCheck } from '@/components/KnowledgeCheck';
 import { Eyebrow } from '@/components/ui/Bits';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
+import { TextArea } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
 import { CHECK_QUESTIONS, checkScore, type CheckPhase, letter } from '@/lib/check';
 import {
@@ -282,14 +283,13 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
         <label htmlFor="feedback" className="font-semibold text-fg">
           Anything confusing, or anything you’d change? (optional)
         </label>
-        <textarea
+        <TextArea
           id="feedback"
           value={feedback}
           onChange={(event) => setFeedback(event.target.value)}
           maxLength={2000}
           rows={4}
           disabled={sent}
-          className="w-full rounded border border-line bg-page px-3 py-2.5 text-sm text-fg disabled:opacity-60"
         />
         {sent ? (
           <p className="m-0 text-sm text-subtle">Sent. Thanks.</p>
