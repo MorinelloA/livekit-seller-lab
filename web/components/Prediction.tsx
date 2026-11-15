@@ -19,8 +19,8 @@ export function Prediction(props: {
 
   return (
     <fieldset className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0" disabled={locked}>
-      <legend className="sr-only">Predict</legend>
-      <p className="m-0 text-[15px] leading-relaxed text-fg">{question}</p>
+      {/* The question names the group, so each prediction is told apart from the others. */}
+      <legend className="m-0 mb-3 p-0 text-card leading-relaxed text-fg">{question}</legend>
       <div className="grid gap-2 sm:grid-cols-3">
         {options.map((option, index) => {
           const chosen = choice === index;
