@@ -643,7 +643,13 @@ export function Lab() {
 
         {access.ready && !access.hasCode && (
           <div className="pb-8">
-            <AccessCodeForm onSave={access.saveCode} />
+            <AccessCodeForm
+              onSave={(code) => {
+                access.saveCode(code);
+                // The old code's error no longer applies.
+                setError(null);
+              }}
+            />
           </div>
         )}
 

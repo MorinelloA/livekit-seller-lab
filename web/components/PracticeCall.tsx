@@ -274,7 +274,15 @@ export function PracticeCall() {
           <Briefing />
 
           <section aria-label="The call" className="flex min-w-0 flex-col gap-4">
-            {access.ready && !access.hasCode && <AccessCodeForm onSave={access.saveCode} />}
+            {access.ready && !access.hasCode && (
+              <AccessCodeForm
+                onSave={(code) => {
+                  access.saveCode(code);
+                  // The old code's error no longer applies.
+                  setError(null);
+                }}
+              />
+            )}
             <CallBar
               phase={phase}
               connected={connected}
