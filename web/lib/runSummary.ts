@@ -150,8 +150,10 @@ export function outcomeSentence(outcome: RunOutcome): string {
     const { heardFirst, replies, cutOff } = outcome;
     if (!heardFirst) return 'Juniper didn’t hear the caller.';
     if (replies === 0) return `Juniper heard “${heardFirst}” and didn’t answer.`;
-    // The quote sits mid-sentence and keeps its own punctuation: a line cut short has no full stop to show.
-    return `Juniper heard “${heardFirst}” before its first answer. It started answering ${times(replies)} and was ${
+    // The quote keeps its own punctuation: a whole sentence ends inside the marks, and a
+    // line cut short has no full stop to show, so the sentence's own follows the quote.
+    const stop = /[.!?…]$/.test(heardFirst) ? '' : '.';
+    return `Before its first answer, Juniper heard “${heardFirst}”${stop} It started answering ${times(replies)} and was ${
       cutOff > 0 ? `cut off ${times(cutOff)}` : 'never cut off'
     }.`;
   }

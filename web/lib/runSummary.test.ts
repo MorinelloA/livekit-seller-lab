@@ -49,7 +49,7 @@ test('Experiment 1: a run that jumps in says what it had heard, and counts in wo
   assert.deepEqual(runOutcome(1, events), { experiment: 1, heardFirst: "I'd like a table for", replies: 3, cutOff: 2 });
   assert.equal(
     sentence(1, events),
-    "Juniper heard “I'd like a table for” before its first answer. It started answering 3 times and was cut off twice.",
+    "Before its first answer, Juniper heard “I'd like a table for”. It started answering 3 times and was cut off twice.",
   );
 });
 
@@ -57,7 +57,7 @@ test('Experiment 1: one answer is "once", never "1 time"', () => {
   const whole = [caller("I'd like a table for four people on Friday at seven."), juniper('May I have a name for the booking, please?')];
   assert.equal(
     sentence(1, whole),
-    "Juniper heard “I'd like a table for four people on Friday at seven.” before its first answer. It started answering once and was never cut off.",
+    "Before its first answer, Juniper heard “I'd like a table for four people on Friday at seven.” It started answering once and was never cut off.",
   );
   const twice = [caller("I'd like a table for"), juniper('How many?', { interrupted: true }), caller('four'), juniper('Which day?')];
   assert.match(sentence(1, twice), /It started answering twice and was cut off once\.$/);

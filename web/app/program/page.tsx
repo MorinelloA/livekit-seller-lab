@@ -215,7 +215,7 @@ export default function ProgramPage() {
       <Feature
         id="certification"
         eyebrow="Certification"
-        title="Ready means you’ve done it, with a recording"
+        title="Ready means you’ve done it out loud"
         intro={
           <>
             <p className="m-0">

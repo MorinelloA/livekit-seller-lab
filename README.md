@@ -1,29 +1,37 @@
 # Seller Lab 1: Why Real-Time Voice AI Is Hard
 
-A hands-on LiveKit lab for new sellers. Juniper, a voice agent that answers the phone for a made-up restaurant, runs each experiment twice with the same recorded test caller: once on a baseline setting and once on LiveKit's enhanced one. The learner predicts what will happen, hears the difference, tries it with their own voice, and gets a card with the discovery question to ask.
+A hands-on LiveKit lab for new sellers, built as a work sample for LiveKit's Technical Enablement Engineer role.
 
-Built so far (slices 1 to 3 and 5 of the build, and the tools for slice 4's pilot):
+**Live at [tonyt908.com/livekitlab](https://tonyt908.com/livekitlab/).** Every experiment can be heard there from a recording of a real call. Placing a call yourself takes the access code in the link you were sent.
+
+Juniper, a voice agent that answers the phone for a made-up restaurant, takes the same recorded test caller twice in each experiment, with one setting changed. The learner predicts what will happen, hears the difference, tries it with their own voice, and leaves with a card: what the customer says, what's happening, what LiveKit does about it, and the question to ask.
+
+What's built:
 
 - **Make it your own:** rename the restaurant and add one house rule, then hear Juniper follow it.
 - **Experiment 1, turn detection:** silence-based end of turn against LiveKit's audio turn detector.
 - **Experiment 2, interruptions:** any speech over half a second against adaptive interruption handling.
 - **Experiment 3, the coffee shop:** the caller's audio as it comes in against ai-coustics voice isolation, with a booking made in a busy café.
 - **Experiment 4, the pause:** a quick LLM against one that reasons before it answers.
-- The test caller, a prediction question for each section, and LiveKit's per-turn timing on the page.
-- **The practice call:** a discovery call with Priya, an AI prospect, scored on the lab's six-item rubric by an LLM judge, with a coach voice that talks the learner through the result.
+- **Recorded runs:** both settings of every experiment, recorded from real calls. The overview plays them, and so does the lab for anyone who isn't on a call, so the predictions, the results and the seller cards all work without one.
+- **Seller cards with sources:** each card lists the LiveKit pages its facts rest on and the day they were read.
+- **The practice call:** a discovery call with Priya, an AI prospect, scored on six items by an LLM judge that has to quote the call, with a coach voice that talks the learner through the result.
 - **The pilot:** a check before and after the lab (five questions and three ratings), a page that walks a participant through the four steps, a record of each participant's session, and a results page. [`pilot/facilitator-guide.md`](pilot/facilitator-guide.md) says how to run it.
-- **The overview and the write-up:** a front page that replays a recorded run of Experiment 1, and a page on how the lab is built, in LiveKit's brand like the rest of the site (see [The design](#the-design)).
-- **Hosting:** the site runs at tonyt908.com/livekitlab for the people it's sent to, with the agent on LiveKit Cloud.
+- **The program:** a proposal for the training program this lab would belong to: the audit that comes first, five more labs, certification, and the job post's four measures set against what the pilot records today. Only Lab 1 is built, and the page says so.
+- **How it's built:** the architecture, the protocol between the page and the agent, the scoring rules and what isn't proven yet, in LiveKit's brand like the rest of the site (see [The design](#the-design)).
+- **Tests and CI:** 87 tests for the pages and the API and 16 for the agent, run on every push. None needs keys or places a call.
 
-Still to come: running the pilot with two or three people who don't know LiveKit, and fixing what they get stuck on.
+Still to come: running the pilot with two or three people who don't know LiveKit, and fixing what they get stuck on. Priya has only been tried by typing, and the café-noise button needs a real microphone, so neither has been tested by voice yet.
 
 ## What's here
 
 | Folder | What it is |
 | --- | --- |
-| `agent/` | Juniper and Priya, a Python agent on the LiveKit Agents framework (1.8), with tests for the scoring rules and the Dockerfile LiveKit Cloud builds |
-| `web/` | The overview, lab, practice-call, pilot and how-it's-built pages (Next.js, exported as static files, using `livekit-client` and LiveKit's React components), and the API, a Cloudflare Worker in `web/worker` |
-| `web/scripts/capture-server.mjs` | Saves recorded test-caller runs for the overview's replay, in development only |
+| `agent/` | Juniper and Priya, a Python agent on the LiveKit Agents framework (1.8), with tests for the scoring rules and for what the page can send it, and the Dockerfile LiveKit Cloud builds |
+| `web/` | The overview, lab, practice-call, program, pilot and how-it's-built pages (Next.js, exported as static files, using `livekit-client` and LiveKit's React components), and the API, a Cloudflare Worker in `web/worker` |
+| `web/lib/replays/`, `web/public/replay/` | The recorded runs: each one's timeline and events as JSON, and its sound as a WAV |
+| `web/scripts/capture-server.mjs` | Saves a recorded test-caller run, in development only |
+| `.github/workflows/ci.yml` | Typecheck, tests and the static export for the pages; lint and tests for the agent |
 | `pilot/` | The facilitator guide for the pilot |
 | `scripts/make_clips_livekit.py` | Makes the test-caller clips for Experiments 1 and 2 with a natural voice from LiveKit Inference |
 | `scripts/make_clips_exp34.py` | Makes the café booking, the café loop and Experiment 4's question, with Deepgram's own API |
@@ -55,7 +63,17 @@ You need a LiveKit Cloud project and a Deepgram account. The free plans are enou
 
 Calls need the access code. Open a page with `?code=` and the code once, or type it into the box the page shows. For local testing, `.env.test.local` can set throwaway `LAB_ACCESS_CODE` and `LAB_ADMIN_CODE` values that apply only to `pnpm dev`.
 
-The agent doesn't reload when its code changes: stop it and start it again. To check the scoring rules without keys or a network, run `.venv\Scripts\python -m pytest` in `agent`. `pnpm test` in `web` checks how the timeline places each turn, also without keys.
+The agent doesn't reload when its code changes: stop it and start it again.
+
+The overview, the program page and the lab's recorded runs need neither the agent nor any keys: `pnpm dev:web` in `web` is enough to see them.
+
+### Tests
+
+None of these needs keys or a network, and CI runs them all on every push.
+
+- `pnpm test` in `web`: how the timeline places each turn; what each run's outcome sentence says; every recording (its file, its settings, and that it still shows its lesson); the Worker's API against a stand-in for KV; the kit's rules; the cards' sources; and that the names the agent and the pages share still match.
+- `pnpm typecheck` in `web`: the pages, then the Worker.
+- `.venv\Scripts\python -m pytest` in `agent`: the scoring rules, and what Juniper accepts from the page.
 
 ## How it works
 
@@ -98,7 +116,8 @@ Before each test-caller run, `lab.reset` hands off to a fresh Juniper with an em
   - each practice call's scorecard and transcript.
 - **Calls.** A pilot participant's calls carry the pilot code in the dispatch metadata, so the agent records them for LiveKit Cloud's Agent Insights (`record=True`). Everyone else's run with `record=False`.
 - **Results.** `/livekitlab/pilot/results/` shows everything recorded, one participant at a time. It takes the admin code, can delete a participant's data, and can download it all as JSON.
-- **The check.** It covers what the lab teaches today (`web/lib/check.ts`): the lab guide's questions 1 and 2, plus three new ones on Make it your own, what LiveKit builds itself, and the turn-taking discovery question. The answers are 1c, 2a, 3b, 4c, 5a.
+- **The check.** One question on each experiment's problem, and the discovery question for noise (`web/lib/check.ts`). The answers are 1c, 2a, 3b, 4c, 5a, and the last screen gives the reason for each.
+- **Recorded runs.** A participant who plays a recording is logged as doing that, never as a live run.
 
 ## The design
 
@@ -110,7 +129,10 @@ The pages follow LiveKit's brand kit (livekit.com/brand): near-black `#070707` w
   - Where a reply ends is where a listener stopped hearing it. When a reply is cut off, LiveKit pauses it first and reports it stopped only when it gives up the turn, about a second later (4.10 s against 5.33 s in the run on the overview). So the capsules follow the state changes, and the agent's turns say which one was cut off.
   - Experiment 2's runs line up on the first "uh-huh", because the "uh-huh"s wait for Juniper to start speaking.
   - An agent from before 15 Nov 2026 doesn't report speech times. The timeline still draws from the state changes, but without cut-off marks.
-- **The replay.** The overview plays a real recording of Experiment 1 on both settings: the test clip and Juniper's voice, as the caller heard them. To record it again, start the agent locally, run `node scripts/capture-server.mjs` in `web` next to `pnpm dev`, open http://localhost:3100/livekitlab/lab/?capture, call Juniper and play Experiment 1's test caller on both settings. Each finished run is saved to `web/lib/replays/` (the timeline, the run's events and the clip's peaks) and `web/public/replay/` (the recording, a 24 kHz WAV). The capture code is only in development builds.
+- **The recorded runs.** Both settings of every experiment are recorded from real calls: the test clip and Juniper's voice, as the caller heard them. The overview plays them, switching between the four experiments. In the lab, anyone who isn't on a call can lock a prediction and play them in place of a live run; they draw the same timeline and result, are labelled with the day they were recorded, and open the seller card. A live run takes over as soon as there is one.
+  - To record one again, start the agent locally, run `node scripts/capture-server.mjs` in `web` next to `pnpm dev`, open http://localhost:3100/livekitlab/lab/?capture, call Juniper and play an experiment's test caller on both settings. Each finished run is saved to `web/lib/replays/` (the timeline, the run's events and the clips' peaks) and `web/public/replay/` (the recording, a 24 kHz WAV with the silence at its end trimmed). The console says what the run showed and anything wrong with the take. The capture code is only in development builds.
+  - `web/lib/replays.test.ts` fails if a recording is missing a piece, was made on the wrong settings, or no longer shows its lesson (Experiment 1's baseline has to answer more than once, and so on).
+  - Experiment 3's recordings both play the café, because the recording taps what the caller's phone sent. Voice isolation works on the agent's side, so its effect is in what Juniper heard.
 
 ### Layout and brand rules
 
@@ -143,7 +165,8 @@ The pages also follow a design kit (the boards in `.canvas/project/`, kept out o
   - sizes: `text-label` (11px), `text-small` (13), `text-card` (15), `text-lead` (17), `text-title` (22), `text-heading` (30), `text-score` (64), and the fluid `text-hero`, `text-page-title`, `text-feature`, `text-section`, `text-subsection` and `text-quote`;
   - line heights: `leading-reading`, `leading-heading`, `leading-page`;
   - tracking: `tracking-body`, `tracking-title`, `tracking-pill`, `tracking-chip`, `tracking-score`.
-- Labels are `eyebrow` (12px, page level) or `eyebrow-sm` (11px at 0.18em, the kit's card label).
+- Tailwind's own `text-xs`, `text-sm` and `text-base` are the kit's 12, 14 and 16px. Anything larger takes a token, so a heading or a lead is one size wherever it appears.
+- Labels are `eyebrow` (12px, page level) or `eyebrow-sm` (11px at 0.18em, the kit's card label). Table headings are `eyebrow-sm`.
 - Public Sans is for reading; Commit Mono is for labels, times, scores and code.
 - At 200% browser zoom nothing runs off the side or is cut off. Chrome on Android doesn't apply the phone's system text size to web pages.
 
@@ -157,12 +180,15 @@ The pages also follow a design kit (the boards in `.canvas/project/`, kept out o
   - primary, secondary, danger and quiet;
   - the `stack` size goes full width at 48px on a phone;
   - disabled is neutral, at opacity 0.6.
-- The rest: `Segmented`, `Pill`, `Callout`, `Eyebrow`, `Points`, `RightWrong`, the fields, `Scroller` (a box that scrolls sideways becomes focusable and named while it scrolls), and `CodeBlock`.
+  - Every disabled control, a field or a segment included, is at 0.6.
+- The rest: `Segmented`, `Pill`, `Callout`, `Eyebrow`, `Points`, `RightWrong`, the fields, `Scroller` (a box that scrolls sideways becomes focusable and named while it scrolls), `CodeBlock`, `SectionHead` and `Feature` (how the overview, the program and the build page head their sections), and `ExternalLink` (a new tab, and no referrer).
+- A choice, an outline mark or any other control is edged in `--control-line`, like a field.
 
 **The rules the tests check** (`web/lib/kit-rules.test.ts`, run by `pnpm test`; each failure names the piece to use)
 - No colour literals: use a token.
 - No copy of the page column: use `page-column`.
-- No pixel or clamp text sizes: use a type token.
+- No pixel or clamp text sizes, and nothing from `text-lg` up: use a type token.
+- No link off the site outside `ExternalLink`.
 - No raw text inputs or textareas: use the fields.
 - No `overflow-x-auto` outside `Scroller` (the header's nav row is the one exception).
 - No ✓ or ✗ glyphs.
@@ -318,3 +344,17 @@ What it took:
 - **Choosing the voice isolation.** With the booking clip, ai-coustics Voice Focus S removed the next table every time. Krisp VIVA let it through.
 - **The café button.** With the café playing and nobody talking into the microphone, ai-coustics kept the café's voices. Voice isolation keeps the main nearby voice, and with no caller, a café voice is the main one. Krisp removed them in that case. A real caller's phone is much closer to their mouth than anyone else's, so the page now plays the café into the microphone only while the learner is talking, and for 1.2 seconds after. That gating needs a real microphone, so it hasn't been tested yet.
 - **Experiments 1 and 2 afterwards.** They behave as before with the voice isolation filter in place but switched off.
+
+### The recordings of 15 Nov 2026
+
+Experiments 2 to 4 were run once more on each setting and recorded, on one call to a local agent. These are the runs the overview and the lab now play:
+
+| Experiment | Baseline / Fast model | Enhanced / Reasoning model |
+| --- | --- | --- |
+| 2. Interruptions | Stopped for "uh-huh" twice and picked up again each time; heard the real question | Never stopped for "uh-huh"; heard the real question |
+| 3. The coffee shop | Heard 12 words nobody said to it: "no way did you see the game last night it went over" | Heard only the caller |
+| 4. The pause | 0.58 seconds before the answer, 0.15 of it the LLM's first words | 2.23 seconds, 1.79 of it the LLM's first words |
+
+That call also ran the agent as it is now: it joins the room and registers its RPCs before the session starts, and sets the interruption length (0.5 seconds) and the false-interruption timeout (2 seconds) in code. The page's first `lab.get_state` was answered, all six runs finished, and Experiment 2's baseline stalled and resumed as before.
+
+Not run again on that day: Experiment 1 (its recordings are from 14 Nov), the practice call, and anything by voice.
