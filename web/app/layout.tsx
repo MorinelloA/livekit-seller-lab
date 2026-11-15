@@ -8,6 +8,8 @@ import { commitMono, publicSans } from './fonts';
 import './globals.css';
 
 export const metadata: Metadata = {
+  // Absolute URLs for the social card (app/opengraph-image.png), which link previews need.
+  metadataBase: new URL('https://tonyt908.com'),
   title: {
     default: 'Seller Lab: Why Real-Time Voice AI Is Hard',
     template: '%s · Seller Lab',
