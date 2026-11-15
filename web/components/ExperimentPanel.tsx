@@ -182,7 +182,8 @@ export function ExperimentPanel(props: {
             <Segmented
               label={experiment.switchName}
               options={MODES.map((mode) => ({ value: mode, label: labels[mode] }))}
-              value={canRun ? currentMode : null}
+              // The setting in use stays shown while a run plays; the control is only disabled.
+              value={currentMode}
               onChange={props.onSetMode}
               disabled={!canRun}
             />
