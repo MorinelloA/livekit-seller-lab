@@ -207,9 +207,11 @@ export class LabMic {
     if (cached) return cached;
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(
-        `Couldn't load ${url}. Run scripts/make_clips_livekit.py and scripts/make_clips_exp34.py to create the test-caller clips.`,
+      // The fix is a developer's, so the console says how; the learner gets plain words.
+      console.warn(
+        `Couldn't load ${url} (${response.status}). Run scripts/make_clips_livekit.py and scripts/make_clips_exp34.py to create the test-caller clips.`,
       );
+      throw new Error('The test caller’s recording couldn’t load. Reload the page and try again.');
     }
     const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
     this.clips.set(url, buffer);
