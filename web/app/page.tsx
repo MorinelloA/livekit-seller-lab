@@ -8,6 +8,7 @@ import type { ReplayRun } from '@/lib/replay';
 import baselineRun from '@/lib/replays/exp1-baseline.json';
 import enhancedRun from '@/lib/replays/exp1-enhanced.json';
 import { AUTHOR } from '@/lib/site';
+import { Scroller } from '@/components/ui/Scroller';
 
 export const metadata: Metadata = {
   title: { absolute: 'Seller Lab: Why Real-Time Voice AI Is Hard' },
@@ -183,7 +184,7 @@ export default function OverviewPage() {
 
       <section aria-labelledby="results-title" className="page-column flex flex-col gap-8 pt-24">
         <SectionHead eyebrow="What the live runs showed" id="results-title" title="Same clips, two runs per setting, on LiveKit Cloud" />
-        <div className="overflow-x-auto rounded-lg border border-line">
+        <Scroller label="What the live runs showed" className="rounded-lg border border-line">
           <table className="w-full min-w-[760px] border-collapse text-left text-[15px] leading-relaxed">
             <thead className="bg-surface">
               <tr>
@@ -211,7 +212,7 @@ export default function OverviewPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Scroller>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="flex flex-col gap-2 rounded-lg border border-line p-6">
             <Eyebrow className="text-[11px]">A cheaper judge</Eyebrow>

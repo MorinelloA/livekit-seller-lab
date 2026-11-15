@@ -1,3 +1,5 @@
+import { Scroller } from '@/components/ui/Scroller';
+
 // The path of a call, as one drawing. Scales with its box; on a phone the box
 // scrolls sideways rather than shrinking the words past reading.
 
@@ -37,7 +39,7 @@ const LABELS = [
 
 export function ArchitectureDiagram() {
   return (
-    <div className="overflow-x-auto rounded-lg border border-line bg-page">
+    <Scroller label="How the lab is built" className="rounded-lg border border-line bg-page">
       <svg
         viewBox="24 88 928 504"
         role="img"
@@ -111,6 +113,6 @@ export function ArchitectureDiagram() {
           </text>
         ))}
       </svg>
-    </div>
+    </Scroller>
   );
 }

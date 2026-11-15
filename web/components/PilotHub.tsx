@@ -20,6 +20,7 @@ import {
   STEP_LABEL,
 } from '@/lib/pilot';
 import { useLabAccess } from '@/lib/useLabAccess';
+import { Scroller } from '@/components/ui/Scroller';
 
 const NUMBERED: { step: Step; label: string }[] = [
   { step: 'before', label: 'The check before the lab' },
@@ -243,7 +244,7 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
           <p className="m-0 text-sm">
             Before the lab you got {checkScore(before)} of {CHECK_QUESTIONS.length}; after it, {checkScore(after)}.
           </p>
-          <div className="overflow-x-auto rounded-lg border border-line">
+          <Scroller label="Your answers" className="rounded-lg border border-line">
             <table className="w-full border-collapse text-left text-sm">
               <thead className="border-b border-line bg-surface">
                 <tr>
@@ -266,7 +267,7 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
                 ))}
               </tbody>
             </table>
-          </div>
+          </Scroller>
         </div>
       )}
       <form

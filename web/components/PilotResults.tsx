@@ -8,6 +8,7 @@ import { CHECK_QUESTIONS, CHECK_RATINGS, letter } from '@/lib/check';
 import { withBase } from '@/lib/paths';
 import type { StoredEvent } from '@/lib/pilot';
 import { type CheckResult, type ParticipantSummary, sinceStart, summarize } from '@/lib/pilotSummary';
+import { Scroller } from '@/components/ui/Scroller';
 
 const ADMIN_KEY = 'lab.adminCode';
 type Data = Record<string, StoredEvent[]>;
@@ -148,7 +149,7 @@ const minutes = (value?: number) => (value === undefined ? '–' : `${value} min
 
 function SummaryTable({ summaries }: { summaries: ParticipantSummary[] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-line">
+    <Scroller label="Participants" className="rounded-lg border border-line">
       <table className="w-full border-collapse text-left text-sm">
         <thead className="border-b border-line bg-surface">
           <tr>
@@ -187,7 +188,7 @@ function SummaryTable({ summaries }: { summaries: ParticipantSummary[] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </Scroller>
   );
 }
 
@@ -218,7 +219,7 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
 
       <div className="flex flex-col gap-2">
         <h3 className={h3}>The check</h3>
-        <div className="overflow-x-auto">
+        <Scroller label="The check">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr>
@@ -249,7 +250,7 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
               ))}
             </tbody>
           </table>
-        </div>
+        </Scroller>
         <p className="m-0 font-mono text-xs text-subtle">
           Time on the check: {s.before ? `${s.before.seconds} s` : '–'} before, {s.after ? `${s.after.seconds} s` : '–'} after.
         </p>

@@ -1,5 +1,6 @@
 import { Eyebrow } from '@/components/ui/Bits';
 import { isTurn, type LabSettings, type LoggedEvent, type Mode } from '@/lib/protocol';
+import { Scroller } from '@/components/ui/Scroller';
 
 const seconds = (value: number | null | undefined) => (value == null ? '–' : `${value.toFixed(2)} s`);
 const short: Record<Mode, string> = { baseline: 'Base', enhanced: 'Enh' };
@@ -35,7 +36,7 @@ export function TurnLog({ events }: { events: LoggedEvent[] }) {
       {turns.length === 0 ? (
         <p className="m-0 text-sm text-subtle">Turns appear here once the call starts.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-line">
+        <Scroller label="LiveKit’s per-turn metrics" className="rounded-lg border border-line">
           <table className="w-full border-collapse text-left text-sm">
             <thead className="border-b border-line bg-surface">
               <tr>
@@ -84,7 +85,7 @@ export function TurnLog({ events }: { events: LoggedEvent[] }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </Scroller>
       )}
     </section>
   );

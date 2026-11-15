@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Scroller } from './Scroller';
 
 type Lang = 'python' | 'ts';
 
@@ -39,9 +40,11 @@ export function CodeBlock({ code, lang, file, note }: { code: string; lang: Lang
         <span className="text-fg">{file}</span>
         {note && <span className="text-subtle">{note}</span>}
       </figcaption>
-      <pre className="overflow-x-auto px-[18px] py-4 font-mono text-[13px] leading-[1.7] text-fg">
-        <code>{highlight(code, lang)}</code>
-      </pre>
+      <Scroller label={`Code: ${file}`}>
+        <pre className="m-0 w-max min-w-full px-[18px] py-4 font-mono text-[13px] leading-[1.7] text-fg">
+          <code>{highlight(code, lang)}</code>
+        </pre>
+      </Scroller>
     </figure>
   );
 }

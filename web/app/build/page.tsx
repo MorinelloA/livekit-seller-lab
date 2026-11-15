@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { excerpt } from '@/lib/excerpts';
 import { RPC_FINISH, SCORECARD_TOPIC, CHAT_TOPIC } from '@/lib/practice';
 import { EVENTS_TOPIC, RPC_CUSTOMIZE, RPC_GET_STATE, RPC_RESET, RPC_SET_SETTINGS } from '@/lib/protocol';
+import { Scroller } from '@/components/ui/Scroller';
 
 export const metadata: Metadata = {
   title: 'How it’s built',
@@ -148,7 +149,7 @@ export default function BuildPage() {
           </>
         }
       >
-        <div className="overflow-x-auto rounded-lg border border-line">
+        <Scroller label="RPC methods and text streams" className="rounded-lg border border-line">
           <table className="w-full min-w-[600px] border-collapse text-left text-sm leading-normal">
             <thead className="bg-surface">
               <tr>
@@ -167,7 +168,7 @@ export default function BuildPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Scroller>
         <CodeBlock file="agent/src/agent.py" note="lab.set_settings" lang="python" code={CODE.settings} />
       </Feature>
 
@@ -312,7 +313,7 @@ export default function BuildPage() {
           </div>
           <p className="m-0 text-sm">4.5 to 6.5 seconds before, 2 to 4 now.</p>
         </figure>
-        <div className="overflow-x-auto rounded-lg border border-line">
+        <Scroller label="The cheaper judge’s scores" className="rounded-lg border border-line">
           <table className="w-full min-w-[560px] border-collapse text-left text-sm leading-normal">
             <thead className="bg-surface">
               <tr>
@@ -334,7 +335,7 @@ export default function BuildPage() {
               </tr>
             </tbody>
           </table>
-        </div>
+        </Scroller>
       </Feature>
 
       <Feature

@@ -36,6 +36,12 @@ test('colours come from the tokens in app/globals.css, never literals', () => {
   assert.deepEqual(found, [], 'Use a colour token (text-fg, bg-surface, border-line, …) from app/globals.css.');
 });
 
+test('boxes that scroll sideways are Scrollers, so a keyboard can reach them', () => {
+  // The header's nav scrolls on a phone, but its links take focus themselves.
+  const found = offenders(/overflow-x-auto/, (file) => /ui[\\/]Scroller\.tsx$|shell[\\/]SiteHeader\.tsx$/.test(file));
+  assert.deepEqual(found, [], 'Use Scroller (components/ui/Scroller.tsx), which can be focused and is named while it scrolls.');
+});
+
 test('pages sit in the page column, not a copy of it', () => {
   const found = offenders(/max-w-\[1200px\]/);
   assert.deepEqual(found, [], 'Use the page-column utility (app/globals.css): 1200px with the kit’s gutters.');
