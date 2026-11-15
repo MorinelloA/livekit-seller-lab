@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Callout, Eyebrow } from '@/components/ui/Bits';
+import { Callout, Eyebrow, RightWrong } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
 import { Field, TextInput } from '@/components/ui/Field';
@@ -267,7 +267,7 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
             <ul className="m-0 list-none p-0 text-sm leading-relaxed">
               {s.predictions.map((p, i) => (
                 <li key={i}>
-                  {p.section}: “{p.choice}” <span className={p.correct ? 'text-ok' : 'text-bad'}>{p.correct ? '✓' : '✗'}</span>
+                  {p.section}: “{p.choice}” <RightWrong right={p.correct} />
                 </li>
               ))}
             </ul>
@@ -371,7 +371,7 @@ function Mark({ check, index }: { check?: CheckResult; index: number }) {
   const right = answer === CHECK_QUESTIONS[index].answer;
   return (
     <td className={cx('py-2 pr-3 font-mono', right ? 'text-ok' : 'text-bad')}>
-      {letter(answer)} {right ? '✓' : '✗'}
+      {letter(answer)} <RightWrong right={right} />
     </td>
   );
 }

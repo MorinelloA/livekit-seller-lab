@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from 'react';
 import { KnowledgeCheck } from '@/components/KnowledgeCheck';
-import { Eyebrow } from '@/components/ui/Bits';
+import { Eyebrow, RightWrong } from '@/components/ui/Bits';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
 import { TextArea } from '@/components/ui/Field';
@@ -233,7 +233,13 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
   const before = checks.before?.answers ?? [];
   const after = checks.after?.answers ?? [];
   const mark = (answers: number[], qi: number) =>
-    answers[qi] === undefined ? '–' : `${letter(answers[qi])} ${answers[qi] === CHECK_QUESTIONS[qi].answer ? '✓' : '✗'}`;
+    answers[qi] === undefined ? (
+      '–'
+    ) : (
+      <>
+        {letter(answers[qi])} <RightWrong right={answers[qi] === CHECK_QUESTIONS[qi].answer} />
+      </>
+    );
   const th = 'px-3 py-2.5 font-mono text-label font-bold tracking-pill uppercase text-subtle';
 
   return (

@@ -144,6 +144,19 @@ export function Segmented<T extends string>({
   );
 }
 
+/**
+ * Right or wrong, as the kit's line icons, with the word for screen readers.
+ * The kit draws icons as line SVGs, never as ✓ or ✗ glyphs.
+ */
+export function RightWrong({ right }: { right: boolean }) {
+  return (
+    <>
+      <Icon name={right ? 'check' : 'x'} className={cx('inline-block size-3.5 align-middle', right ? 'text-ok' : 'text-bad')} />
+      <span className="sr-only">{right ? ' right' : ' wrong'}</span>
+    </>
+  );
+}
+
 /** A panel: LiveKit's raised card with a hairline border. */
 export function panelClass(className?: string): string {
   return cx('rounded-lg border border-line bg-surface', className);

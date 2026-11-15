@@ -62,6 +62,11 @@ test('type sizes come from the kit’s tokens, not pixel values', () => {
   assert.deepEqual(found, [], 'Use a type token (text-label, text-small, text-card, text-page, …) from app/globals.css.');
 });
 
+test('icons are the kit’s line icons, not glyphs', () => {
+  const found = offenders(/[✓✗✔✕✖]/).filter((line) => !/:\s*(\/\/|\*|\/\*)/.test(line));
+  assert.deepEqual(found, [], 'Use Icon (components/ui/Icon.tsx), or RightWrong for a right or wrong mark.');
+});
+
 test('pages sit in the page column, not a copy of it', () => {
   const found = offenders(/max-w-\[1200px\]/);
   assert.deepEqual(found, [], 'Use the page-column utility (app/globals.css): 1200px with the kit’s gutters.');
