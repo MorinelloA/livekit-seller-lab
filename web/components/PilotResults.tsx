@@ -1,14 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Callout, Eyebrow, inputClass } from '@/components/ui/Bits';
+import { Callout, Eyebrow } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
+import { Field, TextInput } from '@/components/ui/Field';
+import { Scroller } from '@/components/ui/Scroller';
 import { CHECK_QUESTIONS, CHECK_RATINGS, letter } from '@/lib/check';
 import { withBase } from '@/lib/paths';
 import type { StoredEvent } from '@/lib/pilot';
 import { type CheckResult, type ParticipantSummary, sinceStart, summarize } from '@/lib/pilotSummary';
-import { Scroller } from '@/components/ui/Scroller';
 
 const ADMIN_KEY = 'lab.adminCode';
 type Data = Record<string, StoredEvent[]>;
@@ -101,25 +102,26 @@ export function PilotResults() {
 
       {!admin ? (
         <form
-          className="flex flex-wrap items-end gap-2"
           onSubmit={(event) => {
             event.preventDefault();
             if (input.trim()) setAdmin(input.trim());
           }}
         >
-          <label className="flex flex-col gap-1.5 text-sm font-semibold text-fg">
-            Admin code (LAB_ADMIN_CODE in .env.local)
-            <input
-              type="password"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              autoComplete="off"
-              className={cx(inputClass, 'w-72 font-mono font-normal')}
-            />
-          </label>
-          <Button type="submit" variant="primary">
-            Show results
-          </Button>
+          <Field id="admin-code" label="Admin code (LAB_ADMIN_CODE in .env.local)" labelClassName="text-sm font-semibold text-fg">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <TextInput
+                id="admin-code"
+                type="password"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                autoComplete="off"
+                className="font-mono sm:max-w-72"
+              />
+              <Button type="submit" variant="primary">
+                Show results
+              </Button>
+            </div>
+          </Field>
         </form>
       ) : (
         <div className="flex flex-wrap gap-2">
