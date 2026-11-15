@@ -14,7 +14,10 @@ import { type CheckResult, type ParticipantSummary, sinceStart, summarize } from
 const ADMIN_KEY = 'lab.adminCode';
 type Data = Record<string, StoredEvent[]>;
 
-const th = 'px-3 py-2.5 font-mono text-label font-bold tracking-pill uppercase text-subtle whitespace-nowrap';
+// A header cell's type; its padding is set where it's used, because cx only joins classes
+// and a later px-0 can't override an earlier px-3.
+const thType = 'py-2.5 font-mono text-label font-bold tracking-pill uppercase text-subtle whitespace-nowrap';
+const th = `px-3 ${thType}`;
 const td = 'px-3 py-2.5';
 
 /** Tony's view of the pilot: everything recorded, one participant at a time. */
@@ -225,10 +228,10 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr>
-                <th scope="col" className={cx(th, 'px-0 pr-3')}>Question</th>
-                <th scope="col" className={cx(th, 'px-0 pr-3')}>Before</th>
-                <th scope="col" className={cx(th, 'px-0 pr-3')}>After</th>
-                <th scope="col" className={cx(th, 'px-0')}>Answer</th>
+                <th scope="col" className={cx(thType, 'pr-3')}>Question</th>
+                <th scope="col" className={cx(thType, 'pr-3')}>Before</th>
+                <th scope="col" className={cx(thType, 'pr-3')}>After</th>
+                <th scope="col" className={thType}>Answer</th>
               </tr>
             </thead>
             <tbody>
