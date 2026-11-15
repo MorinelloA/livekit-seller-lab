@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { ConversationTimeline, type TimelineRun, TimelineLegend } from '@/components/ConversationTimeline';
 import { PauseParts } from '@/components/PauseParts';
 import { Prediction } from '@/components/Prediction';
@@ -73,6 +73,12 @@ export function ExperimentPanel(props: {
   const [choice, setChoice] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const [revealed, setRevealed] = useState(false);
+
+  // "Show the answer now" goes away when the answer opens, so focus moves to the answer.
+  const answerRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (revealed) answerRef.current?.focus();
+  }, [revealed]);
 
   const labels = experiment.modeLabels ?? DEFAULT_MODE_LABELS;
   const bothRan = MODES.every((mode) => runs[mode].state?.status === 'done');
@@ -207,7 +213,7 @@ export function ExperimentPanel(props: {
         <Step n={4} state={showAnswer ? 'done' : 'upcoming'} label="Take it to a call">
           {showAnswer ? (
             <>
-              <p className="m-0 flex items-start gap-2 text-sm leading-normal text-fg">
+              <p ref={answerRef} tabIndex={-1} className="m-0 flex items-start gap-2 text-sm leading-normal text-fg focus:outline-none">
                 <Icon
                   name={choice === prediction.expected ? 'check' : 'info'}
                   className={cx('mt-0.5 size-4 shrink-0', choice === prediction.expected ? 'text-ok' : 'text-subtle')}

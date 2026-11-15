@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { AgentBars } from '@/components/AgentBars';
 import { Callout } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
@@ -40,6 +41,18 @@ export function CallDock(props: {
   onToggleMic: () => void;
 }) {
   const { status, agentPresent, agentState, slowJoin, settings, micOn, busy, message } = props;
+
+  // When Call becomes Leave (or the other way), the button that had focus is gone. Rather
+  // than let focus fall to the page, it moves to the call's status.
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    if (document.activeElement === document.body) labelRef.current?.focus();
+  }, [status]);
   const connected = status === 'connected';
   const label = !connected
     ? status === 'connecting'
@@ -70,7 +83,9 @@ export function CallDock(props: {
             />
           )}
           <div className="flex min-w-0 flex-col">
-            <span className="text-sm font-semibold text-fg">{label}</span>
+            <span ref={labelRef} tabIndex={-1} className="text-sm font-semibold text-fg focus:outline-none">
+              {label}
+            </span>
             {/* A screen reader hears joins and waits, not every listening, thinking and speaking change. */}
             <span className="sr-only" aria-live="polite">
               {status === 'connecting'
@@ -120,7 +135,7 @@ export function CallDock(props: {
               Leave
             </Button>
           ) : (
-            <Button variant="primary" onClick={props.onConnect} disabled={status === 'connecting'}>
+            <Button id="call-button" variant="primary" onClick={props.onConnect} disabled={status === 'connecting'}>
               <Icon name="phone" className="size-4" />
               Call Juniper
             </Button>

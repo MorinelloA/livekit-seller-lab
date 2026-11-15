@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
 
@@ -16,11 +17,16 @@ export function Prediction(props: {
   onLock: () => void;
 }) {
   const { question, options, choice, locked } = props;
+  // Locking in removes its button, so focus moves to the question, which then says it's locked.
+  const legendRef = useRef<HTMLLegendElement>(null);
 
   return (
     <fieldset className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0" disabled={locked}>
       {/* The question names the group, so each prediction is told apart from the others. */}
-      <legend className="m-0 mb-3 p-0 text-card leading-relaxed text-fg">{question}</legend>
+      <legend ref={legendRef} tabIndex={-1} className="m-0 mb-3 p-0 text-card leading-relaxed text-fg focus:outline-none">
+        {question}
+        {locked && <span className="sr-only"> Your prediction is locked in.</span>}
+      </legend>
       <div className="grid gap-2 sm:grid-cols-3">
         {options.map((option, index) => {
           const chosen = choice === index;
@@ -47,7 +53,14 @@ export function Prediction(props: {
       </div>
       {!locked && (
         <div>
-          <Button variant="primary" onClick={props.onLock} disabled={choice === null}>
+          <Button
+            variant="primary"
+            onClick={() => {
+              props.onLock();
+              requestAnimationFrame(() => legendRef.current?.focus());
+            }}
+            disabled={choice === null}
+          >
             Lock in my prediction
           </Button>
         </div>

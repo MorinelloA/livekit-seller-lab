@@ -659,6 +659,8 @@ export function Lab() {
                 access.saveCode(code);
                 // The old code's error no longer applies.
                 setError(null);
+                // The form goes away, so focus moves on to the call.
+                requestAnimationFrame(() => document.getElementById('call-button')?.focus());
               }}
             />
           </div>

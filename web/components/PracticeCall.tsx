@@ -296,6 +296,8 @@ export function PracticeCall() {
                   access.saveCode(code);
                   // The old code's error no longer applies.
                   setError(null);
+                  // The form goes away, so focus moves on to the call.
+                  requestAnimationFrame(() => document.getElementById('call-button')?.focus());
                 }}
               />
             )}
@@ -434,6 +436,18 @@ function CallBar(props: {
   onCallAgain: () => void;
 }) {
   const { phase, connected, agentPresent, agentState, slowJoin, elapsed, micOn } = props;
+
+  // When Call becomes End, or End becomes Call again, the button that had focus is gone. Rather
+  // than let focus fall to the page, it moves to the call's status.
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    if (document.activeElement === document.body) labelRef.current?.focus();
+  }, [phase]);
   const live = phase === 'live';
   const over = phase === 'scoring' || phase === 'scored' || phase === 'empty' || phase === 'failed';
   const speaker = over ? 'Your coach' : 'Priya';
@@ -474,7 +488,9 @@ function CallBar(props: {
             <span aria-hidden className={cx('size-2.5 shrink-0 rounded-full', connected ? 'animate-pulse bg-warn' : 'bg-subtle')} />
           )}
           <div className="flex min-w-0 flex-col">
-            <span className="text-sm font-semibold text-fg">{label}</span>
+            <span ref={labelRef} tabIndex={-1} className="text-sm font-semibold text-fg focus:outline-none">
+              {label}
+            </span>
             <span className="sr-only" aria-live="polite">
               {announce}
             </span>
@@ -494,7 +510,7 @@ function CallBar(props: {
             </Button>
           )}
           {(phase === 'idle' || phase === 'connecting') && (
-            <Button variant="primary" onClick={props.onCall} disabled={phase === 'connecting'}>
+            <Button id="call-button" variant="primary" onClick={props.onCall} disabled={phase === 'connecting'}>
               <Icon name="phone" className="size-4" />
               Call Priya
             </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ConversationTimeline, TimelineLegend } from '@/components/ConversationTimeline';
 import { type RunView, TurnList } from '@/components/ExperimentPanel';
 import { Prediction } from '@/components/Prediction';
@@ -29,6 +29,14 @@ export function MakeItYourOwn(props: {
   const [choice, setChoice] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const [revealed, setRevealed] = useState(false);
+
+  // "Show the answer now" goes away when the answer opens, so focus moves to the answer.
+  const answerRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (revealed) answerRef.current?.focus();
+  }, [revealed]);
+  // "Back to the original Juniper" goes away once it worked, so focus moves to the status line.
+  const statusRef = useRef<HTMLParagraphElement>(null);
   const [applied, setApplied] = useState(false);
   const [name, setName] = useState('');
   const [rule, setRule] = useState('');
@@ -128,13 +136,19 @@ export function MakeItYourOwn(props: {
             Play the test caller’s booking
           </Button>
           {persona?.custom && (
-            <Button onClick={() => void props.onRestore()} disabled={!canAct}>
+            <Button
+              onClick={async () => {
+                await props.onRestore();
+                statusRef.current?.focus();
+              }}
+              disabled={!canAct}
+            >
               Back to the original Juniper
             </Button>
           )}
         </div>
         {!locked && <p className="m-0 text-small text-subtle">Lock in a prediction first.</p>}
-        <p className="m-0 text-sm" aria-live="polite">
+        <p ref={statusRef} tabIndex={-1} className="m-0 text-sm focus:outline-none" aria-live="polite">
           {!persona
             ? 'Call Juniper to start.'
             : persona.custom
@@ -186,7 +200,7 @@ export function MakeItYourOwn(props: {
         </p>
         {showAnswer ? (
           <div className="flex flex-col gap-2 rounded-md border border-accent-line bg-accent-soft p-4 text-sm leading-relaxed text-fg">
-            <p className="m-0">
+            <p ref={answerRef} tabIndex={-1} className="m-0 focus:outline-none">
               <span className="font-semibold">Expected: </span>
               {prediction.options[prediction.expected]}.{' '}
               {choice === prediction.expected
