@@ -296,7 +296,9 @@ export function PracticeCall() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
           <Briefing />
 
-          <section aria-label="The call" className="flex min-w-0 flex-col gap-4">
+          {/* Below 1024px the call comes first on screen, so Call Priya isn't a page below the
+              briefing; the briefing stays first for screen readers and the keyboard. */}
+          <section aria-label="The call" className="flex min-w-0 flex-col gap-4 max-lg:order-first">
             {access.ready && !access.hasCode && (
               <AccessCodeForm
                 error={codeError}
@@ -368,7 +370,8 @@ export function PracticeCall() {
 /** Priya's details split out of the brief, for a quick read before the call. */
 function Briefing() {
   return (
-    <aside aria-label="Briefing" className="flex flex-col gap-7 lg:sticky lg:top-6 lg:self-start">
+    // Sticky only where the screen is tall enough to show all of it (about 1,000px of it).
+    <aside aria-label="Briefing" className="flex flex-col gap-7 lg:self-start lg:tall:sticky lg:tall:top-6">
       <section aria-labelledby="who-title" className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6">
         <Eyebrow as="h2" id="who-title" size="sm">
           Who you’re calling

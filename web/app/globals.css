@@ -136,6 +136,9 @@
 /* A touch screen (the hit areas and 16px fields key off this). */
 @custom-variant touch (@media (pointer: coarse));
 
+/* A screen tall enough (1088px) to hold the practice call's briefing, which can then stay in view. */
+@custom-variant tall (@media (min-height: 68rem));
+
 @layer base {
   html {
     background-color: var(--page);
