@@ -1,7 +1,8 @@
 import { Scroller } from '@/components/ui/Scroller';
 
-// The path of a call, as one drawing. Scales with its box; on a phone the box
-// scrolls sideways rather than shrinking the words past reading.
+// The path of a call, as one drawing. Scales up with its box, but never below its
+// drawn size (928px, so its smallest labels stay at 12px): on a narrower screen the
+// box scrolls sideways instead.
 
 type Card = { x: number; y: number; w: number; h: number; title: string; lines: string[]; accent?: boolean };
 
@@ -44,7 +45,7 @@ export function ArchitectureDiagram() {
         viewBox="24 88 928 504"
         role="img"
         aria-labelledby="architecture-title architecture-desc"
-        className="mx-auto block h-auto w-full min-w-[720px] max-w-[976px]"
+        className="mx-auto block h-auto w-full min-w-[58rem] max-w-[976px]"
       >
         <title id="architecture-title">The path of a call</title>
         <desc id="architecture-desc">
