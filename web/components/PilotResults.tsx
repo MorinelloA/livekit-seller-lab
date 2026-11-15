@@ -58,12 +58,19 @@ export function PilotResults() {
 
   const remove = async (id: string) => {
     if (!window.confirm(`Delete everything recorded for ${id}? This can’t be undone.`)) return;
-    const response = await fetch(withBase(`/api/pilot/?id=${encodeURIComponent(id)}`), {
-      method: 'DELETE',
-      headers: { 'X-Lab-Admin': admin },
-    });
-    if (!response.ok) setError((await response.text()) || `Deleting failed (${response.status}).`);
+    let failure: string | null = null;
+    try {
+      const response = await fetch(withBase(`/api/pilot/?id=${encodeURIComponent(id)}`), {
+        method: 'DELETE',
+        headers: { 'X-Lab-Admin': admin },
+      });
+      if (!response.ok) failure = (await response.text()) || `Deleting failed (${response.status}).`;
+    } catch (err) {
+      failure = `Deleting failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
+    // The reload clears the page's error, so a failed delete says so after it.
     await load(admin);
+    if (failure) setError((reloadError) => (reloadError ? `${failure} ${reloadError}` : failure));
   };
 
   const download = () => {
