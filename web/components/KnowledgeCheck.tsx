@@ -83,7 +83,8 @@ export function KnowledgeCheck(props: {
                   <label
                     key={value}
                     className={cx(
-                      'flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-3.5 text-sm transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent',
+                      // At least 44px wide too: "2", "3" and "4" were 37px, under the touch minimum.
+                      'flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-3.5 text-sm transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent',
                       chosen ? 'border-accent-line bg-accent-soft text-fg' : 'border-line hover:border-subtle',
                     )}
                   >
