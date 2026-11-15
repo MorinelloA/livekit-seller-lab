@@ -298,6 +298,12 @@ export function Lab() {
     if (!skewRef.current || rttMs < skewRef.current.rttMs) skewRef.current = { skewMs, rttMs };
   }, [callAgent]);
 
+  // Once Juniper joins, ask for its state: the page learns who Juniper is playing and the
+  // settings in use before any other call, and gets a first reading of the agent's clock.
+  useEffect(() => {
+    if (status === 'connected' && agentPresent) void measureSkew().catch(() => undefined);
+  }, [status, agentPresent, measureSkew]);
+
   const disconnect = useCallback(async () => {
     const r = roomRef.current;
     const mic = micRef.current;
