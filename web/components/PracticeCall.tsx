@@ -158,7 +158,10 @@ export function PracticeCall() {
       r.on(RoomEvent.ParticipantConnected, () => findAgent(r))
         .on(RoomEvent.ParticipantDisconnected, () => findAgent(r))
         .on(RoomEvent.ParticipantAttributesChanged, () => findAgent(r))
-        .on(RoomEvent.Disconnected, () => void disconnect());
+        // Only this call's own room ends it: a late event from the last call's room is ignored.
+        .on(RoomEvent.Disconnected, () => {
+          if (roomRef.current === r) void disconnect();
+        });
 
       await r.connect(serverUrl, participantToken);
       await r.startAudio();
