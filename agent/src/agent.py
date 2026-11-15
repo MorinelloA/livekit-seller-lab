@@ -78,8 +78,15 @@ LLM_MODEL = "google/gemma-4-31b-it"
 # Pro was slower still (3.7 to 4.6 s) but about seven times the price.
 REASONING_LLM = "xai/grok-4.20-0309-reasoning"
 
-# The lab takes about 25 minutes. A session ends on its own after this long.
+# The lab takes about 30 minutes. A session ends on its own after this long.
 LAB_MINUTES = 40
+
+# The lab's copy quotes these two numbers, so they're set here, not left to the
+# framework's defaults (which they match in livekit-agents 1.8). On the baseline
+# setting, speech this long stops Juniper. If no words follow the stop, Juniper
+# picks the sentence back up after the second number.
+MIN_INTERRUPTION_SECONDS = 0.5
+FALSE_INTERRUPTION_SECONDS = 2.0
 
 DEFAULT_NAME = "Juniper"
 
@@ -176,6 +183,21 @@ def clean(value: Any, limit: int) -> str:
     return " ".join(value.split())[:limit].strip()
 
 
+def request_of(data: rtc.RpcInvocationData) -> dict[str, Any]:
+    """An RPC's payload as a dict. The page always sends a JSON object."""
+    try:
+        request = json.loads(data.payload or "{}")
+    except json.JSONDecodeError:
+        request = None
+    if not isinstance(request, dict):
+        # The caller gets this message back, in place of a bare handler error.
+        raise rtc.RpcError(
+            rtc.RpcError.ErrorCode.APPLICATION_ERROR,
+            "The payload must be a JSON object.",
+        )
+    return request
+
+
 def turn_detection_for(mode: Mode) -> Any:
     # "vad" ends the turn after a short silence (voice activity detection only).
     return "vad" if mode == "baseline" else inference.TurnDetector()
@@ -242,12 +264,22 @@ async def run_juniper_lab(ctx: JobContext, record: bool = False) -> None:
             }
         )
 
+    # The LLM and the two switchable turn settings belong to Juniper, the agent
+    # (see the class above), so a switch can replace them. The rest is here.
     session = AgentSession(
         stt=stt(),
-        llm=inference.LLM(model=LLM_MODEL),
         tts=tts("juniper"),
-        turn_handling=TurnHandlingOptions(preemptive_generation={"enabled": True}),
+        turn_handling=TurnHandlingOptions(
+            interruption={
+                "min_duration": MIN_INTERRUPTION_SECONDS,
+                "false_interruption_timeout": FALSE_INTERRUPTION_SECONDS,
+                "resume_false_interruption": True,
+            },
+            preemptive_generation={"enabled": True},
+        ),
     )
+    # Set once the session is running. A switch that arrives sooner waits for it.
+    started = asyncio.Event()
 
     # Each turn also carries the restaurant and the switches in use at the time.
     forward_turns(
@@ -276,37 +308,16 @@ async def run_juniper_lab(ctx: JobContext, record: bool = False) -> None:
     )
     isolation.enabled = settings.noise == "enhanced"
 
-    await session.start(
-        agent=Juniper(settings, persona),
-        room=ctx.room,
-        record=record,
-        room_options=room_io.RoomOptions(
-            audio_input=room_io.AudioInputOptions(
-                noise_cancellation=isolation,
-                # LiveKit turns gain control off when a noise filter is set. Keep
-                # it on, as it was when Experiments 1 and 2 were tuned.
-                auto_gain_control=True,
-            )
-        ),
-    )
-    await ctx.connect()
-    limit_session(
-        ctx,
-        session,
-        send,
-        LAB_MINUTES,
-        "That's the time limit for one lab session. Press Call Juniper to start "
-        "a fresh one.",
-    )
-
     async def wait_for_handoff() -> None:
         try:
             await asyncio.wait_for(session.wait_for_idle(), timeout=3)
-        except Exception:
+        except (asyncio.TimeoutError, RuntimeError):
+            # Too slow, or the session has already closed. The switch still took.
             logger.warning("handoff did not settle within three seconds")
 
     async def set_settings(data: rtc.RpcInvocationData) -> str:
-        request = json.loads(data.payload or "{}")
+        request = request_of(data)
+        await started.wait()
         turn_detection = request.get("turn_detection")
         interruptions = request.get("interruptions")
 
@@ -348,13 +359,15 @@ async def run_juniper_lab(ctx: JobContext, record: bool = False) -> None:
 
     async def reset(data: rtc.RpcInvocationData) -> str:
         """Start a test-caller run fresh, as the original Juniper, so runs compare fairly."""
+        await started.wait()
         persona.name, persona.rule = DEFAULT_NAME, ""
         await fresh_agent()
         return state()
 
     async def customize(data: rtc.RpcInvocationData) -> str:
         """Rename the restaurant and set a house rule, or go back to the original."""
-        request = json.loads(data.payload or "{}")
+        request = request_of(data)
+        await started.wait()
         if request.get("reset"):
             persona.name, persona.rule = DEFAULT_NAME, ""
         else:
@@ -369,10 +382,37 @@ async def run_juniper_lab(ctx: JobContext, record: bool = False) -> None:
     async def get_state(data: rtc.RpcInvocationData) -> str:
         return state()
 
+    # Join the room and register the RPCs before the session starts. The page
+    # asks for lab.get_state the moment it sees the agent, so the methods have
+    # to be there by then.
+    await ctx.connect()
     ctx.room.local_participant.register_rpc_method(RPC_SET_SETTINGS, set_settings)
     ctx.room.local_participant.register_rpc_method(RPC_RESET, reset)
     ctx.room.local_participant.register_rpc_method(RPC_CUSTOMIZE, customize)
     ctx.room.local_participant.register_rpc_method(RPC_GET_STATE, get_state)
+
+    await session.start(
+        agent=Juniper(settings, persona),
+        room=ctx.room,
+        record=record,
+        room_options=room_io.RoomOptions(
+            audio_input=room_io.AudioInputOptions(
+                noise_cancellation=isolation,
+                # LiveKit turns gain control off when a noise filter is set. Keep
+                # it on, as it was when Experiments 1 and 2 were tuned.
+                auto_gain_control=True,
+            )
+        ),
+    )
+    started.set()
+    limit_session(
+        ctx,
+        session,
+        send,
+        LAB_MINUTES,
+        "That's the time limit for one lab session. Press Call Juniper to start "
+        "a fresh one.",
+    )
 
     await session.say(persona.greeting)
 

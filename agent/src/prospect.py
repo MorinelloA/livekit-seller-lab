@@ -45,6 +45,8 @@ RPC_FINISH = "practice.finish"
 # same made-up answer caught), in 2 to 4 seconds, for about a tenth of the cost.
 PRIYA_LLM = "openai/gpt-5.4-mini"
 JUDGE_LLM = "openai/gpt-5.4-mini"
+# How long one try at scoring may take. There are two tries at most.
+JUDGE_TIMEOUT_SECONDS = 30.0
 
 # The call takes 8 to 10 minutes, then the feedback. A session ends on its own
 # after this long.
@@ -381,12 +383,13 @@ async def judge(lines: list[Line]) -> dict[str, Any]:
     chat.add_message(role="system", content=JUDGE_INSTRUCTIONS)
     chat.add_message(role="user", content="The call:\n\n" + "\n".join(map(str, lines)))
     text = ""
-    # A reasoning model can think for a while before its first word, so allow a
-    # minute instead of the default ten seconds.
+    # A reasoning model can think for a while before its first word, so allow
+    # longer than the default ten seconds. The judge usually answers in 2 to 4.
+    # Two tries of this length fit inside the page's wait (SCORING_TIMEOUT_MS).
     async with inference.LLM(model=JUDGE_LLM, reasoning="low").chat(
         chat_ctx=chat,
         response_format=Judgment,
-        conn_options=APIConnectOptions(max_retry=1, timeout=60.0),
+        conn_options=APIConnectOptions(max_retry=1, timeout=JUDGE_TIMEOUT_SECONDS),
     ) as stream:
         async for chunk in stream:
             if chunk.delta and chunk.delta.content:

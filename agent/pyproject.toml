@@ -7,10 +7,12 @@ name = "seller-lab-agent"
 version = "0.1.0"
 description = "Juniper, the voice agent behind Seller Lab 1: Why Real-Time Voice AI Is Hard"
 requires-python = ">=3.10, <3.15"
+# Exact versions: the lab's behaviour was tuned and recorded on these, and
+# LiveKit Cloud installs from this list each time the agent is deployed.
 dependencies = [
-    "livekit-agents[deepgram]~=1.8",
-    "livekit-plugins-ai-coustics~=0.3",
-    "python-dotenv",
+    "livekit-agents[deepgram]==1.8.12",
+    "livekit-plugins-ai-coustics==0.3.5",
+    "python-dotenv~=1.2",
 ]
 
 [project.optional-dependencies]
@@ -18,6 +20,10 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "ruff",
+]
+# For scripts/make_clips_exp34.py, which mixes the café clips.
+clips = [
+    "numpy",
 ]
 
 [tool.setuptools]

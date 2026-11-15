@@ -90,21 +90,30 @@ Sender = Callable[[str, dict[str, Any]], None]
 
 
 def make_sender(ctx: JobContext) -> Sender:
-    """Returns send(topic, payload), which streams one JSON message to the page."""
-    pending: set[asyncio.Task[Any]] = set()
+    """Returns send(topic, payload), which streams one JSON message to the page.
 
-    def send(topic: str, payload: dict[str, Any]) -> None:
-        async def _send() -> None:
+    Messages go out one at a time, so the page gets them in the order they were
+    sent. A task per message could let a later turn overtake an earlier one.
+    """
+    queue: asyncio.Queue[tuple[str, str]] = asyncio.Queue()
+
+    async def _drain() -> None:
+        while True:
+            topic, text = await queue.get()
             try:
-                await ctx.room.local_participant.send_text(
-                    json.dumps(payload), topic=topic
-                )
+                await ctx.room.local_participant.send_text(text, topic=topic)
             except Exception:
                 logger.exception("could not send a message to the page on %s", topic)
 
-        task = asyncio.create_task(_send())
-        pending.add(task)
-        task.add_done_callback(pending.discard)
+    task = asyncio.create_task(_drain())
+
+    async def _stop(reason: str) -> None:
+        task.cancel()
+
+    ctx.add_shutdown_callback(_stop)
+
+    def send(topic: str, payload: dict[str, Any]) -> None:
+        queue.put_nowait((topic, json.dumps(payload)))
 
     return send
 
