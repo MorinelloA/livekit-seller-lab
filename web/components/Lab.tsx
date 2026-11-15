@@ -349,11 +349,13 @@ export function Lab() {
     setNotice(null);
     // Created inside the click, so the browser allows it to play audio.
     const mic = new LabMic();
+    let joined: Room | null = null;
     try {
       await mic.resume();
       const { serverUrl, participantToken } = await requestRoom('lab');
 
       const r = createRoom();
+      joined = r;
       r.registerTextStreamHandler(EVENTS_TOPIC, async (reader) => {
         try {
           handleEvent(JSON.parse(await reader.readAll()) as LabEvent);
@@ -382,6 +384,12 @@ export function Lab() {
       findAgent(r);
       logPilot({ kind: 'call', page: 'lab', state: 'connected' });
     } catch (err) {
+      // A step after joining failed (the microphone track, or audio playback): leave the
+      // room too, quietly, so it doesn't stay connected with nobody on the page.
+      if (joined) {
+        joined.removeAllListeners();
+        await joined.disconnect().catch(() => undefined);
+      }
       await mic.close();
       setStatus('error');
       if (err instanceof AccessCodeError) rejectCode();
