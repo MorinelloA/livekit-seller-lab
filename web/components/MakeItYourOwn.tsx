@@ -34,6 +34,9 @@ export function MakeItYourOwn(props: {
   const [rule, setRule] = useState('');
 
   const turns = run.events.filter(isTurn);
+  // The run's own turns say which restaurant Juniper was playing; the persona may have
+  // changed since (every experiment run resets it).
+  const ranAs = turns.find((t) => t.agent)?.agent ?? (persona?.custom ? persona.name : 'Juniper');
   const status = run.state?.status;
   const { prediction } = copy;
   const showAnswer = locked && (revealed || (applied && status === 'done'));
@@ -146,7 +149,7 @@ export function MakeItYourOwn(props: {
                   runs={[
                     {
                       key: run.state.id,
-                      label: persona?.custom ? persona.name : 'Juniper',
+                      label: ranAs,
                       tone: 'enhanced',
                       timeline: run.timeline,
                       events: run.events,
