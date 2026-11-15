@@ -65,7 +65,9 @@ export function CallDock(props: {
         : 'Waiting for Juniper to join…';
 
   return (
-    <div className="sticky bottom-3 z-30 mt-10 flex flex-col gap-2 sm:bottom-4">
+    // On a phone it floats where the kit draws it: 12px from the sides (8px into the page's
+    // 20px gutter) and 20px from the bottom.
+    <div className="sticky bottom-5 z-30 mt-10 flex flex-col gap-2 max-sm:-mx-2 sm:bottom-4">
       {message && <Callout className="[box-shadow:var(--dock-shadow)] backdrop-blur-md">{message}</Callout>}
       <section
         aria-label="Call"
