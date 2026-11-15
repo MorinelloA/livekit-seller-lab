@@ -78,8 +78,11 @@ export function PilotResults() {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `seller-lab-pilot-${new Date().toISOString().slice(0, 10)}.json`;
+    // Safari and Firefox need the link in the page, and the URL alive until the download starts.
+    document.body.append(link);
     link.click();
-    URL.revokeObjectURL(link.href);
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1_000);
   };
 
   const summaries = data
