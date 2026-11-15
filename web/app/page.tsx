@@ -166,7 +166,7 @@ export default function OverviewPage() {
 
       <section aria-labelledby="inside-title" className="page-column flex flex-col gap-8 pt-24">
         <SectionHead eyebrow="What’s inside" id="inside-title" title="Two things to try, and a pilot that checks whether they teach" />
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-3">
           {PARTS.map((part) => (
             <article key={part.eyebrow} className="flex flex-col gap-3.5 rounded-lg border border-line bg-surface p-7">
               <Eyebrow size="sm">{part.eyebrow}</Eyebrow>
