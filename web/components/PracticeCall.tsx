@@ -527,7 +527,8 @@ function CallBar(props: {
           {connected && (live || phase === 'scored') && (
             <Button onClick={props.onToggleMic}>
               <Icon name="mic" className="size-4" />
-              {micOn ? 'Mute' : 'Use my microphone'}
+              {/* Icon-only on phones, like the lab's call bar; the name stays for screen readers. */}
+              <span className="max-sm:sr-only">{micOn ? 'Mute' : 'Use my microphone'}</span>
             </Button>
           )}
           {(phase === 'idle' || phase === 'connecting') && (
