@@ -927,6 +927,7 @@
  },
  "audio": {
   "src": "/replay/exp1-enhanced.wav",
-  "offsetMs": -2
+  "offsetMs": -2,
+  "durationMs": 11839
  }
 }

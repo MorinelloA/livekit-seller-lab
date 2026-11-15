@@ -1,16 +1,23 @@
 'use client';
 
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ComponentProps, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConversationTimeline, type TimelineRun, TimelineLegend } from '@/components/ConversationTimeline';
 import { PauseParts } from '@/components/PauseParts';
 import { Prediction } from '@/components/Prediction';
-import { brandCase, Eyebrow, Segmented } from '@/components/ui/Bits';
+import { TurnList } from '@/components/TurnList';
+import { brandCase, Callout, Eyebrow, Segmented } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
 import { Icon } from '@/components/ui/Icon';
-import { CAFE_BOOKING_LINE, DEFAULT_MODE_LABELS, type Experiment, type ExperimentId } from '@/lib/experiments';
-import { isTurn, type LoggedEvent, type LoggedTurn, type Mode } from '@/lib/protocol';
-import { type RunTimeline, TIMELINE_SECONDS } from '@/lib/timeline';
+import { DEFAULT_MODE_LABELS, type Experiment, type ExperimentId } from '@/lib/experiments';
+import { withBase } from '@/lib/paths';
+import type { Peaks } from '@/lib/peaks';
+import { isTurn, type LoggedEvent, type Mode } from '@/lib/protocol';
+import { loadRecording, RECORDED, type Recording } from '@/lib/recordings';
+import { capturedDate, playheadMs, recordedTimeline, recordingName, type ReplayRun } from '@/lib/replay';
+import { outcomeIsEmpty, outcomeSentence, runOutcome } from '@/lib/runSummary';
+import { type ClipKey, type RunTimeline, TIMELINE_SECONDS } from '@/lib/timeline';
+import { inProgress, type PlayerStatus, usePlaybackPosition, useRecordingPlayer } from '@/lib/useRecordingPlayer';
 
 export interface RunState {
   id: string;
@@ -21,7 +28,12 @@ export interface RunView {
   state?: RunState;
   events: LoggedEvent[];
   timeline?: RunTimeline;
+  /** Set when this is a recording of an earlier call, not a run on this one: when it was made, and its clips' peaks. */
+  recorded?: { capturedAt: string; peaks: Partial<Record<ClipKey, Peaks>> };
 }
+
+/** How a recorded run came to count: heard to the end, opened without sound, or it didn't load. */
+export type RecordedStatus = 'played' | 'skipped' | 'failed';
 
 const MODES: Mode[] = ['baseline', 'enhanced'];
 
@@ -68,8 +80,13 @@ export function ExperimentPanel(props: {
   onPredict?: (choice: string, correct: boolean) => void;
   /** Experiment 3 only: the café under the learner's microphone. */
   cafe?: { on: boolean; onToggle: () => void };
+  /** True while a call is joining or connected. Recordings are put away then: the call would hear them. */
+  onCall: boolean;
+  /** The recorded runs the learner has finished, by hearing them to the end or opening them without sound. */
+  recordedDone: Record<Mode, boolean>;
+  onRecorded: (mode: Mode, status: RecordedStatus) => void;
 }) {
-  const { experiment, currentMode, runs, canRun, cafe } = props;
+  const { experiment, currentMode, runs, canRun, cafe, onCall, recordedDone } = props;
   const [choice, setChoice] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -81,18 +98,132 @@ export function ExperimentPanel(props: {
   }, [revealed]);
 
   const labels = experiment.modeLabels ?? DEFAULT_MODE_LABELS;
-  const bothRan = MODES.every((mode) => runs[mode].state?.status === 'done');
-  const anyRunning = MODES.some((mode) => runs[mode].state?.status === 'running');
-  const showAnswer = locked && (revealed || bothRan);
   const { prediction, card } = experiment;
 
+  // The recorded runs: a real take of this experiment on each setting, for a
+  // learner who isn't on a call. The sound comes from the site's one player;
+  // the run's data (timeline, turns, peaks) loads the first time it's asked for.
+  const player = useRecordingPlayer();
+  const [recording, setRecording] = useState<Recording | null>(null);
+  // The setting whose data didn't load, or 'both' when the results were asked for without sound.
+  const [dataFailed, setDataFailed] = useState<Mode | 'both' | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const keyOf = (mode: Mode) => recordingName(experiment.id, mode);
+  /** Which of this experiment's recordings the player holds, if either. */
+  const heldMode = MODES.find((mode) => player.key === keyOf(mode)) ?? null;
+  const playback: PlayerStatus = heldMode ? player.status : 'idle';
+  const hearing = heldMode !== null && inProgress(playback) ? heldMode : null;
+
+  const liveDone = (mode: Mode) => runs[mode].state?.status === 'done';
+  // The parent hears about a finished recording a moment after its sound ends; until then the player's own word counts.
+  const recordingDone = (mode: Mode) => recordedDone[mode] || (heldMode === mode && playback === 'ended');
+  const doneFor = (mode: Mode) => liveDone(mode) || recordingDone(mode);
+
+  // A recording counts once its sound has ended. The parent keeps the tally and notes it for the pilot.
+  const onRecordedRef = useRef(props.onRecorded);
+  useEffect(() => {
+    onRecordedRef.current = props.onRecorded;
+  });
+  useEffect(() => {
+    if (!heldMode) return;
+    if (playback === 'ended') onRecordedRef.current(heldMode, 'played');
+    if (playback === 'error') onRecordedRef.current(heldMode, 'failed');
+  }, [heldMode, playback]);
+
+  const loadData = useCallback(async () => {
+    const loaded = await loadRecording(experiment.id);
+    setRecording(loaded);
+  }, [experiment.id]);
+
+  const playRecorded = (mode: Mode) => {
+    const key = keyOf(mode);
+    if (heldMode === mode && inProgress(playback)) {
+      if (playback === 'paused') player.resume();
+      else player.pause();
+      return;
+    }
+    setDataFailed(null);
+    // The sound starts inside the click, as browsers require; the run's data loads alongside it.
+    player.play(key, withBase(`/replay/${key}.wav`));
+    if (!recording) {
+      loadData().catch(() => {
+        player.stop(key);
+        setDataFailed(mode);
+      });
+    }
+  };
+
+  /** Opens every result that isn't in yet, silently: Step 4 never depends on sound working. */
+  const showWithoutSound = () => {
+    const missing = MODES.filter((mode) => !doneFor(mode));
+    setDataFailed(null);
+    if (hearing) player.stop(keyOf(hearing));
+    loadData().then(
+      () => {
+        missing.forEach((mode) => props.onRecorded(mode, 'skipped'));
+        // The control goes away once the results are in, so focus moves to them.
+        requestAnimationFrame(() => resultsRef.current?.focus());
+      },
+      () => setDataFailed('both'),
+    );
+  };
+
+  /** What a setting's card and lane show: this call's run, or else its recording once that's been opened. */
+  const viewOf = (mode: Mode): RunView => {
+    const live = runs[mode];
+    const opened = recording !== null && (recordingDone(mode) || hearing === mode);
+    // A run on this call wins over a recording of the same setting, unless it failed.
+    if (!opened || (live.state && live.state.status !== 'failed')) return live;
+    const run = recording[mode];
+    return {
+      state: { id: `recorded-${keyOf(mode)}`, status: recordingDone(mode) ? 'done' : 'running' },
+      events: run.events,
+      timeline: recordedTimeline(run),
+      recorded: { capturedAt: run.capturedAt, peaks: run.peaks },
+    };
+  };
+  const views: Record<Mode, RunView> = { baseline: viewOf('baseline'), enhanced: viewOf('enhanced') };
+  const labelOf = (mode: Mode) => {
+    const made = views[mode].recorded?.capturedAt;
+    return made ? `${labels[mode]} · recorded ${capturedDate(made)}` : labels[mode];
+  };
+  // A recording brings its clips' peaks, so the page never fetches the clips just to draw them.
+  const recordedPeaks = useMemo(() => (recording ? { ...recording.baseline.peaks, ...recording.enhanced.peaks } : undefined), [recording]);
+  const anyRecorded = MODES.some((mode) => views[mode].recorded);
+  /** The recording being heard, when its lane is on the timeline: the playhead follows it. */
+  const heard = hearing && recording && views[hearing].recorded ? { key: keyOf(hearing), run: recording[hearing] } : null;
+
+  const bothRan = MODES.every(doneFor);
+  const anyRunning = MODES.some((mode) => runs[mode].state?.status === 'running');
+  const showAnswer = locked && (revealed || bothRan);
+  const liveCount = MODES.filter(liveDone).length;
+  const stepNote = bothRan
+    ? liveCount === 2
+      ? 'Both runs done'
+      : liveCount === 1
+        ? 'One run and one recording done'
+        : 'Both recordings done'
+    : anyRunning
+      ? 'The test caller is on the line'
+      : hearing
+        ? playback === 'paused'
+          ? 'A recording is paused'
+          : 'A recording is playing'
+        : undefined;
+
+  // Recordings are offered for the settings that have no finished run on this call.
+  const offered = RECORDED.includes(experiment.id) && !onCall ? MODES.filter((mode) => !liveDone(mode)) : [];
+  const unseen = offered.filter((mode) => !recordingDone(mode));
+  const failedMode = heldMode && player.problem === 'failed' ? heldMode : dataFailed;
+
   const timelineRuns: TimelineRun[] = MODES.flatMap((mode) => {
-    const view = runs[mode];
+    const view = views[mode];
     return view.timeline && view.state
-      ? [{ key: view.state.id, label: labels[mode], tone: mode, timeline: view.timeline, events: view.events }]
+      ? [{ key: view.state.id, label: labelOf(mode), tone: mode, timeline: view.timeline, events: view.events }]
       : [];
   });
-  const turnsFor = (mode: Mode) => runs[mode].events.filter(isTurn);
+  // A recording's turns wait for its end, so the learner hears the run before reading it.
+  const turnsFor = (mode: Mode) => (views[mode].recorded && views[mode].state?.status !== 'done' ? [] : views[mode].events.filter(isTurn));
 
   return (
     <section
@@ -138,7 +269,7 @@ export function ExperimentPanel(props: {
           n={2}
           state={bothRan ? 'done' : locked ? 'current' : 'upcoming'}
           label="Run the test caller"
-          note={bothRan ? 'Both runs done' : anyRunning ? 'The test caller is on the line' : undefined}
+          note={stepNote}
         >
           <p className="m-0 text-card leading-relaxed">{experiment.testCaller}</p>
           <div className="flex flex-wrap gap-2">
@@ -149,15 +280,63 @@ export function ExperimentPanel(props: {
               </Button>
             ))}
           </div>
+
+          {offered.length > 0 && (
+            <div className="flex flex-col gap-2.5">
+              <p className="m-0 text-small leading-normal">
+                <span className="font-semibold text-fg">Not on a call? </span>
+                Play a recording instead: the same test caller on a real call, recorded earlier.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {offered.map((mode) => {
+                  const paused = heldMode === mode && playback === 'paused';
+                  const going = hearing === mode && !paused;
+                  return (
+                    <Button key={mode} size="stack" onClick={() => playRecorded(mode)} disabled={!locked}>
+                      <Icon name={going ? 'pause' : 'play'} className="size-3" />
+                      {going ? 'Pause' : paused ? 'Resume' : 'Play'} the recorded {labels[mode]} run
+                    </Button>
+                  );
+                })}
+              </div>
+              {heldMode && player.problem === 'blocked' && (
+                <p className="m-0 text-small text-warn">Your browser didn’t start the sound. Press Play again.</p>
+              )}
+              {failedMode && (
+                <Callout>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <span className="min-w-0 flex-[1_1_16rem]">
+                      {failedMode === 'both'
+                        ? 'The recordings didn’t load. Check your connection, then try again.'
+                        : `The recording of the ${labels[failedMode]} run didn’t load. Check your connection, then try again.`}
+                    </span>
+                    <Button size="sm" onClick={() => (failedMode === 'both' ? showWithoutSound() : playRecorded(failedMode))}>
+                      Retry
+                    </Button>
+                  </div>
+                </Callout>
+              )}
+              {locked && unseen.length > 0 && (
+                <div>
+                  <Button variant="quiet" onClick={showWithoutSound}>
+                    {unseen.length === 2 ? 'Show both results without sound' : `Show the ${labels[unseen[0]]} result without sound`}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
           {!locked && <p className="m-0 text-small text-subtle">Lock in a prediction first.</p>}
 
           {timelineRuns.length > 0 && (
             <div className="rounded-md border border-line bg-page">
               <div className="overflow-hidden px-4 pt-4 pb-1.5 sm:px-[18px]">
-                <ConversationTimeline
+                <RunsTimeline
                   runs={timelineRuns}
                   minSeconds={TIMELINE_SECONDS[experiment.id]}
                   showOverlap={experiment.id === 1}
+                  peaks={anyRecorded ? recordedPeaks : undefined}
+                  heard={heard}
+                  callerFrom={hearing && heard ? views[hearing].state?.id : undefined}
                   title={`Experiment ${experiment.id}, both settings on one time axis`}
                 />
               </div>
@@ -167,9 +346,17 @@ export function ExperimentPanel(props: {
             </div>
           )}
 
-          <div className="grid gap-3 md:grid-cols-2">
+          <div ref={resultsRef} tabIndex={-1} className="grid gap-3 focus:outline-none md:grid-cols-2">
             {MODES.map((mode) => (
-              <RunResult key={mode} experimentId={experiment.id} label={labels[mode]} tone={mode} view={runs[mode]} />
+              <RunResult
+                key={mode}
+                experimentId={experiment.id}
+                label={labelOf(mode)}
+                tone={mode}
+                view={views[mode]}
+                playback={heldMode === mode ? playback : 'idle'}
+                blocked={heldMode === mode && player.problem === 'blocked'}
+              />
             ))}
           </div>
 
@@ -266,37 +453,79 @@ function CardPart({ title, emphasis, children }: { title: string; emphasis?: boo
   );
 }
 
+/**
+ * The timeline, with a playhead while one of its runs is a recording being
+ * heard. The playhead moves every frame, so only this part redraws with it.
+ */
+function RunsTimeline({
+  heard,
+  ...timeline
+}: Omit<ComponentProps<typeof ConversationTimeline>, 'playheadMs'> & { heard: { key: string; run: ReplayRun } | null }) {
+  const position = usePlaybackPosition(heard?.key ?? null);
+  return <ConversationTimeline {...timeline} playheadMs={heard && position !== null ? playheadMs(heard.run, position) : null} />;
+}
+
 function RunResult({
   experimentId,
   label,
   tone,
   view,
+  playback,
+  blocked,
 }: {
   experimentId: ExperimentId;
   label: string;
   tone: Mode;
   view: RunView;
+  /** Where the site's player is with this setting's recording; 'idle' when it holds another, or none. */
+  playback: PlayerStatus;
+  /** The browser wouldn't start this setting's recording. */
+  blocked: boolean;
 }) {
-  const turns = view.events.filter(isTurn);
   const status = view.state?.status;
+  const recorded = view.recorded !== undefined;
+  // A recording's turns wait for its end, so the learner hears the run before reading it.
+  const turns = recorded && status !== 'done' ? [] : view.events.filter(isTurn);
+  const progress =
+    playback === 'loading'
+      ? 'Loading the recording…'
+      : playback === 'buffering'
+        ? 'Buffering…'
+        : playback === 'paused'
+          ? 'The recording is paused.'
+          : playback === 'playing'
+            ? 'The recording is playing…'
+            : null;
+  const live = recorded ? undefined : status;
 
   return (
     <div className="flex flex-col gap-3 rounded-md border border-line p-[18px]">
       <p className={cx('eyebrow-sm m-0', tone === 'enhanced' ? 'text-accent' : 'text-subtle')}>{label}</p>
-      {!status && <p className="m-0 text-sm text-subtle">Not run yet.</p>}
-      {status === 'running' && <p className="m-0 text-sm text-subtle">The test caller is on the line…</p>}
-      {status === 'failed' && <p className="m-0 text-sm text-warn">This run didn’t finish. Try it again.</p>}
+      {!status && !progress && <p className="m-0 text-sm text-subtle">Not run yet.</p>}
+      {live === 'running' && <p className="m-0 text-sm text-subtle">The test caller is on the line…</p>}
+      {live === 'failed' && <p className="m-0 text-sm text-warn">This run didn’t finish. Try it again.</p>}
+      {/* A recording that's already been heard keeps showing its result while it plays again. */}
+      {progress && live === undefined && status !== 'done' && <p className="m-0 text-sm text-subtle">{progress}</p>}
       {/* Only the run's status is announced; its turns are read when the learner gets to them. */}
       <p role="status" className="sr-only">
-        {status === 'running'
-          ? `${label}: the test caller is on the line.`
-          : status === 'failed'
-            ? `${label}: this run didn’t finish.`
-            : status === 'done'
-              ? `${label}: the run is done.`
-              : ''}
+        {blocked
+          ? `${label}: your browser didn’t start the sound. Press Play again.`
+          : recorded && status === 'done'
+            ? // The same words whether it was heard to the end or opened without sound, and while it plays again: said once.
+              `${label}: the result is showing.`
+            : playback === 'loading'
+              ? `${label}: loading the recording.`
+              : playback === 'buffering'
+                ? `${label}: the recording is buffering.`
+                : live === 'running'
+                  ? `${label}: the test caller is on the line.`
+                  : live === 'failed'
+                    ? `${label}: this run didn’t finish.`
+                    : live === 'done'
+                      ? `${label}: the run is done.`
+                      : ''}
       </p>
-      {status === 'done' && <Summary experimentId={experimentId} turns={turns} events={view.events} />}
+      {status === 'done' && <Summary experimentId={experimentId} events={view.events} />}
       {turns.length > 0 && (
         <div className="border-t border-line pt-3">
           <TurnList turns={turns} markExtra={experimentId === 3} />
@@ -306,138 +535,12 @@ function RunResult({
   );
 }
 
-const words = (text: string) => text.toLowerCase().match(/[a-z0-9']+/g) ?? [];
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
-
-/** A caller's line with the words that aren't in the café booking marked: the café said them. */
-function MarkedLine({ text }: { text: string }) {
-  const booking = new Set(words(CAFE_BOOKING_LINE));
+/** What the run showed, in the words lib/runSummary.ts gives every run of that kind. */
+function Summary({ experimentId, events }: { experimentId: ExperimentId; events: LoggedEvent[] }) {
+  const outcome = runOutcome(experimentId, events);
   return (
-    <>
-      {text.split(/(\s+)/).map((part, i) => {
-        const word = part.toLowerCase().match(/[a-z0-9']+/)?.[0];
-        return word && !booking.has(word) ? (
-          <mark key={i} className="rounded-sm bg-warn-soft px-0.5 text-warn">
-            {part}
-          </mark>
-        ) : (
-          part
-        );
-      })}
-    </>
-  );
-}
-
-/** The conversation from one run, with Juniper's cut-off replies marked. */
-export function TurnList({ turns, markExtra = false }: { turns: LoggedTurn[]; markExtra?: boolean }) {
-  if (turns.length === 0) return null;
-  return (
-    <ol className="m-0 flex list-none flex-col gap-2 p-0 text-small leading-normal">
-      {turns.map((turn) => (
-        <li key={turn.id}>
-          <span className={cx('font-semibold', turn.role === 'user' ? 'text-fg' : 'text-accent')}>
-            {turn.role === 'user' ? 'Caller' : (turn.agent ?? 'Juniper')}:{' '}
-          </span>
-          <span>
-            {!turn.text ? '(nothing heard)' : markExtra && turn.role === 'user' ? <MarkedLine text={turn.text} /> : turn.text}
-          </span>
-          {turn.interrupted && (
-            <span className="ml-1.5 rounded-sm bg-warn-soft px-1.5 font-mono text-label text-warn">cut off</span>
-          )}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function Summary({
-  experimentId,
-  turns,
-  events,
-}: {
-  experimentId: ExperimentId;
-  turns: LoggedTurn[];
-  events: LoggedEvent[];
-}) {
-  const callerTurns = turns.filter((t) => t.role === 'user');
-  const line = 'm-0 text-sm leading-relaxed text-fg';
-
-  if (experimentId === 1) {
-    // What the caller had said by the time Juniper first answered, and how
-    // often Juniper started talking and got talked over.
-    const firstReply = turns.findIndex((t) => t.role === 'assistant');
-    const before = (firstReply === -1 ? turns : turns.slice(0, firstReply))
-      .filter((t) => t.role === 'user')
-      .map((t) => t.text.trim())
-      .join(' ');
-    const replies = turns.filter((t) => t.role === 'assistant');
-    const cutOff = replies.filter((t) => t.interrupted).length;
-    if (!before) return <p className="m-0 text-sm text-subtle">Juniper didn’t hear the caller.</p>;
-    return (
-      <p className={line}>
-        Before its first answer, Juniper heard: “{before}” It started answering {replies.length}{' '}
-        {replies.length === 1 ? 'time' : 'times'}
-        {cutOff > 0 ? ` and was cut off ${cutOff} ${cutOff === 1 ? 'time' : 'times'}.` : ' and was never cut off.'}
-      </p>
-    );
-  }
-
-  if (experimentId === 3) {
-    // Words in the caller's turns that aren't in the booking came from the café.
-    const booking = new Set(words(CAFE_BOOKING_LINE));
-    const heard = callerTurns.map((t) => t.text.trim()).join(' ');
-    const extra = words(heard).filter((w) => !booking.has(w));
-    if (!heard) return <p className="m-0 text-sm text-subtle">Juniper didn’t hear the caller.</p>;
-    return (
-      <p className={line}>
-        {extra.length === 0
-          ? 'Juniper heard only the caller.'
-          : `Juniper heard ${plural(extra.length, 'word')} nobody said to it: “${extra.join(' ')}.”`}
-      </p>
-    );
-  }
-
-  if (experimentId === 4) {
-    // LiveKit's own timing for Juniper's first answer in the run.
-    const answer = turns.find((t) => t.role === 'assistant');
-    const pause = answer?.metrics.e2e_latency;
-    const llm = answer?.metrics.llm_node_ttft;
-    if (!answer) return <p className="m-0 text-sm text-subtle">Juniper didn’t answer.</p>;
-    if (pause == null || llm == null) {
-      return <p className="m-0 text-sm text-subtle">Juniper answered, but no timing came back for that turn.</p>;
-    }
-    return (
-      <p className={line}>
-        The pause before Juniper’s answer was {pause.toFixed(2)} s. The LLM’s first words took {llm.toFixed(2)} s of it.
-      </p>
-    );
-  }
-
-  // Experiment 2. Count the times Juniper stopped for something other than the
-  // real question. Deepgram writes no words for "uh-huh", so the agent treats
-  // the stop as a false interruption and picks its sentence back up: those
-  // stops arrive as false_interruption events. A stop that did turn into a
-  // caller's turn shows as a cut-off reply followed by something other than
-  // the question.
-  const isRealQuestion = (text: string) => /vegetarian|\bwait\b/i.test(text);
-  const stalls = events.filter((e) => e.type === 'false_interruption').length;
-  let fullStops = 0;
-  turns.forEach((turn, i) => {
-    if (turn.role !== 'assistant' || !turn.interrupted) return;
-    const next = turns.slice(i + 1).find((t) => t.role === 'user');
-    if (next && !isRealQuestion(next.text)) fullStops += 1;
-  });
-  const stops = stalls + fullStops;
-  const heardQuestion = callerTurns.some((t) => /vegetarian/i.test(t.text));
-  return (
-    <p className={line}>
-      Juniper stopped for “uh-huh” {stops} {stops === 1 ? 'time' : 'times'}
-      {stalls > 0
-        ? stalls === stops
-          ? ', and picked up again after a pause each time'
-          : `, and picked up again ${stalls === 1 ? 'once' : `${stalls} times`}`
-        : ''}
-      . Heard the real question: {heardQuestion ? 'yes' : 'no'}.
+    <p className={outcomeIsEmpty(outcome) ? 'm-0 text-sm text-subtle' : 'm-0 text-sm leading-relaxed text-fg'}>
+      {outcomeSentence(outcome)}
     </p>
   );
 }

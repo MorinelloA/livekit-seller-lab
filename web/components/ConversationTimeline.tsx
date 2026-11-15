@@ -167,12 +167,19 @@ export function ConversationTimeline({
   peaks: givenPeaks,
   showOverlap = false,
   playheadMs = null,
+  callerFrom,
   title,
 }: {
   runs: TimelineRun[];
   minSeconds: number;
   /** Peaks shipped with a recorded replay; otherwise each clip is decoded on the page. */
   peaks?: Partial<Record<ClipKey, Peaks>>;
+  /**
+   * The key of the run whose clips the caller's lane draws: the one being heard.
+   * It matters in Experiment 2, where the "uh-huh"s wait for Juniper, so the
+   * caller's timing differs a little between runs.
+   */
+  callerFrom?: string;
   /** Shade where Juniper talked over the caller (Experiment 1's problem). */
   showOverlap?: boolean;
   /** For the replay: where playback is, in ms from the alignment point. */
@@ -193,8 +200,9 @@ export function ConversationTimeline({
   const x = (ms: number) => (ms - axis.origin) * pxPerMs;
   const pct = (ms: number) => `${((ms - axis.origin) / axis.span) * 100}%`;
 
-  // Both runs hear the same clips; the caller's lane comes from the first run that has them.
-  const callerClips = lanes.find((l) => l.clips.length > 0)?.clips ?? [];
+  // Both runs hear the same clips; the caller's lane comes from the run being heard, or the first run that has them.
+  const chosen = callerFrom === undefined ? undefined : lanes[runs.findIndex((r) => r.key === callerFrom)];
+  const callerClips = (chosen?.clips.length ? chosen : lanes.find((l) => l.clips.length > 0))?.clips ?? [];
   const clipKeys = callerClips.map((c) => c.clip);
   const peaks = usePeaks(clipKeys, givenPeaks);
   const dots = useMemo(

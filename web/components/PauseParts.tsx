@@ -1,4 +1,5 @@
 import type { LoggedTurn } from '@/lib/protocol';
+import { pauseRows } from '@/lib/runSummary';
 import { cx } from '@/components/ui/cx';
 
 export interface PausePartsRun {
@@ -7,36 +8,13 @@ export interface PausePartsRun {
   turns: LoggedTurn[];
 }
 
-const PARTS = [
-  { label: 'End of turn', from: 'user', key: 'end_of_turn_delay' },
-  { label: 'Transcript', from: 'user', key: 'transcription_delay' },
-  { label: 'LLM first words', from: 'assistant', key: 'llm_node_ttft' },
-  { label: 'Voice starts', from: 'assistant', key: 'tts_node_ttfb' },
-  { label: 'Total pause', from: 'assistant', key: 'e2e_latency' },
-] as const;
-
-/** Juniper's first answer in a run, and the caller's turn just before it. */
-function firstExchange(turns: LoggedTurn[]) {
-  const i = turns.findIndex((t) => t.role === 'assistant');
-  if (i === -1) return null;
-  const user = [...turns.slice(0, i)].reverse().find((t) => t.role === 'user') ?? null;
-  return { user, assistant: turns[i] };
-}
-
 /**
  * Experiment 4's readout: each part of the pause, one row per part, a bar per
  * model. Grouped, not stacked: the steps overlap (the agent starts drafting
  * before the turn is confirmed), so they don't add up to the total.
  */
 export function PauseParts({ runs }: { runs: PausePartsRun[] }) {
-  const rows = PARTS.map((part) => ({
-    ...part,
-    values: runs.map((run) => {
-      const exchange = firstExchange(run.turns);
-      const turn = part.from === 'user' ? exchange?.user : exchange?.assistant;
-      return turn?.metrics[part.key] ?? null;
-    }),
-  }));
+  const rows = pauseRows(runs.map((run) => run.turns));
   const largest = Math.max(1, ...rows.flatMap((r) => r.values.filter((v): v is number => v != null)));
   if (rows.every((r) => r.values.every((v) => v == null))) return null;
 

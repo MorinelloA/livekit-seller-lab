@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ConversationTimeline, TimelineLegend } from '@/components/ConversationTimeline';
-import { type RunView, TurnList } from '@/components/ExperimentPanel';
+import type { RunView } from '@/components/ExperimentPanel';
 import { Prediction } from '@/components/Prediction';
+import { TurnList } from '@/components/TurnList';
 import { Eyebrow } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
 import { Field, WrappingInput } from '@/components/ui/Field';

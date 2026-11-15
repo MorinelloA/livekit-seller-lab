@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
-import { Replay, type ReplayEntry } from '@/components/overview/Replay';
+import { Replay, type ReplayExperiment } from '@/components/overview/Replay';
 import { brandCase, Eyebrow } from '@/components/ui/Bits';
 import { ButtonLink } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
-import type { LoggedEvent, LoggedTurn } from '@/lib/protocol';
-import type { ReplayRun } from '@/lib/replay';
-import baselineRun from '@/lib/replays/exp1-baseline.json';
-import enhancedRun from '@/lib/replays/exp1-enhanced.json';
+import { DEFAULT_MODE_LABELS, type ExperimentId, EXPERIMENTS } from '@/lib/experiments';
+import type { Mode } from '@/lib/protocol';
+import { loadRecording, RECORDED, type Recording } from '@/lib/recordings';
+import { capturedDate } from '@/lib/replay';
+import { outcomeSentence, runOutcome } from '@/lib/runSummary';
 import { AUTHOR } from '@/lib/site';
 import { Scroller } from '@/components/ui/Scroller';
 
@@ -15,27 +16,42 @@ export const metadata: Metadata = {
   description: 'A hands-on LiveKit lab for new sellers, with a scored practice call and a pilot.',
 };
 
-const turnsOf = (events: LoggedEvent[]) => events.filter((e): e is LoggedTurn => e.type === 'turn');
+const MODES: Mode[] = ['baseline', 'enhanced'];
 
-/** What one recorded run shows, in a sentence, from its own transcript. */
-function summarize(run: ReplayRun): string {
-  const turns = turnsOf(run.events);
-  const first = turns.findIndex((t) => t.role === 'assistant');
-  const heard = (first === -1 ? turns : turns.slice(0, first))
-    .filter((t) => t.role === 'user')
-    .map((t) => t.text.trim())
-    .join(' ');
-  const replies = turns.filter((t) => t.role === 'assistant');
-  const cut = replies.filter((t) => t.interrupted).length;
-  const times = (n: number) => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`);
-  if (replies.length === 1 && cut === 0) return `Heard “${heard}” as one turn, and answered once.`;
-  return `Jumped in after “${heard}”, started answering ${replies.length} times and was cut off ${times(cut)}.`;
+/** What each setting does, in a few words, for its lane on the replay. */
+const SETTING_IN_SHORT: Record<ExperimentId, Record<Mode, string>> = {
+  1: { baseline: 'silence ends the turn', enhanced: 'LiveKit’s turn detector' },
+  2: { baseline: 'half a second of speech stops Juniper', enhanced: 'adaptive interruption handling' },
+  3: { baseline: 'the audio as it comes in', enhanced: 'voice isolation first' },
+  4: { baseline: 'Gemma 4 31B', enhanced: 'Grok 4.20 Reasoning' },
+};
+
+/** What a recording's sound can't show. A listener should know before judging the setting by ear. */
+const REPLAY_NOTES: Partial<Record<ExperimentId, string>> = {
+  3: 'Both recordings play the café as the caller’s phone sent it. Voice isolation works on the agent’s side, so its effect is in what Juniper heard, not in this sound.',
+};
+
+/**
+ * What the replay shows for one experiment, read from its recording at build
+ * time: the labels, the day, and each run's outcome in lib/runSummary.ts's words.
+ */
+function replayOf(id: ExperimentId, runs: Recording): ReplayExperiment {
+  const experiment = EXPERIMENTS.find((e) => e.id === id)!;
+  const names = experiment.modeLabels ?? DEFAULT_MODE_LABELS;
+  return {
+    id,
+    switchName: experiment.switchName,
+    recordedOn: capturedDate(runs.baseline.capturedAt),
+    note: REPLAY_NOTES[id],
+    settings: MODES.map((mode) => ({
+      mode,
+      name: names[mode],
+      label: `${names[mode]} · ${SETTING_IN_SHORT[id][mode]}`,
+      summary: outcomeSentence(runOutcome(id, runs[mode].events)),
+      durationMs: runs[mode].audio?.durationMs ?? null,
+    })),
+  };
 }
-
-const RUNS: ReplayEntry[] = [
-  { mode: 'baseline', label: 'Baseline · silence ends the turn', replay: baselineRun as unknown as ReplayRun, summary: '' },
-  { mode: 'enhanced', label: 'Enhanced · LiveKit’s turn detector', replay: enhancedRun as unknown as ReplayRun, summary: '' },
-].map((entry) => ({ ...entry, summary: summarize(entry.replay) }) as ReplayEntry);
 
 function SectionHead({ eyebrow, title, id }: { eyebrow: string; title: string; id: string }) {
   return (
@@ -137,7 +153,12 @@ const DECISIONS = [
   },
 ];
 
-export default function OverviewPage() {
+export default async function OverviewPage() {
+  // Every recording is read here, on the server, for its labels and outcomes. Only the first
+  // experiment's runs go to the browser with the page; the others load when a visitor picks them.
+  const recordings = await Promise.all(RECORDED.map(loadRecording));
+  const replays = RECORDED.map((id, i) => replayOf(id, recordings[i]));
+
   return (
     <main id="main">
       <section className="page-column flex flex-col gap-6 pt-20 pb-14 sm:pt-24">
@@ -163,7 +184,7 @@ export default function OverviewPage() {
       </section>
 
       <section aria-labelledby="replay-title" className="page-column">
-        <Replay entries={RUNS} />
+        <Replay experiments={replays} first={recordings[0]} />
       </section>
 
       <section aria-labelledby="inside-title" className="page-column flex flex-col gap-8 pt-24">

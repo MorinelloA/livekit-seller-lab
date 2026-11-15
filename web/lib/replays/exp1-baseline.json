@@ -1055,6 +1055,7 @@
  },
  "audio": {
   "src": "/replay/exp1-baseline.wav",
-  "offsetMs": 2
+  "offsetMs": 2,
+  "durationMs": 12158
  }
 }

@@ -211,6 +211,24 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
     count[run.status === 'done' ? 'done' : 'failed'] += 1;
     runCounts.set(key, count);
   }
+  // Recorded runs are counted on their own line: hearing a recording isn't running the test caller.
+  const recordingCounts = new Map<string, { played: number; skipped: number; failed: number }>();
+  for (const recording of s.recordings) {
+    const key = `${recording.section}, ${recording.mode}`;
+    const count = recordingCounts.get(key) ?? { played: 0, skipped: 0, failed: 0 };
+    if (recording.status === 'played' || recording.status === 'skipped' || recording.status === 'failed') count[recording.status] += 1;
+    recordingCounts.set(key, count);
+  }
+  const recordingLine = [...recordingCounts]
+    .map(([key, count]) => {
+      const parts = [
+        count.played && `${count.played} heard to the end`,
+        count.skipped && `${count.skipped} opened without sound`,
+        count.failed && `${count.failed} failed to load`,
+      ].filter(Boolean);
+      return `${key}: ${parts.join(', ')}`;
+    })
+    .join(' · ');
   const h3 = 'm-0 text-base font-semibold text-fg';
 
   return (
@@ -294,6 +312,7 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
               ))}
             </ul>
           )}
+          {recordingLine && <p className="m-0 text-sm leading-relaxed">Recordings, not live runs: {recordingLine}</p>}
           {s.customizations.map((c, i) => (
             <p key={i} className="m-0 text-sm">
               Made it their own: “{c.name}”{c.rule ? `, rule “${c.rule}”` : ''}

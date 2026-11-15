@@ -22,6 +22,8 @@ export interface ParticipantSummary {
   minutes: { lab?: number; practice?: number; total?: number };
   predictions: { section: string; choice: string; correct: boolean }[];
   runs: { section: string; mode?: string; status: string }[];
+  /** Recorded runs, kept apart from live ones: hearing a recording isn't running the test caller. */
+  recordings: { section: string; mode: string; status: string }[];
   customizations: { name: string; rule: string }[];
   notices: { page: string; text: string; at: number }[];
   calls: { page: string; state: string; at: number }[];
@@ -42,6 +44,7 @@ export function summarize(id: string, events: StoredEvent[]): ParticipantSummary
     minutes: {},
     predictions: [],
     runs: [],
+    recordings: [],
     customizations: [],
     notices: [],
     calls: [],
@@ -73,6 +76,9 @@ export function summarize(id: string, events: StoredEvent[]): ParticipantSummary
         break;
       case 'run':
         summary.runs.push({ section: event.section, mode: event.mode, status: event.status });
+        break;
+      case 'recording':
+        summary.recordings.push({ section: event.section, mode: event.mode, status: event.status });
         break;
       case 'customize':
         summary.customizations.push({ name: event.name, rule: event.rule });

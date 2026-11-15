@@ -26,6 +26,8 @@ export type PilotEvent =
   | { kind: 'call'; page: 'lab' | 'practice'; state: 'connected' | 'ended' | 'time_limit' }
   | { kind: 'prediction'; section: string; choice: string; correct: boolean }
   | { kind: 'run'; section: string; mode?: string; status: 'done' | 'failed' }
+  // A recorded run, not a live one: heard to the end, opened without sound, or failed to load.
+  | { kind: 'recording'; section: string; mode: string; status: 'played' | 'skipped' | 'failed' }
   | { kind: 'customize'; name: string; rule: string }
   | { kind: 'notice'; page: 'lab' | 'practice'; text: string }
   | { kind: 'scorecard'; card: Scorecard; transcript: TranscriptLine[] }

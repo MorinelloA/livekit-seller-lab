@@ -1,4 +1,5 @@
-import { withBase } from './paths';
+// With its extension, so `node --test` can load this file too (lib/runSummary.ts needs it).
+import { withBase } from './paths.ts';
 import type { Mode } from './protocol';
 
 export type ExperimentId = 1 | 2 | 3 | 4;

@@ -6,12 +6,12 @@ import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import { type RemoteParticipant, type Room, RoomEvent, Track } from 'livekit-client';
 import { AccessCodeForm } from '@/components/AccessCodeForm';
 import { CallDock, type CallStatus } from '@/components/CallDock';
-import { ExperimentPanel, type RunState } from '@/components/ExperimentPanel';
+import { ExperimentPanel, type RecordedStatus, type RunState } from '@/components/ExperimentPanel';
 import { LabOutline } from '@/components/LabOutline';
 import { MakeItYourOwn } from '@/components/MakeItYourOwn';
 import { PilotBanner } from '@/components/PilotBanner';
 import { TurnLog } from '@/components/TurnLog';
-import { Eyebrow } from '@/components/ui/Bits';
+import { Callout, Eyebrow } from '@/components/ui/Bits';
 import { ButtonLink } from '@/components/ui/Button';
 import { AccessCodeError } from '@/lib/access';
 import { CLIPS, EXPERIMENTS, type ExperimentId } from '@/lib/experiments';
@@ -34,21 +34,15 @@ import {
   RPC_RESET,
   RPC_SET_SETTINGS,
 } from '@/lib/protocol';
-import { encodeWav, firstSoundMs, type ReplayRun } from '@/lib/replay';
+import { captureProblems, encodeWav, firstSoundMs, type ReplayRun, trimTrailingSilence } from '@/lib/replay';
 import { createRoom } from '@/lib/room';
+import { outcomeSentence, runOutcome } from '@/lib/runSummary';
+import { DEFAULT_SETTINGS, modeOf, settingsFor } from '@/lib/settings';
 import { type ClipKey, RunRecorder, type RunTimeline, speechRuns } from '@/lib/timeline';
 import { useLabAccess } from '@/lib/useLabAccess';
+import { stopPlayback } from '@/lib/useRecordingPlayer';
 
 type RunKey = `${ExperimentId}-${Mode}`;
-
-// Production settings, except voice isolation: it's billed by the minute, so the
-// agent runs it only while Experiment 3's Enhanced setting is on.
-const DEFAULT_SETTINGS: LabSettings = {
-  turn_detection: 'enhanced',
-  interruptions: 'enhanced',
-  noise: 'baseline',
-  model: 'fast',
-};
 
 // On LiveKit's free plan an idle agent is shut down, and the next call starts it
 // again, which can take up to 20 seconds. After this long, the page says so.
@@ -65,31 +59,13 @@ class CallEnded extends Error {
 /** Thrown inside connect() when the learner left the page while the call was still joining. */
 class LeftPage extends Error {}
 
-/** Each experiment changes one setting and keeps the others as they are by default. */
-function settingsFor(experiment: ExperimentId, mode: Mode): LabSettings {
-  const settings = { ...DEFAULT_SETTINGS };
-  if (experiment === 1) settings.turn_detection = mode;
-  if (experiment === 2) settings.interruptions = mode;
-  if (experiment === 3) settings.noise = mode;
-  if (experiment === 4) settings.model = mode === 'enhanced' ? 'reasoning' : 'fast';
-  return settings;
-}
-
-/** Which of an experiment's two settings is on now. */
-function modeOf(experiment: ExperimentId, settings: LabSettings): Mode {
-  if (experiment === 1) return settings.turn_detection;
-  if (experiment === 2) return settings.interruptions;
-  if (experiment === 3) return settings.noise;
-  return settings.model === 'reasoning' ? 'enhanced' : 'baseline';
-}
-
 /** The test caller's clip for experiments 3 and 4, which play one clip each. */
 const SINGLE_CLIP: Partial<Record<ExperimentId, ClipKey>> = { 3: 'cafeBooking', 4: 'saturday' };
 
 /**
  * Development only: saves a finished run, with a recording of it, for the
- * overview's replay. Needs `?capture` on the lab's address and
- * scripts/capture-server.mjs running.
+ * recorded runs the overview and the lab play. Needs `?capture` on the lab's
+ * address and scripts/capture-server.mjs running.
  */
 async function saveCapture(
   name: string,
@@ -105,6 +81,8 @@ async function saveCapture(
   const firstWord = firstPeaks ? speechRuns(firstPeaks.values, firstPeaks.step)[0] : undefined;
   const heardAt = recording ? firstSoundMs(recording.samples, recording.sampleRate) : null;
   const offsetMs = first && firstWord && heardAt !== null ? first.start + firstWord.start * 1000 - heardAt : null;
+  // The run goes on recording while it waits to be sure Juniper has finished. That silence isn't kept.
+  const samples = recording ? trimTrailingSilence(recording.samples, recording.sampleRate) : null;
   const { t0Perf: _live, ...saved } = timeline;
   const replay: ReplayRun = {
     v: 1,
@@ -112,10 +90,17 @@ async function saveCapture(
     timeline: saved,
     events,
     peaks,
-    audio: recording && offsetMs !== null ? { src: `/replay/${name}.wav`, offsetMs: Math.round(offsetMs) } : null,
+    audio:
+      recording && samples && offsetMs !== null
+        ? {
+            src: `/replay/${name}.wav`,
+            offsetMs: Math.round(offsetMs),
+            durationMs: Math.round((samples.length / recording.sampleRate) * 1000),
+          }
+        : null,
   };
-  if (recording && replay.audio) {
-    await fetch(withBase(`/dev-capture/${name}.wav`), { method: 'POST', body: encodeWav(recording.samples, recording.sampleRate) });
+  if (recording && samples && replay.audio) {
+    await fetch(withBase(`/dev-capture/${name}.wav`), { method: 'POST', body: encodeWav(samples, recording.sampleRate) });
   }
   await fetch(withBase(`/dev-capture/${name}.json`), {
     method: 'POST',
@@ -123,6 +108,12 @@ async function saveCapture(
     body: JSON.stringify(replay, null, 1),
   });
   console.info(`Saved ${name} for the replay.`);
+  // Say what the take shows, and anything that would stop the pages from using it, while it's easy to record again.
+  if (timeline.experiment !== 0 && timeline.mode) {
+    console.info(`${name}: ${outcomeSentence(runOutcome(timeline.experiment, events))}`);
+    const problems = captureProblems(timeline.experiment, timeline.mode, replay);
+    if (problems.length > 0) console.warn(`${name} can’t be used as it is:\n- ${problems.join('\n- ')}`);
+  }
 }
 
 export function Lab() {
@@ -147,6 +138,9 @@ export function Lab() {
   const [micOn, setMicOn] = useState(false);
   const [cafeOn, setCafeOn] = useState(false);
   const [predicted, setPredicted] = useState<string[]>([]);
+  // Recorded runs the learner has finished, heard to the end or opened without sound. They count
+  // towards an experiment being done, as a run on a call does.
+  const [recordedDone, setRecordedDone] = useState<Partial<Record<RunKey, true>>>({});
 
   const roomRef = useRef<Room | null>(null);
   const micRef = useRef<LabMic | null>(null);
@@ -655,6 +649,18 @@ export function Lab() {
     }
   }, [measureSkew, play, showNotice, startRecording, stillOnCall, stopRecording, waitForAgentState, waitForAnswer]);
 
+  // A recording must never play into a call: the call's microphone would feed it to the agent.
+  const onCall = status === 'connecting' || status === 'connected';
+  useEffect(() => {
+    if (onCall) stopPlayback();
+  }, [onCall]);
+
+  /** A recorded run finished, was opened without sound, or didn't load. Noted apart from live runs. */
+  const noteRecorded = (experiment: ExperimentId, mode: Mode, outcome: RecordedStatus) => {
+    if (outcome !== 'failed') setRecordedDone((prev) => ({ ...prev, [`${experiment}-${mode}`]: true }));
+    logPilot({ kind: 'recording', section: `Experiment ${experiment}`, mode, status: outcome });
+  };
+
   const ready = status === 'connected' && agentPresent;
   const predict = (section: string) => (choice: string, correct: boolean) => {
     setPredicted((prev) => (prev.includes(section) ? prev : [...prev, section]));
@@ -665,8 +671,8 @@ export function Lab() {
     events: state ? events.filter((e) => e.runId === state.id) : [],
     timeline: state ? timelines[state.id] : undefined,
   });
-  const bothDone = (id: ExperimentId) =>
-    runs[`${id}-baseline`]?.status === 'done' && runs[`${id}-enhanced`]?.status === 'done';
+  const runDone = (key: RunKey) => runs[key]?.status === 'done' || recordedDone[key] === true;
+  const bothDone = (id: ExperimentId) => runDone(`${id}-baseline`) && runDone(`${id}-enhanced`);
 
   return (
     <RoomContext.Provider value={room ?? undefined}>
@@ -709,6 +715,14 @@ export function Lab() {
             />
           </div>
         )}
+
+        <div className="pb-8">
+          <Callout tone="info" role="note">
+            <span className="font-semibold">No call, or no access code? </span>
+            Every experiment below has a recording of both test-caller runs, made on a real call. Lock in a prediction
+            and play them to see what happened and the question to ask a customer.
+          </Callout>
+        </div>
 
         <div className="lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10">
           <LabOutline
@@ -754,6 +768,12 @@ export function Lab() {
                 onSetMode={(mode) => void setMode(experiment.id, mode)}
                 onPredict={predict(`Experiment ${experiment.id}`)}
                 cafe={experiment.id === 3 ? { on: cafeOn, onToggle: () => void toggleCafe() } : undefined}
+                onCall={onCall}
+                recordedDone={{
+                  baseline: recordedDone[`${experiment.id}-baseline`] === true,
+                  enhanced: recordedDone[`${experiment.id}-enhanced`] === true,
+                }}
+                onRecorded={(mode, outcome) => noteRecorded(experiment.id, mode, outcome)}
               />
             ))}
 
