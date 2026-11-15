@@ -555,7 +555,9 @@ export function Lab() {
 
   const applyPersona = useCallback(
     async (name: string, rule: string) => {
-      if (await withAgent(RPC_CUSTOMIZE, { name, rule })) logPilot({ kind: 'customize', name, rule });
+      const worked = await withAgent(RPC_CUSTOMIZE, { name, rule });
+      if (worked) logPilot({ kind: 'customize', name, rule });
+      return worked;
     },
     [withAgent],
   );

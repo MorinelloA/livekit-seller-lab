@@ -17,7 +17,8 @@ export function MakeItYourOwn(props: {
   persona: LabPersona | null;
   canAct: boolean;
   run: RunView;
-  onApply: (name: string, rule: string) => Promise<void>;
+  /** Resolves to whether Juniper took the new name and rule. */
+  onApply: (name: string, rule: string) => Promise<boolean>;
   onRestore: () => Promise<void>;
   onPlayBooking: () => void;
   onLoad: () => Promise<void>;
@@ -38,8 +39,8 @@ export function MakeItYourOwn(props: {
   const showAnswer = locked && (revealed || (applied && status === 'done'));
 
   const apply = async () => {
-    await props.onApply(name.trim() || 'Juniper', rule.trim());
-    setApplied(true);
+    // Only a change Juniper took counts: the booking and the answer wait for it.
+    if (await props.onApply(name.trim() || 'Juniper', rule.trim())) setApplied(true);
   };
 
   return (
