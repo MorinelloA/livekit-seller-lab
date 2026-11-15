@@ -27,6 +27,8 @@ const NUMBERED: { step: Step; label: string }[] = [
   { step: 'after', label: 'The check after the lab' },
 ];
 
+const MAIN = 'mx-auto flex max-w-[840px] flex-col gap-10 px-5 pt-14 sm:px-10 sm:pt-16';
+
 /** The pilot participant's home: consent, then the four steps in order. */
 export function PilotHub() {
   const { ready, pilot } = useLabAccess();
@@ -39,7 +41,9 @@ export function PilotHub() {
     setChecks(readChecks());
   }, [ready, pilot]);
 
-  if (!ready) return null;
+  // The page's main area exists from the first paint, so the skip link has its target
+  // before the participant's progress is read from this browser.
+  if (!ready) return <main id="main" className={MAIN} />;
 
   const step = currentStep(progress);
   const submit = (phase: CheckPhase) => (answers: number[], ratings: number[], startedAt: number) => {
@@ -51,7 +55,7 @@ export function PilotHub() {
   };
 
   return (
-    <main id="main" className="mx-auto flex max-w-[840px] flex-col gap-10 px-5 pt-14 sm:px-10 sm:pt-16">
+    <main id="main" className={MAIN}>
       <header className="flex flex-col gap-4">
         <Eyebrow>Seller Lab 1 · Pilot{pilot ? ` · ${pilot}` : ''}</Eyebrow>
         <h1 className="display text-[clamp(34px,4vw,48px)] leading-[1.08]">
