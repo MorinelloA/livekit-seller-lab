@@ -449,6 +449,20 @@ function CallBar(props: {
           : slowJoin
             ? 'Waiting for Priya to join. After a quiet spell this can take up to 20 seconds.'
             : 'Waiting for Priya to join…';
+  // What a screen reader hears: joins, leaves and waits, not every listening, thinking and
+  // speaking change (the visible label still shows those).
+  const announce =
+    phase === 'connecting'
+      ? 'Calling Priya.'
+      : !connected
+        ? ''
+        : !agentPresent
+          ? slowJoin
+            ? label
+            : 'Waiting for Priya to join.'
+          : over
+            ? 'The call is over. Your coach is on the line.'
+            : 'Priya joined the call.';
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface py-3 pr-3 pl-4">
@@ -460,8 +474,9 @@ function CallBar(props: {
             <span aria-hidden className={cx('size-2.5 shrink-0 rounded-full', connected ? 'animate-pulse bg-warn' : 'bg-subtle')} />
           )}
           <div className="flex min-w-0 flex-col">
-            <span className="text-sm font-semibold text-fg" aria-live="polite">
-              {label}
+            <span className="text-sm font-semibold text-fg">{label}</span>
+            <span className="sr-only" aria-live="polite">
+              {announce}
             </span>
             {(live || over) && (
               <span className="font-mono text-[11px] text-subtle tabular-nums">
@@ -603,7 +618,6 @@ function Transcript({ turns, live }: { turns: PracticeTurn[]; live: boolean }) {
       ) : (
         <ol
           ref={listRef}
-          role="log"
           className="m-0 flex max-h-96 list-none flex-col gap-2.5 overflow-y-auto rounded-lg border border-line bg-surface px-[18px] py-4 text-sm"
         >
           {ordered.map((turn) => {

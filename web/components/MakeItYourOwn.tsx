@@ -142,7 +142,7 @@ export function MakeItYourOwn(props: {
               : 'Now answering as the original Juniper.'}
         </p>
         {(status || turns.length > 0) && (
-          <div className="flex flex-col gap-3 rounded-md border border-line bg-page p-4" aria-live="polite">
+          <div className="flex flex-col gap-3 rounded-md border border-line bg-page p-4">
             {run.timeline && run.state && (
               <>
                 <ConversationTimeline
@@ -163,6 +163,16 @@ export function MakeItYourOwn(props: {
             )}
             {status === 'running' && <p className="m-0 text-sm text-subtle">The test caller is on the line…</p>}
             {status === 'failed' && <p className="m-0 text-sm text-warn">This run didn’t finish. Try it again.</p>}
+            {/* Only the booking's status is announced, not each turn as it arrives. */}
+            <p role="status" className="sr-only">
+              {status === 'running'
+                ? 'The test caller is on the line.'
+                : status === 'failed'
+                  ? 'The booking didn’t finish.'
+                  : status === 'done'
+                    ? 'The booking is done.'
+                    : ''}
+            </p>
             <TurnList turns={turns} />
           </div>
         )}

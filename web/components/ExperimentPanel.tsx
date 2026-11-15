@@ -275,11 +275,21 @@ function RunResult({
   const status = view.state?.status;
 
   return (
-    <div className="flex flex-col gap-3 rounded-md border border-line p-[18px]" aria-live="polite">
+    <div className="flex flex-col gap-3 rounded-md border border-line p-[18px]">
       <p className={cx('eyebrow m-0 text-[11px]', tone === 'enhanced' ? 'text-accent' : 'text-subtle')}>{label}</p>
       {!status && <p className="m-0 text-sm text-subtle">Not run yet.</p>}
       {status === 'running' && <p className="m-0 text-sm text-subtle">The test caller is on the line…</p>}
       {status === 'failed' && <p className="m-0 text-sm text-warn">This run didn’t finish. Try it again.</p>}
+      {/* Only the run's status is announced; its turns are read when the learner gets to them. */}
+      <p role="status" className="sr-only">
+        {status === 'running'
+          ? `${label}: the test caller is on the line.`
+          : status === 'failed'
+            ? `${label}: this run didn’t finish.`
+            : status === 'done'
+              ? `${label}: the run is done.`
+              : ''}
+      </p>
       {status === 'done' && <Summary experimentId={experimentId} turns={turns} events={view.events} />}
       {turns.length > 0 && (
         <div className="border-t border-line pt-3">

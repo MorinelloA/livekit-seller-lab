@@ -69,8 +69,20 @@ export function CallDock(props: {
               className={cx('size-2.5 shrink-0 rounded-full', connected ? 'animate-pulse bg-warn' : 'bg-subtle')}
             />
           )}
-          <div className="flex min-w-0 flex-col" aria-live="polite">
+          <div className="flex min-w-0 flex-col">
             <span className="text-sm font-semibold text-fg">{label}</span>
+            {/* A screen reader hears joins and waits, not every listening, thinking and speaking change. */}
+            <span className="sr-only" aria-live="polite">
+              {status === 'connecting'
+                ? 'Calling Juniper.'
+                : !connected
+                  ? ''
+                  : agentPresent
+                    ? 'Juniper joined the call.'
+                    : slowJoin
+                      ? label
+                      : 'Waiting for Juniper to join.'}
+            </span>
             {connected && props.persona && (
               <span className="truncate font-mono text-label text-subtle" title={props.persona}>
                 {props.persona}
