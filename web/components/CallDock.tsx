@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { AgentBars } from '@/components/AgentBars';
 import { Callout } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
@@ -40,6 +40,8 @@ export function CallDock(props: {
   micOn: boolean;
   busy: boolean;
   message: string | null;
+  /** What to do next, shown above the bar when there's no message to show. */
+  hint?: ReactNode;
   onConnect: () => void;
   onDisconnect: () => void;
   onToggleMic: () => void;
@@ -72,7 +74,7 @@ export function CallDock(props: {
     // On a phone it floats where the kit draws it: 12px from the sides (8px into the page's
     // 20px gutter) and 20px from the bottom.
     <div className="sticky bottom-5 z-30 mt-10 flex flex-col gap-2 max-sm:-mx-2 sm:bottom-4">
-      {message && <Callout className="[box-shadow:var(--dock-shadow)] backdrop-blur-md">{message}</Callout>}
+      {message ? <Callout className="[box-shadow:var(--dock-shadow)] backdrop-blur-md">{message}</Callout> : props.hint}
       <section
         aria-label="Call"
         // One row on phones, as the kit draws the dock at 390px: the status takes what the

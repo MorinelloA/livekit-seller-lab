@@ -662,6 +662,26 @@ export function Lab() {
   };
 
   const ready = status === 'connected' && agentPresent;
+  // Joining changes nothing on the page but the call bar, so the bar says what to do
+  // next. It goes once the learner has started anything: by then the next button is in front of them.
+  const started =
+    predicted.length > 0 || Object.keys(runs).length > 0 || bookingRun !== undefined || persona?.custom === true || micOn;
+  const hintLink = 'hit font-semibold text-accent underline-offset-2 hover:underline';
+  const hint =
+    ready && !started ? (
+      <Callout tone="info" className="[box-shadow:var(--dock-shadow)] backdrop-blur-md">
+        <span className="font-semibold">You’re on the call.</span> No need to speak yet: lock in a prediction, then press
+        its Play test caller button.{' '}
+        <a href="#make-it-your-own" className={hintLink}>
+          Start with Make it your own
+        </a>
+        , or{' '}
+        <a href="#experiment-1" className={hintLink}>
+          go to Experiment 1
+        </a>
+        .
+      </Callout>
+    ) : null;
   const predict = (section: string) => (choice: string, correct: boolean) => {
     setPredicted((prev) => (prev.includes(section) ? prev : [...prev, section]));
     logPilot({ kind: 'prediction', section, choice, correct });
@@ -815,6 +835,7 @@ export function Lab() {
           micOn={micOn}
           busy={busy}
           message={error ?? notice}
+          hint={hint}
           onConnect={() => void connect()}
           onDisconnect={() => void disconnect()}
           onToggleMic={() => void toggleMic()}

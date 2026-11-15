@@ -212,6 +212,12 @@ export function ExperimentPanel(props: {
           : 'A recording is playing'
         : undefined;
 
+  // A finished run changes nothing on the page but its result further down, so
+  // Step 2 says that it's done and what to press next.
+  const doneModes = MODES.filter(doneFor);
+  const nextMode = doneModes.length === 1 ? MODES.find((mode) => !doneFor(mode)) : undefined;
+  const idle = !anyRunning && !hearing;
+
   // Recordings are offered for the settings that have no finished run on this call.
   const offered = RECORDED.includes(experiment.id) && !onCall ? MODES.filter((mode) => !liveDone(mode)) : [];
   const unseen = offered.filter((mode) => !recordingDone(mode));
@@ -327,6 +333,24 @@ export function ExperimentPanel(props: {
             </div>
           )}
           {!locked && <p className="m-0 text-small text-subtle">Lock in a prediction first.</p>}
+          {locked && idle && nextMode && (
+            <p className="m-0 flex items-start gap-2 text-small leading-normal text-fg">
+              <Icon name="check" className="mt-0.5 size-4 shrink-0 text-ok" />
+              <span>
+                <span className="font-semibold">The {labels[doneModes[0]]} run is done.</span> Its result is below. Now play
+                the {labels[nextMode]} run: the same caller, on the other setting.
+              </span>
+            </p>
+          )}
+          {locked && idle && bothRan && (
+            <p className="m-0 flex items-start gap-2 text-small leading-normal text-fg">
+              <Icon name="check" className="mt-0.5 size-4 shrink-0 text-ok" />
+              <span>
+                <span className="font-semibold">Both runs are done.</span> Compare them below, then go on to Step 4 for the
+                answer and the question to ask.
+              </span>
+            </p>
+          )}
 
           {timelineRuns.length > 0 && (
             <div className="rounded-md border border-line bg-page">
@@ -516,7 +540,16 @@ function RunResult({
 
   return (
     <div className="flex flex-col gap-3 rounded-md border border-line p-[18px]">
-      <p className={cx('eyebrow-sm m-0', tone === 'enhanced' ? 'text-accent' : 'text-subtle')}>{label}</p>
+      <p className="m-0 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <span className={cx('eyebrow-sm', tone === 'enhanced' ? 'text-accent' : 'text-subtle')}>{label}</span>
+        {/* The run's own sign that it has finished, beside its name. */}
+        {status === 'done' && (
+          <span className="inline-flex items-center gap-1 font-mono text-label font-bold tracking-pill text-ok uppercase">
+            <Icon name="check" className="size-3.5" strokeWidth={2} />
+            Done
+          </span>
+        )}
+      </p>
       {!status && !progress && <p className="m-0 text-sm text-subtle">Not run yet.</p>}
       {live === 'running' && <p className="m-0 text-sm text-subtle">The test caller is on the line…</p>}
       {live === 'failed' && <p className="m-0 text-sm text-warn">This run didn’t finish. Try it again.</p>}
