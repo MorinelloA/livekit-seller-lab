@@ -4,6 +4,16 @@ export function oneLine(text: string): string {
 }
 
 /**
+ * A quote that ends a sentence inside its quotation marks: adds a full stop
+ * unless it already ends with one, a question mark, an exclamation mark or an
+ * ellipsis.
+ */
+export function asSentence(quote: string): string {
+  const q = quote.trim();
+  return /[.!?…]$/.test(q) ? q : `${q}.`;
+}
+
+/**
  * Splits text around each "LiveKit", so a label set in capitals can keep the
  * name in its own case: LiveKit's brand guide never writes it "LIVEKIT".
  * The odd-numbered parts are the name.

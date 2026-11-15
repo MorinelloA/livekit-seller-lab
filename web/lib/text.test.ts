@@ -1,7 +1,14 @@
 // Run with `pnpm test` (node --test; Node strips the types).
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { oneLine, splitBrand } from './text.ts';
+import { asSentence, oneLine, splitBrand } from './text.ts';
+
+test('a quoted made-up answer ends its sentence inside the quotation marks', () => {
+  assert.equal(asSentence('It will never interrupt a learner again, guaranteed'), 'It will never interrupt a learner again, guaranteed.');
+  assert.equal(asSentence('It will never interrupt a learner again, guaranteed.'), 'It will never interrupt a learner again, guaranteed.');
+  assert.equal(asSentence('Is that guaranteed?'), 'Is that guaranteed?');
+  assert.equal(asSentence('  Trust me…  '), 'Trust me…');
+});
 
 test('a one-line field turns typed or pasted line breaks into single spaces', () => {
   assert.equal(oneLine('Mention the special\nbefore booking'), 'Mention the special before booking');

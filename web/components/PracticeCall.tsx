@@ -27,6 +27,7 @@ import {
 } from '@/lib/practice';
 import { AGENT_STATE_ATTRIBUTE, EVENTS_TOPIC, type TimeLimitEvent } from '@/lib/protocol';
 import { createRoom } from '@/lib/room';
+import { asSentence } from '@/lib/text';
 import { useLabAccess } from '@/lib/useLabAccess';
 
 /**
@@ -534,7 +535,7 @@ function ScorecardView({ card, totals }: { card: Scorecard; totals: number[] }) 
 
       {card.bluff && (
         <Callout tone="bad" role="note" className="mx-6 mt-5">
-          At <span className="font-mono">{card.bluff.time}</span> you said “{card.bluff.quote}” That isn’t true of LiveKit,
+          At <span className="font-mono">{card.bluff.time}</span> you said “{asSentence(card.bluff.quote)}” That isn’t true of LiveKit,
           or isn’t something you could know, so the call can’t pass, whatever the total. “I don’t know, let me bring in our
           engineer” would have kept the points.
         </Callout>
