@@ -32,6 +32,7 @@ const MAX_EVENT_BYTES = 100_000;
 // KV keeps up to 1 KB of metadata with each key, and list() returns it, so small
 // events need no separate read.
 const MAX_METADATA_BYTES = 900;
+const TOKEN_TTL = '2m';
 
 const HEADERS = {
   'Cache-Control': 'no-store',
@@ -98,8 +99,9 @@ async function token(request: Request, env: Env): Promise<Response> {
   const accessToken = new AccessToken(env.LIVEKIT_API_KEY, env.LIVEKIT_API_SECRET, {
     identity: `learner_${suffix}`,
     name: pilot ?? 'Learner',
-    // Only for joining. LiveKit keeps a joined participant's token fresh.
-    ttl: '10m',
+    // Only for joining, which the page does at once. LiveKit keeps a joined
+    // participant's token fresh. A short life leaves little time to reuse it.
+    ttl: TOKEN_TTL,
   });
   accessToken.addGrant({
     room: roomName,
@@ -110,7 +112,6 @@ async function token(request: Request, env: Env): Promise<Response> {
   });
   // The agent reads the mode, and records only a pilot participant's calls.
   const metadata: Record<string, string> = { mode: practice ? 'practice' : 'lab' };
-  if (practice) metadata.persona = 'priya';
   if (pilot) metadata.pilot = pilot;
   accessToken.roomConfig = new RoomConfiguration({
     agents: [new RoomAgentDispatch({ agentName: env.AGENT_NAME || 'juniper-lab', metadata: JSON.stringify(metadata) })],
@@ -167,7 +168,13 @@ async function listEvents(request: Request, env: Env): Promise<Response> {
   );
   keys.forEach((key, i) => {
     const id = key.name.split(':')[1];
-    const event = JSON.parse(events[i]) as unknown;
+    // One stored value that isn't JSON mustn't hide everyone else's results.
+    let event: unknown = null;
+    try {
+      event = JSON.parse(events[i]);
+    } catch {
+      console.error('skipped a pilot event that isn’t JSON', key.name);
+    }
     if (event) (participants[id] ??= []).push(event);
   });
   return json({ participants });

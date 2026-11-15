@@ -19,6 +19,7 @@ import { LabMic } from '@/lib/labMic';
 import { withBase } from '@/lib/paths';
 import { loadPeaks, type Peaks } from '@/lib/peaks';
 import { logPilot, reachStep, requestRoom } from '@/lib/pilot';
+import { problem } from '@/lib/problems';
 import {
   AGENT_STATE_ATTRIBUTE,
   EVENTS_TOPIC,
@@ -54,13 +55,15 @@ const DEFAULT_SETTINGS: LabSettings = {
 const SLOW_JOIN_MS = 6_000;
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 class CallEnded extends Error {
   constructor() {
     super('The call ended before the run finished.');
   }
 }
+
+/** Thrown inside connect() when the learner left the page while the call was still joining. */
+class LeftPage extends Error {}
 
 /** Each experiment changes one setting and keeps the others as they are by default. */
 function settingsFor(experiment: ExperimentId, mode: Mode): LabSettings {
@@ -158,6 +161,9 @@ export function Lab() {
   // The agent's clock minus the page's, from the quickest round trip so far.
   const skewRef = useRef<{ skewMs: number; rttMs: number } | null>(null);
   const captureRef = useRef(false);
+  // False once the learner has left the page. A call that's still joining then hangs up.
+  const aliveRef = useRef(true);
+  const joiningRef = useRef<{ room?: Room; mic: LabMic } | null>(null);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -303,7 +309,22 @@ export function Lab() {
   // Once Juniper joins, ask for its state: the page learns who Juniper is playing and the
   // settings in use before any other call, and gets a first reading of the agent's clock.
   useEffect(() => {
-    if (status === 'connected' && agentPresent) void measureSkew().catch(() => undefined);
+    if (status !== 'connected' || !agentPresent) return;
+    let cancelled = false;
+    void (async () => {
+      // An agent that has only just joined may not answer the first try.
+      for (let attempt = 0; attempt < 3 && !cancelled; attempt += 1) {
+        try {
+          await measureSkew();
+          return;
+        } catch {
+          await sleep(700);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [status, agentPresent, measureSkew]);
 
   const disconnect = useCallback(async () => {
@@ -327,13 +348,18 @@ export function Lab() {
     await mic?.close();
   }, [noteAgentState]);
 
-  useEffect(
-    () => () => {
+  // Leaving the page hangs up, including a call that hasn't finished joining:
+  // a room left connected keeps an agent running until its time limit.
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
       void roomRef.current?.disconnect();
       void micRef.current?.close();
-    },
-    [],
-  );
+      void joiningRef.current?.room?.disconnect();
+      void joiningRef.current?.mic.close();
+    };
+  }, []);
 
   // Say so when the agent is slow to join, which happens when it was asleep.
   useEffect(() => {
@@ -352,12 +378,18 @@ export function Lab() {
     // Created inside the click, so the browser allows it to play audio.
     const mic = new LabMic();
     let joined: Room | null = null;
+    joiningRef.current = { mic };
+    const stillHere = () => {
+      if (!aliveRef.current) throw new LeftPage();
+    };
     try {
       await mic.resume();
       const { serverUrl, participantToken } = await requestRoom('lab');
+      stillHere();
 
       const r = createRoom();
       joined = r;
+      joiningRef.current = { room: r, mic };
       r.registerTextStreamHandler(EVENTS_TOPIC, async (reader) => {
         try {
           handleEvent(JSON.parse(await reader.readAll()) as LabEvent);
@@ -380,9 +412,11 @@ export function Lab() {
         dtx: false,
       });
       await r.startAudio();
+      stillHere();
 
       micRef.current = mic;
       roomRef.current = r;
+      joiningRef.current = null;
       lastActivityRef.current = Date.now();
       setRoom(r);
       setStatus('connected');
@@ -396,14 +430,16 @@ export function Lab() {
         await joined.disconnect().catch(() => undefined);
       }
       await mic.close();
+      joiningRef.current = null;
+      if (err instanceof LeftPage || !aliveRef.current) return;
       setStatus('error');
       if (err instanceof AccessCodeError) {
         rejectCode();
-        setCodeError(message(err));
+        setCodeError(err.message);
       } else {
-        setError(message(err));
+        setError(problem(err));
       }
-      logPilot({ kind: 'notice', page: 'lab', text: message(err) });
+      logPilot({ kind: 'notice', page: 'lab', text: problem(err) });
     }
   }, [disconnect, findAgent, handleEvent, rejectCode]);
 
@@ -414,7 +450,7 @@ export function Lab() {
       await mic.setMicEnabled(!micOn);
       setMicOn(!micOn);
     } catch (err) {
-      showNotice(`Your microphone isn’t available: ${message(err)}`);
+      showNotice(problem(err));
     }
   }, [micOn, showNotice]);
 
@@ -425,7 +461,7 @@ export function Lab() {
       await mic.setCafe(cafeOn ? null : CLIPS.cafe);
       setCafeOn(!cafeOn);
     } catch (err) {
-      showNotice(message(err));
+      showNotice(problem(err));
     }
   }, [cafeOn, showNotice]);
 
@@ -436,7 +472,7 @@ export function Lab() {
       try {
         await callAgent(RPC_SET_SETTINGS, settingsFor(experiment, mode));
       } catch (err) {
-        showNotice(message(err));
+        showNotice(problem(err));
       } finally {
         setBusy(false);
       }
@@ -541,7 +577,7 @@ export function Lab() {
       } catch (err) {
         setRuns((prev) => ({ ...prev, [key]: { id, status: 'failed' } }));
         logPilot({ kind: 'run', section, mode, status: 'failed' });
-        showNotice(message(err));
+        showNotice(problem(err));
       } finally {
         stopRecording(id, outcome, `exp${experiment}-${mode}`);
         activeRunRef.current = null;
@@ -561,7 +597,7 @@ export function Lab() {
         await callAgent(method, payload);
         return true;
       } catch (err) {
-        showNotice(message(err));
+        showNotice(problem(err));
         return false;
       } finally {
         setBusy(false);
@@ -610,7 +646,7 @@ export function Lab() {
     } catch (err) {
       setBookingRun({ id, status: 'failed' });
       logPilot({ kind: 'run', section, status: 'failed' });
-      showNotice(message(err));
+      showNotice(problem(err));
     } finally {
       stopRecording(id, outcome, null);
       activeRunRef.current = null;

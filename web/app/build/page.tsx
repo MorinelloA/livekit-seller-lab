@@ -70,7 +70,7 @@ const TESTS = [
 const CONTROLS = [
   { name: 'Access code', text: 'Rooms only for the code, compared in constant time.' },
   { name: 'Daily cap', text: 'At most 40 rooms a day.' },
-  { name: 'Short tokens', text: 'Good for 10 minutes, just long enough to join.' },
+  { name: 'Short tokens', text: 'Good for 2 minutes, just long enough to join.' },
   { name: 'Time limits', text: 'The agent ends a lab session after 40 minutes and a practice call after 15.' },
   { name: 'Out of search', text: 'Every response says noindex; pages send no referrer, so the code in a link stays put.' },
   { name: 'Recording', text: 'Only pilot calls, after consent. Deepgram is asked not to keep audio.' },

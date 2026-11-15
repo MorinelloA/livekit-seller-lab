@@ -106,7 +106,7 @@ const RESULTS = [
 
 const PATH = [
   { name: 'Browser', detail: 'Next.js pages and livekit-client' },
-  { name: 'Cloudflare Worker', detail: 'Access code, daily cap, a 10-minute join token' },
+  { name: 'Cloudflare Worker', detail: 'Access code, daily cap, a 2-minute join token' },
   { name: 'LiveKit Cloud', detail: 'The room, and the agent dispatched to it' },
   { name: 'Agent', detail: 'Python on LiveKit Agents 1.8: Juniper, Priya, the coach', accent: true },
   { name: 'Models', detail: 'Deepgram Nova-3 and Aura-2, LLMs on LiveKit Inference' },
@@ -133,7 +133,7 @@ const DECISIONS = [
   },
   {
     title: 'A public demo that stays cheap',
-    body: 'Rooms need the access code, checked in constant time. At most 40 rooms a day; join tokens last ten minutes; calls end on their own.',
+    body: 'Rooms need the access code, checked in constant time. At most 40 rooms a day; join tokens last two minutes; calls end on their own.',
   },
 ];
 

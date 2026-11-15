@@ -176,7 +176,7 @@ The site runs at https://tonyt908.com/livekitlab/ for the people it's sent to, a
 - **Keeping costs and exposure down:**
   - **Access code.** The API gives out rooms only for the access code (`X-Lab-Code`), compared in constant time.
   - **Daily cap.** At most 40 rooms a day (`DAILY_SESSION_LIMIT`).
-  - **Short tokens.** A room token is good for 10 minutes, just long enough to join.
+  - **Short tokens.** A room token is good for 2 minutes, just long enough to join.
   - **Time limits.** The agent ends a lab session after 40 minutes and a practice call after 15. It says goodbye, tells the page and closes the room.
   - **Search engines.** Every response says `noindex, nofollow`, and pages send no referrer, so the code in a link stays on tonyt908.com.
   - **Recording.** Only pilot calls are recorded, and Deepgram is asked not to keep audio (`mip_opt_out`).

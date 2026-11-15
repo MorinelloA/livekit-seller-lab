@@ -13,6 +13,7 @@ import { WrappingInput } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
 import { AccessCodeError } from '@/lib/access';
 import { logPilot, requestRoom } from '@/lib/pilot';
+import { problem } from '@/lib/problems';
 import {
   BRIEF,
   CHAT_TOPIC,
@@ -41,9 +42,12 @@ type Phase = 'idle' | 'connecting' | 'live' | 'scoring' | 'scored' | 'empty' | '
 const WRAP_UP_AFTER_S = 8 * 60;
 // After this long without Priya, say that a sleeping agent takes a while to start.
 const SLOW_JOIN_MS = 6_000;
-// The coach scores a call in a few seconds; after this long, stop waiting and say so.
-const SCORING_TIMEOUT_MS = 60_000;
-const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
+// The judge scores a call in a few seconds; after this long, stop waiting and say so.
+// It has to outlast the judge's two tries (JUDGE_TIMEOUT_SECONDS in agent/src/prospect.py).
+const SCORING_TIMEOUT_MS = 75_000;
+
+/** Thrown inside connect() when the learner left the page while the call was still joining. */
+class LeftPage extends Error {}
 
 /** The call as the pilot results show it, from the turns the page received. */
 function transcriptOf(turns: PracticeTurn[]) {
@@ -80,6 +84,9 @@ export function PracticeCall() {
   const agentRef = useRef<RemoteParticipant | null>(null);
   const turnsRef = useRef<PracticeTurn[]>([]);
   turnsRef.current = turns;
+  // False once the learner has left the page. A call that's still joining then hangs up.
+  const aliveRef = useRef(true);
+  const joiningRef = useRef<Room | null>(null);
 
   /** Shows a problem on the page, and notes it for the pilot. */
   const showNotice = useCallback((text: string) => {
@@ -108,12 +115,16 @@ export function PracticeCall() {
     await r?.disconnect();
   }, []);
 
-  useEffect(
-    () => () => {
+  // Leaving the page hangs up, including a call that hasn't finished joining:
+  // a room left connected keeps an agent running until its time limit.
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
       void roomRef.current?.disconnect();
-    },
-    [],
-  );
+      void joiningRef.current?.disconnect();
+    };
+  }, []);
 
   const connect = useCallback(async () => {
     setPhase('connecting');
@@ -121,10 +132,17 @@ export function PracticeCall() {
     setNotice(null);
     setTurns([]);
     setScorecard(null);
+    let joined: Room | null = null;
+    const stillHere = () => {
+      if (!aliveRef.current) throw new LeftPage();
+    };
     try {
       const { serverUrl, participantToken } = await requestRoom('practice');
+      stillHere();
 
       const r = createRoom();
+      joined = r;
+      joiningRef.current = r;
       r.registerTextStreamHandler(EVENTS_TOPIC, async (reader) => {
         try {
           const event = JSON.parse(await reader.readAll()) as PracticeTurn | TimeLimitEvent;
@@ -168,7 +186,9 @@ export function PracticeCall() {
 
       await r.connect(serverUrl, participantToken);
       await r.startAudio();
+      stillHere();
       roomRef.current = r;
+      joiningRef.current = null;
       setRoom(r);
       setPhase('live');
       setStartedAt(Date.now());
@@ -181,14 +201,21 @@ export function PracticeCall() {
         .then(() => setMicOn(true))
         .catch(() => showNotice('Your microphone isn’t available, so type your side of the call below.'));
     } catch (err) {
+      // A step after joining failed, or the learner left: don't leave the room connected.
+      if (joined) {
+        joined.removeAllListeners();
+        await joined.disconnect().catch(() => undefined);
+      }
+      joiningRef.current = null;
+      if (err instanceof LeftPage || !aliveRef.current) return;
       setPhase('idle');
       if (err instanceof AccessCodeError) {
         rejectCode();
-        setCodeError(message(err));
+        setCodeError(err.message);
       } else {
-        setError(message(err));
+        setError(problem(err, 'Priya'));
       }
-      logPilot({ kind: 'notice', page: 'practice', text: message(err) });
+      logPilot({ kind: 'notice', page: 'practice', text: problem(err, 'Priya') });
     }
   }, [disconnect, findAgent, rejectCode, showNotice]);
 
@@ -199,7 +226,7 @@ export function PracticeCall() {
       await r.localParticipant.setMicrophoneEnabled(!micOn);
       setMicOn(!micOn);
     } catch (err) {
-      showNotice(`Your microphone isn’t available: ${message(err)}`);
+      showNotice(problem(err, 'Priya'));
     }
   }, [micOn, showNotice]);
 
@@ -212,7 +239,7 @@ export function PracticeCall() {
       await r.localParticipant.sendText(text, { topic: CHAT_TOPIC });
     } catch (err) {
       setTyped(text);
-      showNotice(`That message didn’t send: ${message(err)}`);
+      showNotice(`That message didn’t send. ${problem(err, 'Priya')}`);
     }
   }, [showNotice, typed]);
 
@@ -238,7 +265,7 @@ export function PracticeCall() {
       if (status === 'empty') setPhase((p) => (p === 'scoring' ? 'empty' : p));
     } catch (err) {
       setPhase('live');
-      showNotice(`The call didn’t end: ${message(err)}`);
+      showNotice(`The call didn’t end. ${problem(err, 'Priya')}`);
     }
   }, [micOn, showNotice]);
 
