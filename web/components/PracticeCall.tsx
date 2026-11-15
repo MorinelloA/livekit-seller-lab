@@ -376,7 +376,16 @@ function Briefing() {
             <span className="text-sm">CTO and co-founder, Fluento</span>
           </div>
         </div>
-        <p className="m-0 text-sm leading-relaxed text-fg">{BRIEF}</p>
+        <dl className="m-0 flex flex-col gap-3">
+          {BRIEF.map((fact) => (
+            <div key={fact.label} className="flex flex-col gap-1">
+              <Eyebrow as="dt" size="sm">
+                {fact.label}
+              </Eyebrow>
+              <dd className="m-0 text-sm leading-relaxed text-fg">{fact.text}</dd>
+            </div>
+          ))}
+        </dl>
         <p className="m-0 border-t border-line pt-3.5 text-[13px] leading-relaxed text-subtle">
           She knows much more than this, and shares it only when you ask good questions.
         </p>

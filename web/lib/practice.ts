@@ -39,9 +39,12 @@ export interface Scorecard {
 
 export type ScorecardMessage = ({ status: 'done' } & Scorecard) | { status: 'failed' };
 
-/** What the learner sees before the call. Priya knows much more. */
-export const BRIEF =
-  'Priya Raman is CTO and co-founder of Fluento, a 12-person startup whose language-learning app includes a voice tutor. She booked the call from LiveKit’s website.';
+/** What the learner sees before the call, as the kit's labelled rows. Priya knows much more. */
+export const BRIEF = [
+  { label: 'Company', text: 'Fluento, a 12-person startup' },
+  { label: 'Product', text: 'A language-learning app that includes a voice tutor' },
+  { label: 'How she found us', text: 'She booked the call from LiveKit’s website' },
+] as const;
 
 /** The lab guide's rubric, with what earns the full 2 points. */
 export const RUBRIC = [
