@@ -39,6 +39,8 @@ type Phase = 'idle' | 'connecting' | 'live' | 'scoring' | 'scored' | 'empty' | '
 const WRAP_UP_AFTER_S = 8 * 60;
 // After this long without Priya, say that a sleeping agent takes a while to start.
 const SLOW_JOIN_MS = 6_000;
+// The coach scores a call in a few seconds; after this long, stop waiting and say so.
+const SCORING_TIMEOUT_MS = 60_000;
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 /** The call as the pilot results show it, from the turns the page received. */
@@ -252,6 +254,16 @@ export function PracticeCall() {
     const timer = setTimeout(() => setSlowJoin(true), SLOW_JOIN_MS);
     return () => clearTimeout(timer);
   }, [connected, agentPresent]);
+
+  // If the scorecard never comes (the agent stopped, say), "scoring" shouldn't stay up for good.
+  useEffect(() => {
+    if (phase !== 'scoring') return;
+    const timer = setTimeout(() => {
+      setPhase((p) => (p === 'scoring' ? 'failed' : p));
+      logPilot({ kind: 'notice', page: 'practice', text: 'The call couldn’t be scored: no scorecard within a minute.' });
+    }, SCORING_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [phase]);
 
   return (
     <RoomContext.Provider value={room ?? undefined}>
