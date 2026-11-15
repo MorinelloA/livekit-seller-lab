@@ -114,7 +114,8 @@ export function MakeItYourOwn(props: {
             />
           </Field>
         </div>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Suggested rules">
+        {/* 12px between wrapped rows, so each 36px chip's 44px touch area has clear space around it. */}
+        <div className="flex flex-wrap gap-x-2 gap-y-3" role="group" aria-label="Suggested rules">
           {copy.suggestions.map((suggestion) => (
             <button
               key={suggestion}
