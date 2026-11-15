@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { describedBy, Field, TextInput } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
@@ -12,8 +12,19 @@ import { Icon } from '@/components/ui/Icon';
 export function AccessCodeForm({ onSave, error }: { onSave: (code: string) => void; error?: string | null }) {
   const [value, setValue] = useState('');
 
+  // A code is turned down when Call is tapped, in the call bar, maybe far down the page
+  // or with the bar over this form. Bring the form into view and focus its field, so the
+  // reason is seen, and read with the field.
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (!error) return;
+    formRef.current?.scrollIntoView({ block: 'center' });
+    document.getElementById('access-code')?.focus({ preventScroll: true });
+  }, [error]);
+
   return (
     <form
+      ref={formRef}
       className="rounded-lg border border-warn bg-warn-soft p-4"
       onSubmit={(event) => {
         event.preventDefault();
