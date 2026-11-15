@@ -17,6 +17,7 @@ import {
   readProgress,
   saveCheck,
   type Step,
+  STEP_LABEL,
 } from '@/lib/pilot';
 import { useLabAccess } from '@/lib/useLabAccess';
 
@@ -41,11 +42,27 @@ export function PilotHub() {
     setChecks(readChecks());
   }, [ready, pilot]);
 
+  const step = currentStep(progress);
+  const stepName = step === 'consent' ? 'Consent' : step === 'done' ? 'Done' : STEP_LABEL[step].replace(/\.$/, '');
+
+  // Each step titles the page, so a participant (and a screen reader) knows where they are.
+  // Next writes the page's own title into the head after hydration, so it's put back if so.
+  useEffect(() => {
+    if (!ready) return;
+    const title = `${stepName} · Pilot · Seller Lab`;
+    const apply = () => {
+      if (document.title !== title) document.title = title;
+    };
+    apply();
+    const observer = new MutationObserver(apply);
+    observer.observe(document.head, { subtree: true, childList: true, characterData: true });
+    return () => observer.disconnect();
+  }, [ready, stepName]);
+
   // The page's main area exists from the first paint, so the skip link has its target
   // before the participant's progress is read from this browser.
   if (!ready) return <main id="main" className={MAIN} />;
 
-  const step = currentStep(progress);
   const submit = (phase: CheckPhase) => (answers: number[], ratings: number[], startedAt: number) => {
     logPilot({ kind: 'check', phase, answers, ratings, startedAt });
     saveCheck(phase, { answers, ratings });
