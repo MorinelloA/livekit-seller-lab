@@ -218,7 +218,7 @@ lk agent deploy       # after agent code changes; needs LIVEKIT_URL, LIVEKIT_API
 lk agent update-secrets --secrets DEEPGRAM_API_KEY=...   # when the Deepgram key changes
 ```
 
-The hosted agent needs one `lk agent deploy` after 15 Nov 2026's change, which reports when each turn's speech started and stopped; until then the hosted lab's timelines draw without cut-off marks.
+The hosted agent was last deployed on 15 Nov 2026, from the code as it is here. It hasn't taken a call since: the first one after a deploy should confirm that it answers and that a cut-off reply is marked on the timeline.
 
 ## The test-caller clips
 
