@@ -523,16 +523,29 @@ function CallBar(props: {
 
 function ScorecardView({ card, totals }: { card: Scorecard; totals: number[] }) {
   const verdict = card.passed ? 'Pass' : card.bluff ? 'Not a pass: a made-up answer' : `Not a pass yet: ${card.passMark} needed`;
+  // When a scorecard arrives, focus moves to it, so a screen reader reads its name
+  // ("Your scorecard: 12 of 12. Pass") and a keyboard user starts from it.
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+  }, [card]);
   return (
-    <section aria-labelledby="scorecard-title" className="rounded-lg border border-line bg-surface">
+    <section
+      ref={ref}
+      tabIndex={-1}
+      aria-labelledby="scorecard-title"
+      className="rounded-lg border border-line bg-surface focus:outline-none"
+    >
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-line px-6 pt-6 pb-5">
         <div className="flex flex-col gap-2">
           <Eyebrow as="span" className="text-[11px]">
             Your scorecard
           </Eyebrow>
           <h2 id="scorecard-title" className="m-0 flex items-baseline gap-3 text-fg">
+            <span className="sr-only">Your scorecard: </span>
             <span className="display text-[64px] leading-none tracking-[-0.03em] tabular-nums">{card.total}</span>
             <span className="text-[22px] font-light text-subtle">of {card.max}</span>
+            <span className="sr-only">. {verdict}</span>
           </h2>
         </div>
         <span
