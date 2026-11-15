@@ -23,57 +23,20 @@ What's built:
 
 Still to come: running the pilot with two or three people who don't know LiveKit, and fixing what they get stuck on. Priya has only been tried by typing, and the café-noise button needs a real microphone, so neither has been tested by voice yet.
 
-## What's here
+## Results so far
 
-| Folder | What it is |
-| --- | --- |
-| `agent/` | Juniper and Priya, a Python agent on the LiveKit Agents framework (1.8), with tests for the scoring rules and for what the page can send it, and the Dockerfile LiveKit Cloud builds |
-| `web/` | The overview, lab, practice-call, program, pilot and how-it's-built pages (Next.js, exported as static files, using `livekit-client` and LiveKit's React components), and the API, a Cloudflare Worker in `web/worker` |
-| `web/lib/replays/`, `web/public/replay/` | The recorded runs: each one's timeline and events as JSON, and its sound as a WAV |
-| `web/scripts/capture-server.mjs` | Saves a recorded test-caller run, in development only |
-| `.github/workflows/ci.yml` | Typecheck, tests and the static export for the pages; lint and tests for the agent |
-| `pilot/` | The facilitator guide for the pilot |
-| `scripts/make_clips_livekit.py` | Makes the test-caller clips for Experiments 1 and 2 with a natural voice from LiveKit Inference |
-| `scripts/make_clips_exp34.py` | Makes the café booking, the café loop and Experiment 4's question, with Deepgram's own API |
-| `scripts/make-clips.ps1` | Makes robot-voice stand-ins with Windows text to speech, without keys |
+On the current models, each setting did the same thing every time it was run (14 and 15 Nov 2026):
 
-## Run it
+| Experiment | Baseline / Fast model | Enhanced / Reasoning model |
+| --- | --- | --- |
+| 1. Turn detection | Jumped in after "I'd like a table for" and answered at each pause | Heard the whole sentence as one turn, and answered once |
+| 2. Interruptions | Stopped at each "uh-huh", then picked its sentence up again about two seconds later | Read on through both "uh-huh"s; stopped only for the caller's real question |
+| 3. The coffee shop | Took 11 or 12 words from the next table as the caller's, and answered them | Heard only the caller |
+| 4. The pause | 0.54 to 0.69 seconds before the answer | 1.77 to 2.23 seconds |
 
-You need a LiveKit Cloud project and a Deepgram account. The free plans are enough: LiveKit's Build plan at [cloud.livekit.io](https://cloud.livekit.io), and Deepgram's $200 of free credit at [console.deepgram.com](https://console.deepgram.com).
+The practice call's judge scored two saved calls twice each. The good one passed with 12 of 12 both times. The bluffing one failed with 4 or 5 of 12, and the judge quoted the bluff each time. Every quote it gave was in the transcript.
 
-1. Fill in `.env.local` at the root of this folder (copy `.env.example` if it isn't there): the LiveKit project URL, API key and API secret, the Deepgram API key, and the lab's access and admin codes. The agent and the API both read that one file. `AGENT_NAME=juniper-lab-dev` keeps a local agent from taking the hosted lab's calls.
-2. Start the agent:
-
-   ```powershell
-   cd agent
-   python -m venv .venv
-   .venv\Scripts\python -m pip install -e ".[dev]"
-   .venv\Scripts\python src/agent.py dev
-   ```
-
-3. In a second terminal, start the pages and the API:
-
-   ```powershell
-   cd web
-   pnpm install
-   pnpm dev
-   ```
-
-4. Open http://localhost:3100/livekitlab/lab/ and press **Call Juniper**. Use headphones. The overview is at `/livekitlab/`, how it's built at `/livekitlab/build/`, the practice call at `/livekitlab/practice/`, the pilot at `/livekitlab/pilot/` and its results at `/livekitlab/pilot/results/`.
-
-Calls need the access code. Open a page with `?code=` and the code once, or type it into the box the page shows. For local testing, `.env.test.local` can set throwaway `LAB_ACCESS_CODE` and `LAB_ADMIN_CODE` values that apply only to `pnpm dev`.
-
-The agent doesn't reload when its code changes: stop it and start it again.
-
-The overview, the program page and the lab's recorded runs need neither the agent nor any keys: `pnpm dev:web` in `web` is enough to see them.
-
-### Tests
-
-None of these needs keys or a network, and CI runs them all on every push.
-
-- `pnpm test` in `web`: how the timeline places each turn; what each run's outcome sentence says; every recording (its file, its settings, and that it still shows its lesson); the Worker's API against a stand-in for KV; the kit's rules; the cards' sources; and that the names the agent and the pages share still match.
-- `pnpm typecheck` in `web`: the pages, then the Worker.
-- `.venv\Scripts\python -m pytest` in `agent`: the scoring rules, and what Juniper accepts from the page.
+Every run, with its date and what it took to make each experiment work, is in [What the live runs showed](#what-the-live-runs-showed) at the end.
 
 ## How it works
 
@@ -134,64 +97,7 @@ The pages follow LiveKit's brand kit (livekit.com/brand): near-black `#070707` w
   - `web/lib/replays.test.ts` fails if a recording is missing a piece, was made on the wrong settings, or no longer shows its lesson (Experiment 1's baseline has to answer more than once, and so on).
   - Experiment 3's recordings both play the café, because the recording taps what the caller's phone sent. Voice isolation works on the agent's side, so its effect is in what Juniper heard.
 
-### Layout and brand rules
-
-The pages also follow a design kit (the boards in `.canvas/project/`, kept out of git). The kit's tokens and pieces live in the code, so a page is built from them rather than from raw values.
-
-**Which source wins**
-- Where the kit and the app differ, the kit wins.
-- The brand guide wins on its "never" rules. LiveKit is never written "LIVEKIT", so a label set in capitals keeps the name in its own case (`brandCase`).
-- WCAG 2.2 AA wins over both sources' colours:
-  - 4.5:1 for text, placeholders included;
-  - 3:1 for large text and for the edges of controls. Fields and segmented controls draw their edge in `--control-line`, which is 3:1 or more on every ground in both themes; `--line` is for dividers only.
-
-**The column**
-- Every page sits in `page-column`: at most 1200px, with 20px gutters on phones and 40px from 640px.
-- On tablets the page keeps that column. The lab's outline shows from 1024px.
-
-**Fields**
-- Use `Field`, `TextInput`, `TextArea` and `WrappingInput` from `components/ui/Field.tsx`.
-- Fields are 44px tall, with 16px text on touch screens (iOS zooms in on anything smaller) and the kit's 14px with a mouse.
-- Text that must stay on one line but can be long (a name, a rule, a typed message) is a `WrappingInput`. It wraps instead of hiding its end, and line breaks never reach the value.
-- Two fields share a row only when both labels fit, and then as equal halves: Make it your own's are side by side from 768px.
-- A field's error shows under it (`Field`'s `error`), where the fix is. When an action elsewhere turns the value down, as Call does with a wrong access code, the field scrolls into view and takes focus.
-
-**Touch**
-- Every control has a 44×44px touch area on a touch screen (`pointer: coarse`) and 24×24px with a mouse.
-- A control drawn smaller keeps its drawn size and gets the `hit` utility, an invisible area centred on it. An ancestor with `overflow: hidden` clips that area, so check where it's used.
-
-**Type**
-- Sizes, line heights and tracking come from the tokens in `app/globals.css`:
-  - sizes: `text-label` (11px), `text-small` (13), `text-card` (15), `text-lead` (17), `text-title` (22), `text-heading` (30), `text-score` (64), and the fluid `text-hero`, `text-page-title`, `text-feature`, `text-section`, `text-subsection` and `text-quote`;
-  - line heights: `leading-reading`, `leading-heading`, `leading-page`;
-  - tracking: `tracking-body`, `tracking-title`, `tracking-pill`, `tracking-chip`, `tracking-score`.
-- Tailwind's own `text-xs`, `text-sm` and `text-base` are the kit's 12, 14 and 16px. Anything larger takes a token, so a heading or a lead is one size wherever it appears.
-- Labels are `eyebrow` (12px, page level) or `eyebrow-sm` (11px at 0.18em, the kit's card label). Table headings are `eyebrow-sm`.
-- Public Sans is for reading; Commit Mono is for labels, times, scores and code.
-- At 200% browser zoom nothing runs off the side or is cut off. Chrome on Android doesn't apply the phone's system text size to web pages.
-
-**Icons**
-- The kit's line icons, from `components/ui/Icon.tsx` (a 16px grid, 1.6 stroke).
-- Right and wrong marks are `RightWrong`, never ✓ or ✗ glyphs.
-- The site's mark is its own (`Wordmark`, `app/icon.svg`, `apple-icon.png`, `opengraph-image.png`), never LiveKit's.
-
-**The kit's pieces** (`components/ui`)
-- `Button` and `ButtonLink`, in four variants:
-  - primary, secondary, danger and quiet;
-  - the `stack` size goes full width at 48px on a phone;
-  - disabled is neutral, at opacity 0.6.
-  - Every disabled control, a field or a segment included, is at 0.6.
-- The rest: `Segmented`, `Pill`, `Callout`, `Eyebrow`, `Points`, `RightWrong`, the fields, `Scroller` (a box that scrolls sideways becomes focusable and named while it scrolls), `CodeBlock`, `SectionHead` and `Feature` (how the overview, the program and the build page head their sections), and `ExternalLink` (a new tab, and no referrer).
-- A choice, an outline mark or any other control is edged in `--control-line`, like a field.
-
-**The rules the tests check** (`web/lib/kit-rules.test.ts`, run by `pnpm test`; each failure names the piece to use)
-- No colour literals: use a token.
-- No copy of the page column: use `page-column`.
-- No pixel or clamp text sizes, and nothing from `text-lg` up: use a type token.
-- No link off the site outside `ExternalLink`.
-- No raw text inputs or textareas: use the fields.
-- No `overflow-x-auto` outside `Scroller` (the header's nav row is the one exception).
-- No ✓ or ✗ glyphs.
+The layout and brand rules every page follows, and the ones `pnpm test` enforces, are in [`web/DESIGN.md`](web/DESIGN.md).
 
 ## The hosted lab
 
@@ -220,6 +126,61 @@ lk agent update-secrets --secrets DEEPGRAM_API_KEY=...   # when the Deepgram key
 
 The hosted agent was last deployed on 15 Nov 2026, from the code as it is here. It hasn't taken a call since: the first one after a deploy should confirm that it answers and that a cut-off reply is marked on the timeline.
 
+## Run it
+
+You need Node 26 and pnpm for the pages, and Python 3.10 to 3.14 for the agent (CI and the agent's Dockerfile use 3.13). `pnpm test` fails on Node 22, so `web/package.json` pins Node 26, the version CI uses, and pnpm stops with a message on any other.
+
+You also need a LiveKit Cloud project and a Deepgram account. The free plans are enough: LiveKit's Build plan at [cloud.livekit.io](https://cloud.livekit.io), and Deepgram's $200 of free credit at [console.deepgram.com](https://console.deepgram.com).
+
+1. Fill in `.env.local` at the root of this folder (copy `.env.example` if it isn't there): the LiveKit project URL, API key and API secret, the Deepgram API key, and the lab's access and admin codes. The agent and the API both read that one file. `AGENT_NAME=juniper-lab-dev` keeps a local agent from taking the hosted lab's calls.
+2. Start the agent:
+
+   ```powershell
+   cd agent
+   python -m venv .venv
+   .venv\Scripts\python -m pip install -e ".[dev]"
+   .venv\Scripts\python src/agent.py dev
+   ```
+
+3. In a second terminal, start the pages and the API:
+
+   ```powershell
+   cd web
+   pnpm install
+   pnpm dev
+   ```
+
+4. Open http://localhost:3100/livekitlab/lab/ and press **Call Juniper**. Use headphones. The overview is at `/livekitlab/`, how it's built at `/livekitlab/build/`, the practice call at `/livekitlab/practice/`, the pilot at `/livekitlab/pilot/` and its results at `/livekitlab/pilot/results/`.
+
+Calls need the access code. Open a page with `?code=` and the code once, or type it into the box the page shows. For local testing, `.env.test.local` can set throwaway `LAB_ACCESS_CODE` and `LAB_ADMIN_CODE` values that apply only to `pnpm dev`.
+
+The agent doesn't reload when its code changes: stop it and start it again.
+
+The overview, the program page and the lab's recorded runs need neither the agent nor any keys: `pnpm dev:web` in `web` is enough to see them.
+
+### Tests
+
+None of these needs keys or a network, and CI runs them all on every push.
+
+- `pnpm test` in `web`: how the timeline places each turn; what each run's outcome sentence says; every recording (its file, its settings, and that it still shows its lesson); the Worker's API against a stand-in for KV; the kit's rules; the cards' sources; and that the names the agent and the pages share still match.
+- `pnpm typecheck` in `web`: the pages, then the Worker.
+- `.venv\Scripts\python -m pytest` in `agent`: the scoring rules, and what Juniper accepts from the page.
+
+## What's here
+
+| Folder | What it is |
+| --- | --- |
+| `agent/` | Juniper and Priya, a Python agent on the LiveKit Agents framework (1.8), with tests for the scoring rules and for what the page can send it, and the Dockerfile LiveKit Cloud builds |
+| `web/` | The overview, lab, practice-call, program, pilot and how-it's-built pages (Next.js, exported as static files, using `livekit-client` and LiveKit's React components), and the API, a Cloudflare Worker in `web/worker` |
+| `web/DESIGN.md` | The layout and brand rules the pages follow, and which of them the tests check |
+| `web/lib/replays/`, `web/public/replay/` | The recorded runs: each one's timeline and events as JSON, and its sound as a WAV |
+| `web/scripts/capture-server.mjs` | Saves a recorded test-caller run, in development only |
+| `.github/workflows/ci.yml` | Typecheck, tests and the static export for the pages; lint and tests for the agent |
+| `pilot/` | The facilitator guide for the pilot |
+| `scripts/make_clips_livekit.py` | Makes the test-caller clips for Experiments 1 and 2 with a natural voice from LiveKit Inference |
+| `scripts/make_clips_exp34.py` | Makes the café booking, the café loop and Experiment 4's question, with Deepgram's own API |
+| `scripts/make-clips.ps1` | Makes robot-voice stand-ins with Windows text to speech, without keys |
+
 ## The test-caller clips
 
 `scripts/make_clips_livekit.py` makes the clips in `web/public/clips` with a natural voice from LiveKit Inference (Deepgram's "Apollo"), using the keys in `.env.local`. Run it from the project root with the agent's Python; pass clip names to remake only those:
@@ -247,6 +208,8 @@ agent\.venv\Scripts\python scripts\make_clips_livekit.py exp2-uh-huh
 `scripts/make-clips.ps1` makes robot-voice versions of Experiments 1 and 2's clips with Windows text to speech, without any keys. Don't judge the Enhanced settings with those (see below).
 
 ## What the live runs showed
+
+Oldest first. The runs down to [A cheaper judge](#a-cheaper-judge) used the first set of models: AssemblyAI's speech-to-text, Fish Audio's and Cartesia's voices, and `openai/gpt-5.5` as the judge. The lab then moved to Deepgram for speech and voices, to keep within LiveKit's free inference credits.
 
 Run on 2026-11-14 against a LiveKit Cloud project, with the natural-voice clips:
 
@@ -289,8 +252,6 @@ Fixes from these calls:
 - "Before you go there" now fires only when the seller pitches before asking a single question. This change hasn't been re-run live.
 
 After Juniper's turn events moved into `agent/src/common.py`, Experiment 1's Enhanced run still heard the whole sentence and answered once.
-
-These runs used the first set of models: AssemblyAI's speech-to-text, Fish Audio's and Cartesia's voices, and `openai/gpt-5.5` as the judge. The lab moved to Deepgram for speech and voices, to keep within LiveKit's free inference credits.
 
 ### A cheaper judge
 

@@ -1,5 +1,5 @@
 // Run with `pnpm test`. The design kit's rules for the pages' source, checked as a scan:
-// each failure names the kit piece to use instead. See the README's "Layout and brand rules".
+// each failure names the kit piece to use instead. See web/DESIGN.md.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
