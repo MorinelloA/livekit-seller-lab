@@ -385,9 +385,11 @@ export function ConversationTimeline({
         const top = runsTop + i * RUN_BLOCK;
         return (
           <div key={r.key} aria-hidden>
+            {/* One line, so a long restaurant name can't spill over the lanes; the full name is in its title. */}
             <p
-              className={`eyebrow-sm absolute left-0 ${r.tone === 'enhanced' ? 'text-accent' : 'text-subtle'}`}
+              className={`eyebrow-sm absolute left-0 max-w-full truncate ${r.tone === 'enhanced' ? 'text-accent' : 'text-subtle'}`}
               style={{ top }}
+              title={r.label}
             >
               {brandCase(r.label)}
               {r.timeline.status === 'running' && <span className="ml-2 font-normal tracking-normal normal-case">· live</span>}
