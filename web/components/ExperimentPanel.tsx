@@ -191,7 +191,6 @@ export function ExperimentPanel(props: {
               <Button
                 onClick={cafe.onToggle}
                 disabled={!canRun}
-                aria-pressed={cafe.on}
                 className={cafe.on ? 'border-accent-line bg-accent-soft text-accent' : undefined}
               >
                 <Icon name="cafe" className="size-4" />

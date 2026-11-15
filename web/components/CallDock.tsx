@@ -96,7 +96,6 @@ export function CallDock(props: {
             <Button
               onClick={props.onToggleMic}
               disabled={busy}
-              aria-pressed={micOn}
               className={micOn ? 'border-accent-line bg-accent-soft text-accent' : undefined}
             >
               <Icon name="mic" className="size-4" />

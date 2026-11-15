@@ -473,7 +473,7 @@ function CallBar(props: {
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           {connected && (live || phase === 'scored') && (
-            <Button onClick={props.onToggleMic} aria-pressed={micOn}>
+            <Button onClick={props.onToggleMic}>
               <Icon name="mic" className="size-4" />
               {micOn ? 'Mute' : 'Use my microphone'}
             </Button>

@@ -112,7 +112,7 @@ export function Replay({ entries }: { entries: ReplayEntry[] }) {
               setMode(next);
             }}
           />
-          <Button onClick={() => (playing ? stop() : void play())} disabled={!entry.replay.audio} aria-pressed={playing}>
+          <Button onClick={() => (playing ? stop() : void play())} disabled={!entry.replay.audio}>
             <Icon name={playing ? 'pause' : 'play'} className="size-3" />
             {playing ? 'Pause' : `Play the ${mode === 'baseline' ? 'Baseline' : 'Enhanced'} call`}
           </Button>
