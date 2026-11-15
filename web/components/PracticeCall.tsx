@@ -698,6 +698,9 @@ function Transcript({ turns, live }: { turns: PracticeTurn[]; live: boolean }) {
           ref={listRef}
           // It scrolls once a call has a few turns, so it can be reached and scrolled by keyboard.
           tabIndex={0}
+          // A screen reader reads each new turn as it arrives, once it has finished what it was saying.
+          aria-live="polite"
+          aria-relevant="additions"
           aria-label="Transcript"
           className="m-0 flex max-h-96 list-none flex-col gap-2.5 overflow-y-auto rounded-lg border border-line bg-surface px-[18px] py-4 text-sm"
         >

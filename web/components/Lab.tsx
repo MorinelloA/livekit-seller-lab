@@ -737,8 +737,8 @@ export function Lab() {
                 label: `${experiment.id} · ${experiment.title.replace(/^Experiment \d+:\s*/, '')}`,
                 done: predicted.includes(`Experiment ${experiment.id}`) && bothDone(experiment.id),
               })),
-              { id: 'prove-it', label: 'Prove it: the practice call', done: false },
-              { id: 'every-turn', label: 'Every turn, measured', done: false },
+              { id: 'prove-it', label: 'Prove it: the practice call' },
+              { id: 'every-turn', label: 'Every turn, measured' },
             ]}
           />
 

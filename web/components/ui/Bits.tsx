@@ -159,11 +159,6 @@ export function RightWrong({ right }: { right: boolean }) {
   );
 }
 
-/** A panel: LiveKit's raised card with a hairline border. */
-export function panelClass(className?: string): string {
-  return cx('rounded-lg border border-line bg-surface', className);
-}
-
 /** Up to two points, as filled and empty dots. */
 export function Points({ score, max = 2 }: { score: number; max?: number }) {
   return (

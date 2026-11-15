@@ -8,7 +8,8 @@ import { Icon } from '@/components/ui/Icon';
 export interface OutlineItem {
   id: string;
   label: string;
-  done: boolean;
+  /** Left out for a section that isn't something to finish, which gets a dash, not a circle to fill. */
+  done?: boolean;
 }
 
 /** Which section is on screen: the last one whose top has scrolled past a third of the window. */
@@ -58,6 +59,10 @@ export function LabOutline({ items }: { items: OutlineItem[] }) {
               <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent">
                 <Icon name="check" className="size-3" strokeWidth={2} />
                 <span className="sr-only">Done: </span>
+              </span>
+            ) : item.done === undefined ? (
+              <span aria-hidden className="flex size-4 shrink-0 items-center justify-center">
+                <span className="h-px w-2.5 bg-control-line" />
               </span>
             ) : (
               <span aria-hidden className="size-4 shrink-0 rounded-full border-[1.5px] border-control-line" />

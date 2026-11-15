@@ -16,7 +16,7 @@ type Data = Record<string, StoredEvent[]>;
 
 // A header cell's type; its padding is set where it's used, because cx only joins classes
 // and a later px-0 can't override an earlier px-3.
-const thType = 'py-2.5 font-mono text-label font-bold tracking-pill uppercase text-subtle whitespace-nowrap';
+const thType = 'py-2.5 eyebrow-sm text-subtle whitespace-nowrap';
 const th = `px-3 ${thType}`;
 const td = 'px-3 py-2.5';
 
