@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ConversationTimeline, TimelineLegend } from '@/components/ConversationTimeline';
 import type { RunView } from '@/components/ExperimentPanel';
@@ -234,7 +235,13 @@ export function MakeItYourOwn(props: {
             {persona?.instructions ?? 'Call Juniper, then open this again to load them.'}
           </pre>
         </details>
-        <p className="m-0 text-sm leading-relaxed text-subtle">{copy.fullProgram}</p>
+        <p className="m-0 text-sm leading-relaxed text-subtle">
+          {copy.fullProgram}{' '}
+          <Link href="/program/" className="text-accent underline-offset-2 hover:underline">
+            See the program
+          </Link>
+          .
+        </p>
       </div>
     </section>
   );

@@ -8,8 +8,9 @@ import { TurnList } from '@/components/TurnList';
 import { brandCase, Callout, Eyebrow, Segmented } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
+import { ExternalLink } from '@/components/ui/ExternalLink';
 import { Icon } from '@/components/ui/Icon';
-import { DEFAULT_MODE_LABELS, type Experiment, type ExperimentId } from '@/lib/experiments';
+import { DEFAULT_MODE_LABELS, type Experiment, type ExperimentId, FACTS_CHECKED_ON } from '@/lib/experiments';
 import { withBase } from '@/lib/paths';
 import type { Peaks } from '@/lib/peaks';
 import { isTurn, type LoggedEvent, type Mode } from '@/lib/protocol';
@@ -414,7 +415,8 @@ export function ExperimentPanel(props: {
                 </span>
               </p>
               <div className="overflow-hidden rounded-lg border border-accent-line">
-                <dl className="m-0 grid gap-px bg-line md:grid-cols-3">
+                {/* The third part has the most to say, so it gets the most room. */}
+                <dl className="m-0 grid gap-px bg-line md:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,5fr)]">
                   <CardPart title="What the customer says" emphasis>
                     {card.customerSays}
                   </CardPart>
@@ -427,6 +429,20 @@ export function ExperimentPanel(props: {
                   </Eyebrow>
                   <p className="display m-0 text-quote leading-[1.35] [text-wrap:pretty]">{card.askThis}</p>
                 </div>
+              </div>
+              {/* Outside the card's clipped box, so the links keep their full touch area. */}
+              <div className="flex flex-col gap-1.5">
+                <ul aria-label="Where these facts come from" className="m-0 flex list-none flex-wrap items-baseline gap-x-5 gap-y-1 p-0 text-small">
+                  <li className="eyebrow-sm text-subtle">Sources</li>
+                  {card.sources.map((source) => (
+                    <li key={source.href}>
+                      <ExternalLink href={source.href}>{source.label}</ExternalLink>
+                    </li>
+                  ))}
+                </ul>
+                <p className="m-0 text-small text-subtle">
+                  Read against LiveKit’s pages on {capturedDate(FACTS_CHECKED_ON)}. If they’ve changed since, they win.
+                </p>
               </div>
             </>
           ) : locked ? (

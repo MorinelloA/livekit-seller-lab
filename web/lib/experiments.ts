@@ -16,8 +16,29 @@ export interface Experiment {
   testCaller: string;
   tryYourself: string;
   listenFor: string;
-  card: { customerSays: string; happening: string; livekitDoes: string; askThis: string };
+  card: {
+    customerSays: string;
+    happening: string;
+    livekitDoes: string;
+    askThis: string;
+    /** Where the facts in `livekitDoes` come from. Shown under the card. */
+    sources: Source[];
+  };
 }
+
+/** A page a seller card's facts rest on. */
+export interface Source {
+  label: string;
+  href: string;
+  /** Phrases from the card's "what LiveKit does" that this page backs up, numbers above all. */
+  supports?: string[];
+}
+
+/**
+ * The day every card was last read against its sources. After a LiveKit
+ * release, re-read the pages, fix what changed, and move this date.
+ */
+export const FACTS_CHECKED_ON = '2026-11-15';
 
 // Recorded test-caller clips, made by scripts/make_clips_livekit.py and
 // scripts/make_clips_exp34.py.
@@ -60,7 +81,7 @@ export const MAKE_IT_YOUR_OWN = {
   experimentsNote:
     'Test-caller runs in the experiments switch back to the original Juniper, so everyone hears the same calls.',
   fullProgram:
-    'In the full program, each new hire builds this agent in Agent Builder, LiveKit’s no-code builder, in a sandbox project of their own. This page uses two fields instead, because Agent Builder needs a LiveKit account.',
+    'In the full program, each new hire builds this agent in Agent Builder, LiveKit’s no-code builder, in a LiveKit Cloud project of their own. This page uses two fields instead, because Agent Builder needs a LiveKit account.',
 };
 
 export const EXPERIMENTS: Experiment[] = [
@@ -84,7 +105,7 @@ export const EXPERIMENTS: Experiment[] = [
     tryYourself:
       'Then say it yourself, pausing a second or two after “for” and after “on,” the way you would if you were checking your calendar.',
     listenFor:
-      'Whether the agent starts talking before “seven.” The results show which words each setting heard before it replied. Results can vary between tries, so compare the test caller runs first; they give both settings the same input.',
+      'Whether the agent starts talking before “seven.” The results show which words each setting heard before it replied. Results can vary between tries, so compare the test-caller runs first; they give both settings the same input.',
     card: {
       customerSays: '“It keeps cutting people off,” or “Callers hate reading their account number to it.”',
       happening:
@@ -93,6 +114,13 @@ export const EXPERIMENTS: Experiment[] = [
         'Its turn detector is a model that listens to how you speak, not just whether you’ve stopped: your words, pitch and rhythm. It waits when you sound mid-thought and answers sooner when you sound done. LiveKit built and hosts the model; it’s included for agents deployed on LiveKit Cloud and covers 14 languages.',
       askThis:
         '“What do your callers have to say that takes a while, like account numbers, addresses or medication names? Have you heard that the agent cuts people off?”',
+      sources: [
+        {
+          label: 'Turn detector',
+          href: 'https://docs.livekit.io/agents/logic/turns/turn-detector/',
+          supports: ['covers 14 languages', 'included for agents deployed on LiveKit Cloud'],
+        },
+      ],
     },
   },
   {
@@ -123,6 +151,13 @@ export const EXPERIMENTS: Experiment[] = [
         'Adaptive interruption handling uses a model trained on real conversations to tell “uh-huh” from a real interruption. It decides from the sound itself, without waiting for a transcript, so the decision is fast. A fuller “yeah, okay” can mean the caller wants to talk, and the model may stop for that. LiveKit runs the model on LiveKit Cloud, and it’s on by default for most agents deployed there.',
       askThis:
         '“When a caller talks over the agent today, what happens? Does it stop when it should, and keep going when it should?”',
+      sources: [
+        {
+          label: 'Adaptive interruption handling',
+          href: 'https://docs.livekit.io/agents/logic/turns/adaptive-interruption-handling/',
+          supports: ['It decides from the sound itself, without waiting for a transcript', 'on by default for most agents deployed there'],
+        },
+      ],
     },
   },
   {
@@ -144,7 +179,7 @@ export const EXPERIMENTS: Experiment[] = [
       expected: 1,
     },
     testCaller:
-      'The test caller books a table from a busy café. A barista calls out an order before he speaks, and someone at the next table starts talking about a game just after he stops.',
+      'The test caller books a table from a busy café. A barista calls out an order before the caller speaks, and someone at the next table starts talking about a game just after.',
     tryYourself:
       'Then press Café noise and book a table yourself. While you talk, the page mixes the same café into your microphone.',
     listenFor:
@@ -157,6 +192,22 @@ export const EXPERIMENTS: Experiment[] = [
         'LiveKit Cloud runs noise models from Krisp and ai-coustics on the caller’s audio before the agent hears it. Voice isolation keeps the main speaker and removes other voices and noise; it’s priced by the minute, with some minutes included in every plan, and has a version for phone calls. Background noise suppression suits calls with several speakers. In a sample on LiveKit’s docs, voice isolation cut the word error rate from 117.6% to between 7.1% and 14.3%.',
       askThis:
         '“Where are your callers when they talk to the agent: at a desk, in a car, on a job site? Who else is in the room with them?”',
+      sources: [
+        {
+          label: 'Noise and echo cancellation',
+          href: 'https://docs.livekit.io/transport/media/noise-cancellation/',
+          supports: [
+            'from 117.6% to between 7.1% and 14.3%',
+            'has a version for phone calls',
+            'Background noise suppression suits calls with several speakers',
+          ],
+        },
+        {
+          label: 'Pricing',
+          href: 'https://livekit.com/pricing',
+          supports: ['priced by the minute, with some minutes included in every plan'],
+        },
+      ],
     },
   },
   {
@@ -167,7 +218,7 @@ export const EXPERIMENTS: Experiment[] = [
     modeLabels: { baseline: 'Fast model', enhanced: 'Reasoning model' },
     settings: {
       baseline: 'Answers with Gemma 4 31B, a quick LLM.',
-      enhanced: 'Swaps in Grok 4.20 Reasoning, a larger LLM that thinks before it answers.',
+      enhanced: 'Swaps in Grok 4.20 Reasoning, an LLM that thinks before it answers.',
     },
     prediction: {
       question: 'When you switch to the reasoning model, which part of the pause grows?',
@@ -187,6 +238,20 @@ export const EXPERIMENTS: Experiment[] = [
         'It shortens the steps it controls. Its turn detector closes your turn sooner when you sound done, and the agent starts drafting a reply before your turn is confirmed. The speech, LLM and voice models come from providers such as Deepgram, OpenAI, Google and Cartesia, all through one LiveKit account with LiveKit Inference. Agent Console and Agent Insights time each step, so the slow one is easy to find.',
       askThis:
         '“How long is the pause on your calls today, and do callers notice it? Do you know which step is slowest?”',
+      sources: [
+        {
+          label: 'Turn handling options',
+          href: 'https://docs.livekit.io/reference/agents/turn-handling-options/',
+          supports: ['the agent starts drafting a reply before your turn is confirmed'],
+        },
+        {
+          label: 'LiveKit Inference',
+          href: 'https://docs.livekit.io/agents/models/inference/',
+          supports: ['all through one LiveKit account with LiveKit Inference'],
+        },
+        { label: 'Agent Console', href: 'https://docs.livekit.io/testing/agent-console/' },
+        { label: 'Agent Insights', href: 'https://docs.livekit.io/testing/observability/insights/' },
+      ],
     },
   },
 ];

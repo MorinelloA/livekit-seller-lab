@@ -411,7 +411,7 @@ function Briefing() {
             PR
           </span>
           <div className="flex flex-col">
-            <span className="text-lg font-semibold text-fg">Priya Raman</span>
+            <span className="text-lead font-semibold text-fg">Priya Raman</span>
             <span className="text-sm">CTO and co-founder, Fluento</span>
           </div>
         </div>
@@ -431,7 +431,7 @@ function Briefing() {
       </section>
 
       <section aria-labelledby="how-title" className="flex flex-col gap-3">
-        <h2 id="how-title" className="m-0 text-lg font-medium text-fg">
+        <h2 id="how-title" className="m-0 text-lead font-medium text-fg">
           How the call works
         </h2>
         <ul className="m-0 flex list-disc flex-col gap-2 pl-[18px] text-sm leading-relaxed">
@@ -449,7 +449,7 @@ function Briefing() {
       </section>
 
       <section aria-labelledby="rubric-title" className="flex flex-col gap-3">
-        <h2 id="rubric-title" className="m-0 text-lg font-medium text-fg">
+        <h2 id="rubric-title" className="m-0 text-lead font-medium text-fg">
           What’s scored
         </h2>
         <p className="m-0 text-small leading-relaxed text-subtle">Up to 2 points each. Every point rests on something said in the call.</p>
@@ -626,7 +626,7 @@ function ScorecardView({ card, totals }: { card: Scorecard; totals: number[] }) 
 
       <figure className="m-0 flex flex-col gap-2.5 border-b border-line px-6 py-5">
         <figcaption className="eyebrow-sm text-ok">What your coach said</figcaption>
-        <blockquote className="display m-0 text-xl leading-normal">{card.coach}</blockquote>
+        <blockquote className="display m-0 text-quote leading-normal">{card.coach}</blockquote>
       </figure>
 
       {card.bluff && (
@@ -688,7 +688,7 @@ function Transcript({ turns, live }: { turns: PracticeTurn[]; live: boolean }) {
 
   return (
     <section aria-labelledby="transcript-title" className="flex flex-col gap-2.5">
-      <h2 id="transcript-title" className="m-0 text-lg font-medium text-fg">
+      <h2 id="transcript-title" className="m-0 text-lead font-medium text-fg">
         Transcript
       </h2>
       {ordered.length === 0 ? (

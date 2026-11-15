@@ -41,10 +41,10 @@ export const CHECK_QUESTIONS: CheckQuestion[] = [
   },
   {
     taughtIn: 'Experiment 4',
-    question: 'Which part of the pause does a bigger LLM usually lengthen?',
+    question: 'Which part of the pause does a reasoning LLM lengthen?',
     options: ['Deciding the caller was done.', 'The voice starting to speak.', 'The LLM’s first words.'],
     answer: 2,
-    why: 'A bigger model takes longer to produce its first words. Deciding the caller was done and starting the voice take as long as before.',
+    why: 'A reasoning model thinks before its first words. Deciding the caller was done and starting the voice take as long as before.',
   },
   {
     taughtIn: 'Experiment 3’s card',

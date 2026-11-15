@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
 import { ArchitectureDiagram } from '@/components/build/ArchitectureDiagram';
 import { Eyebrow } from '@/components/ui/Bits';
 import { CodeBlock } from '@/components/ui/CodeBlock';
@@ -9,6 +8,7 @@ import { RPC_FINISH, SCORECARD_TOPIC, CHAT_TOPIC } from '@/lib/practice';
 import { EVENTS_TOPIC, RPC_CUSTOMIZE, RPC_GET_STATE, RPC_RESET, RPC_SET_SETTINGS } from '@/lib/protocol';
 import { ExternalLink } from '@/components/ui/ExternalLink';
 import { Scroller } from '@/components/ui/Scroller';
+import { Feature } from '@/components/ui/Sections';
 import { REPO_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -101,28 +101,13 @@ const LIMITS = [
 
 const th = 'border-b border-line px-4 py-3 eyebrow-sm text-subtle whitespace-nowrap';
 
-function Feature({ id, eyebrow, title, intro, children }: { id: string; eyebrow: string; title: string; intro: ReactNode; children: ReactNode }) {
-  return (
-    <section id={id} aria-labelledby={`${id}-title`} className="grid scroll-mt-6 gap-x-12 gap-y-8 pb-24 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-      <div className="flex flex-col gap-3.5">
-        <Eyebrow>{eyebrow}</Eyebrow>
-        <h2 id={`${id}-title`} className="display m-0 text-subsection leading-heading">
-          {title}
-        </h2>
-        <div className="flex flex-col gap-3.5 text-base leading-reading">{intro}</div>
-      </div>
-      <div className="flex min-w-0 flex-col gap-4">{children}</div>
-    </section>
-  );
-}
-
 export default function BuildPage() {
   return (
     <main id="main" className="page-column">
       <section className="flex max-w-[820px] flex-col gap-5 pt-20 pb-12 sm:pt-24">
         <Eyebrow>How it’s built</Eyebrow>
         <h1 className="display m-0 text-feature leading-[1.06]">What happens after you press Call Juniper</h1>
-        <p className="m-0 text-lg leading-reading tracking-body [text-wrap:pretty]">
+        <p className="m-0 text-lead leading-reading tracking-body [text-wrap:pretty]">
           The pages are static files. A small Cloudflare Worker hands out rooms and never calls LiveKit’s API: the agent
           dispatch rides inside the join token. Everything you hear comes from one Python worker on LiveKit Cloud. It plays
           Juniper, Priya and the coach, and asks a separate model to score your practice call.

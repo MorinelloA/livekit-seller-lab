@@ -783,11 +783,11 @@ export function Lab() {
               className="flex scroll-mt-6 flex-wrap items-center gap-x-6 gap-y-4 rounded-lg border border-line p-6"
             >
               <div className="flex min-w-0 flex-[1_1_380px] flex-col gap-1.5">
-                <h2 id="prove-it-title" className="m-0 text-xl font-normal text-fg">
+                <h2 id="prove-it-title" className="m-0 text-title font-normal tracking-title text-fg">
                   Prove it: the practice call
                 </h2>
                 <p className="m-0 text-sm leading-relaxed">
-                  An 8 to 10 minute discovery call with Priya, an AI voice agent playing a buyer. It’s scored on what this
+                  An 8 to 10 minute discovery call with Priya, an AI prospect. It’s scored on what this
                   lab teaches, and a coach talks you through the result.
                 </p>
               </div>

@@ -235,7 +235,7 @@ function Participant({ summary, onDelete }: { summary: ParticipantSummary; onDel
     <section id={`participant-${s.id}`} className="flex scroll-mt-6 flex-col gap-6 rounded-lg border border-line bg-surface p-6">
       <header className="flex flex-wrap items-baseline gap-3">
         {/* A code is one long word: it can break anywhere rather than run off a phone's screen. */}
-        <h2 className="display m-0 min-w-0 text-2xl wrap-anywhere">{s.id}</h2>
+        <h2 className="display m-0 min-w-0 text-title wrap-anywhere">{s.id}</h2>
         <p className="m-0 font-mono text-xs text-subtle">
           Started {new Date(s.stepAt.consent ?? s.firstAt).toLocaleString()} · lab {minutes(s.minutes.lab)} · practice{' '}
           {minutes(s.minutes.practice)} · {s.stepAt.done ? 'finished' : 'not finished'}

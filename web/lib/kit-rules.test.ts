@@ -62,6 +62,13 @@ test('type sizes come from the kit’s tokens, not pixel values', () => {
   assert.deepEqual(found, [], 'Use a type token (text-label, text-small, text-card, text-lead, text-title, …) from app/globals.css.');
 });
 
+test('nothing is set larger than body text without a type token', () => {
+  // Tailwind's own text-xs, text-sm and text-base are the kit's 12, 14 and 16px. From
+  // 17px up, a heading or a lead takes a token, so the same thing is one size everywhere.
+  const found = offenders(/\btext-(lg|[2-9]?xl)\b/);
+  assert.deepEqual(found, [], 'Use text-lead (17px), text-title (22px), text-heading (30px) or a fluid token from app/globals.css.');
+});
+
 test('icons are the kit’s line icons, not glyphs', () => {
   const found = offenders(/[✓✗✔✕✖]/).filter((line) => !/:\s*(\/\/|\*|\/\*)/.test(line));
   assert.deepEqual(found, [], 'Use Icon (components/ui/Icon.tsx), or RightWrong for a right or wrong mark.');

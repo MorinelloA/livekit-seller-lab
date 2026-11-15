@@ -10,6 +10,7 @@ import { capturedDate } from '@/lib/replay';
 import { outcomeSentence, runOutcome } from '@/lib/runSummary';
 import { AUTHOR } from '@/lib/site';
 import { Scroller } from '@/components/ui/Scroller';
+import { SectionHead } from '@/components/ui/Sections';
 
 export const metadata: Metadata = {
   title: { absolute: 'Seller Lab: Why Real-Time Voice AI Is Hard' },
@@ -51,17 +52,6 @@ function replayOf(id: ExperimentId, runs: Recording): ReplayExperiment {
       durationMs: runs[mode].audio?.durationMs ?? null,
     })),
   };
-}
-
-function SectionHead({ eyebrow, title, id }: { eyebrow: string; title: string; id: string }) {
-  return (
-    <div className="flex max-w-[760px] flex-col gap-3">
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 id={id} className="display m-0 text-section leading-heading">
-        {title}
-      </h2>
-    </div>
-  );
 }
 
 function Arrow() {
@@ -166,10 +156,10 @@ export default async function OverviewPage() {
         <h1 className="display m-0 max-w-[920px] text-hero leading-[1.04]">
           Why real-time voice AI is <span className="text-accent">hard</span>
         </h1>
-        <p className="m-0 max-w-[680px] text-lg leading-reading tracking-body [text-wrap:pretty]">
+        <p className="m-0 max-w-[680px] text-lead leading-reading tracking-body [text-wrap:pretty]">
           Juniper is a voice agent that answers the phone for a made-up restaurant. Each experiment plays it the same
-          recorded caller twice: once on a baseline setting, once on LiveKit’s. You predict what will happen, hear the
-          difference, try it with your own voice, and leave with the question to ask a customer.
+          recorded caller twice and changes one setting. You predict what will happen, hear the difference, try it with
+          your own voice, and leave with the question to ask a customer.
         </p>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3 pt-2">
           <ButtonLink href="/lab/" variant="primary" size="stack">
@@ -202,6 +192,19 @@ export default async function OverviewPage() {
               </ButtonLink>
             </article>
           ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-lg border border-line p-7">
+          <div className="flex min-w-0 flex-[1_1_380px] flex-col gap-2">
+            <h3 className="m-0 text-title leading-snug font-normal tracking-title text-fg">This is Lab 1 of a program</h3>
+            <p className="m-0 max-w-[680px] text-card leading-reading">
+              LiveKit’s job post asks for a curriculum, certification and measurement, not one lab. So there’s a proposal
+              for the rest: what I’d find out first, five more labs, and what the pilot already measures.
+            </p>
+          </div>
+          <ButtonLink href="/program/">
+            See the program
+            <Arrow />
+          </ButtonLink>
         </div>
       </section>
 
@@ -256,11 +259,12 @@ export default async function OverviewPage() {
 
       <section aria-labelledby="build-title" className="page-column flex flex-col gap-8 pt-24">
         <SectionHead eyebrow="How it’s built" id="build-title" title="One Python worker plays every voice in the lab" />
-        <ol aria-label="How a call travels" className="m-0 flex list-none flex-wrap gap-2 p-0">
+        {/* Five hops: two across on a tablet with the last one full width, all five in a row from 1024px. */}
+        <ol aria-label="How a call travels" className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-5">
           {PATH.map((hop) => (
             <li
               key={hop.name}
-              className={`flex flex-[1_1_180px] flex-col gap-1.5 rounded-lg border bg-surface px-[18px] py-4 ${hop.accent ? 'border-accent-line' : 'border-line'}`}
+              className={`flex flex-col gap-1.5 rounded-lg border bg-surface px-[18px] py-4 sm:last:col-span-2 lg:last:col-span-1 ${hop.accent ? 'border-accent-line' : 'border-line'}`}
             >
               <span className={`eyebrow-sm ${hop.accent ? 'text-accent' : 'text-subtle'}`}>{brandCase(hop.name)}</span>
               <span className="text-sm leading-normal text-fg">{hop.detail}</span>
@@ -270,7 +274,7 @@ export default async function OverviewPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {DECISIONS.map((decision) => (
             <article key={decision.title} className="flex flex-col gap-2.5 rounded-lg border border-line p-6">
-              <h3 className="m-0 text-lg leading-snug font-medium text-fg">{decision.title}</h3>
+              <h3 className="m-0 text-lead leading-snug font-medium text-fg">{decision.title}</h3>
               <p className="m-0 text-card leading-reading">{decision.body}</p>
             </article>
           ))}
