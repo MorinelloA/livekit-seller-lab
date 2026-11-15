@@ -10,12 +10,16 @@ import type { LabSettings } from '@/lib/protocol';
 
 export type CallStatus = 'idle' | 'connecting' | 'connected' | 'error';
 
-/** The four switches, as the dock shows them. The LiveKit setting is in the accent. */
+/**
+ * The four switches, as the dock shows them, named as each experiment names its
+ * settings. The LiveKit setting is in the accent; neither model is LiveKit's.
+ */
 function chips(settings: LabSettings) {
+  const mode = (value: LabSettings['noise']) => ({ value: value === 'enhanced' ? 'Enhanced' : 'Baseline', on: value === 'enhanced' });
   return [
-    { name: 'Turns', value: settings.turn_detection === 'enhanced' ? 'Enhanced' : 'Baseline', on: settings.turn_detection === 'enhanced' },
-    { name: 'Interruptions', value: settings.interruptions === 'enhanced' ? 'Enhanced' : 'Baseline', on: settings.interruptions === 'enhanced' },
-    { name: 'Noise', value: settings.noise === 'enhanced' ? 'Isolated' : 'Raw', on: settings.noise === 'enhanced' },
+    { name: 'Turns', ...mode(settings.turn_detection) },
+    { name: 'Interruptions', ...mode(settings.interruptions) },
+    { name: 'Noise', ...mode(settings.noise) },
     { name: 'Model', value: settings.model === 'reasoning' ? 'Reasoning' : 'Fast', on: false },
   ];
 }

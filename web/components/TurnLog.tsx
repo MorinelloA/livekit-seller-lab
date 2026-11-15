@@ -3,17 +3,18 @@ import { isTurn, type LabSettings, type LoggedEvent, type Mode } from '@/lib/pro
 import { Scroller } from '@/components/ui/Scroller';
 
 const seconds = (value: number | null | undefined) => (value == null ? '–' : `${value.toFixed(2)} s`);
-const short: Record<Mode, string> = { baseline: 'Base', enhanced: 'Enh' };
+const named: Record<Mode, string> = { baseline: 'Baseline', enhanced: 'Enhanced' };
 
-/** Turn detection / interruptions / voice isolation / model, in a few characters. */
+/** The four settings in force for a turn, in the experiments' own words and order. */
 function settingsText(settings: LabSettings): string {
-  const parts = [short[settings.turn_detection], short[settings.interruptions]];
-  if (settings.noise) parts.push(settings.noise === 'enhanced' ? 'Iso' : 'Raw');
-  if (settings.model) parts.push(settings.model === 'reasoning' ? 'Reason' : 'Fast');
+  const parts = [named[settings.turn_detection], named[settings.interruptions]];
+  // An agent from before Experiments 3 and 4 doesn't report these two.
+  if (settings.noise) parts.push(named[settings.noise]);
+  if (settings.model) parts.push(settings.model === 'reasoning' ? 'Reasoning' : 'Fast');
   return parts.join(' / ');
 }
 
-const th = 'px-3 py-2.5 font-mono text-label font-bold tracking-pill uppercase text-subtle whitespace-nowrap';
+const th = 'px-3 py-2.5 align-bottom eyebrow-sm text-subtle whitespace-nowrap';
 const num = 'px-3 py-2.5 font-mono text-small tabular-nums whitespace-nowrap';
 
 /** Every turn in the call, newest first, with LiveKit's own timing for it. */
@@ -42,12 +43,13 @@ export function TurnLog({ events }: { events: LoggedEvent[] }) {
               <tr>
                 <th scope="col" className={th}>Who</th>
                 <th scope="col" className={th}>What was said</th>
-                <th scope="col" className={th} title="Turn detection / interruptions / voice isolation (Iso) or raw audio / fast or reasoning model">
+                <th scope="col" className={th}>
                   Settings
+                  <span className="block font-normal tracking-normal normal-case">turns / interruptions / noise / model</span>
                 </th>
                 <th scope="col" className={th}>End of turn</th>
                 <th scope="col" className={th}>Transcript</th>
-                <th scope="col" className={th}>LLM first token</th>
+                <th scope="col" className={th}>LLM first words</th>
                 <th scope="col" className={th}>Voice starts</th>
                 <th scope="col" className={th}>Total pause</th>
               </tr>

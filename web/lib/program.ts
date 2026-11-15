@@ -81,7 +81,7 @@ export const LABS: ProgramLab[] = [
     customerSays: '“How long until we’d have something our own team could try?”',
     predict: 'You give the agent a tool that looks up opening hours. When does it use it, and when does it guess?',
     hear: 'The same question put to an agent with the tool and to one without.',
-    tryIt: 'Build the restaurant agent in Agent Builder, in a sandbox project of your own, and add one tool.',
+    tryIt: 'Build the restaurant agent in Agent Builder, in a LiveKit Cloud project of your own, and give it one tool.',
     askThis: '“Who would build the first version on your side? What would it need to look up or do?”',
     check: 'Instructions, tools and models: which one you change to fix which problem.',
     practice: 'A founder who wants a working demo by Friday and has one engineer.',
