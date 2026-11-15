@@ -30,7 +30,8 @@ const NUMBERED: { step: Step; label: string }[] = [
   { step: 'after', label: 'The check after the lab' },
 ];
 
-const MAIN = 'mx-auto flex max-w-[840px] flex-col gap-10 px-5 pt-14 sm:px-10 sm:pt-16';
+// The page column, like every page. Its parts keep to a reading width.
+const MAIN = 'page-column flex flex-col gap-10 pt-14 *:max-w-[840px] sm:pt-16';
 
 /** The pilot participant's home: consent, then the four steps in order. */
 export function PilotHub() {
@@ -83,10 +84,16 @@ export function PilotHub() {
       </header>
 
       {!pilot ? (
-        <p className="m-0 text-base leading-relaxed">
-          This page is for people helping Tony try out the lab. Open the link he sent you, and it brings you here with
-          your pilot code.
-        </p>
+        <div className="flex flex-col items-start gap-5">
+          <p className="m-0 text-base leading-relaxed">
+            This page is for people helping Tony try out the lab. Open the link he sent you, and it brings you here with
+            your pilot code. Without one, nothing here is recorded.
+          </p>
+          <ButtonLink href="/build/#pilot" variant="quiet">
+            How the pilot works
+            <Icon name="arrow" className="size-3.5" strokeWidth={1.8} />
+          </ButtonLink>
+        </div>
       ) : (
         <>
           {step !== 'consent' && <StepList step={step} />}
@@ -120,7 +127,7 @@ export function PilotHub() {
               doneText="I’ve finished the practice call"
               onDone={() => setProgress(reachStep('after'))}
             >
-              Read the brief, then call Priya. The call takes 8 to 10 minutes, and a coach scores it when you end it.
+              Read the brief, then call Priya. The call takes 8 to 10 minutes. When you end it, it’s scored and a coach talks you through the result.
               Call again if you’d like another try.
             </NextStep>
           )}
@@ -172,7 +179,7 @@ function Consent({ pilot, onAgree }: { pilot: string; onAgree: () => void }) {
       <ol className="m-0 flex list-decimal flex-col gap-1 pl-6">
         <li>A quick check: five questions and three ratings.</li>
         <li>The lab, with Juniper, a voice agent for a made-up restaurant.</li>
-        <li>A practice call with Priya, an AI playing a prospect, scored by a coach.</li>
+        <li>A practice call with Priya, an AI prospect. It’s scored, and a coach talks you through the result.</li>
         <li>The same quick check again.</li>
       </ol>
       <p className="m-0">
@@ -215,7 +222,7 @@ function NextStep(props: {
 }) {
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6">
-      <h2 className="display m-0 text-2xl">{props.title}</h2>
+      <h2 className="display m-0 text-title">{props.title}</h2>
       <p className="m-0 text-base leading-relaxed">{props.children}</p>
       <div className="flex flex-wrap gap-2">
         <ButtonLink href={props.href} variant="primary">
@@ -240,14 +247,14 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
         {letter(answers[qi])} <RightWrong right={answers[qi] === CHECK_QUESTIONS[qi].answer} />
       </>
     );
-  const th = 'px-3 py-2.5 font-mono text-label font-bold tracking-pill uppercase text-subtle';
+  const th = 'px-3 py-2.5 eyebrow-sm text-subtle';
 
   return (
     <section className="flex flex-col gap-7">
-      <p className="m-0 text-lg text-fg">That’s everything. Thank you!</p>
+      <p className="m-0 text-lead text-fg">That’s everything. Thank you!</p>
       {checks.before && checks.after && (
         <div className="flex flex-col gap-3">
-          <h2 className="display m-0 text-2xl">Your answers</h2>
+          <h2 className="display m-0 text-title">Your answers</h2>
           <p className="m-0 text-sm">
             Before the lab you got {checkScore(before)} of {CHECK_QUESTIONS.length}; after it, {checkScore(after)}.
           </p>
@@ -269,6 +276,7 @@ function Done({ checks }: { checks: Partial<Record<CheckPhase, CheckAnswers>> })
                     <td className="px-3 py-2.5 font-mono whitespace-nowrap text-fg">{mark(after, qi)}</td>
                     <td className="px-3 py-2.5">
                       ({letter(q.answer)}) {q.options[q.answer]}
+                      <span className="mt-1 block text-small text-subtle">{q.why}</span>
                     </td>
                   </tr>
                 ))}

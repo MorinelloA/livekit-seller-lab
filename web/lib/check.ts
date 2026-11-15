@@ -1,5 +1,5 @@
-// The before-and-after check, as in the lab guide: one question on each of the
-// four problems, and the discovery question for noise. Answers: 1c, 2a, 3b, 4c, 5a.
+// The before-and-after check: one question on each of the four problems, and
+// the discovery question for noise. Answers: 1c, 2a, 3b, 4c, 5a.
 
 export type CheckPhase = 'before' | 'after';
 
@@ -9,6 +9,8 @@ export interface CheckQuestion {
   question: string;
   options: string[];
   answer: number;
+  /** Why that answer is right, shown with the participant's results at the end. */
+  why: string;
 }
 
 export const CHECK_QUESTIONS: CheckQuestion[] = [
@@ -21,24 +23,28 @@ export const CHECK_QUESTIONS: CheckQuestion[] = [
       'The agent decided the caller was done after a short silence.',
     ],
     answer: 2,
+    why: 'Silence can’t tell a pause to think from the end of a sentence. A turn detector also listens to how the caller sounds.',
   },
   {
     taughtIn: 'Experiment 2',
     question: 'An agent stops talking every time a caller says “uh-huh.” What would fix that?',
     options: ['Adaptive interruption handling.', 'A faster LLM.', 'A different voice.'],
     answer: 0,
+    why: 'It tells a listening sound from a real interruption. A faster LLM or another voice would still stop for any speech.',
   },
   {
     taughtIn: 'Experiment 3',
     question: 'A caller’s transcript contains words they never said. What’s the most likely cause?',
     options: ['A slow network.', 'Voices in the background.', 'The turn detector.'],
     answer: 1,
+    why: 'The agent transcribes everything the microphone picks up, the next table included. Voice isolation keeps only the caller.',
   },
   {
     taughtIn: 'Experiment 4',
     question: 'Which part of the pause does a bigger LLM usually lengthen?',
     options: ['Deciding the caller was done.', 'The voice starting to speak.', 'The LLM’s first words.'],
     answer: 2,
+    why: 'A bigger model takes longer to produce its first words. Deciding the caller was done and starting the voice take as long as before.',
   },
   {
     taughtIn: 'Experiment 3’s card',
@@ -49,6 +55,7 @@ export const CHECK_QUESTIONS: CheckQuestion[] = [
       '“How many calls a month do you get?”',
     ],
     answer: 0,
+    why: 'Noise comes from where callers are and who’s around them. The other two questions are about the model and the number of calls.',
   },
 ];
 

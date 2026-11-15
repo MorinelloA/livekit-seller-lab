@@ -7,7 +7,7 @@ import { cx } from './cx';
  * text on touch screens, because iOS zooms in on anything smaller.
  */
 export const fieldClass =
-  'min-h-11 w-full min-w-0 rounded border border-control-line bg-page px-3 text-sm text-fg placeholder:text-subtle touch:text-base disabled:cursor-not-allowed disabled:opacity-50';
+  'min-h-11 w-full min-w-0 rounded border border-control-line bg-page px-3 text-sm text-fg placeholder:text-subtle touch:text-base disabled:cursor-not-allowed disabled:opacity-60';
 
 export function TextInput({ className, ...props }: ComponentProps<'input'>) {
   return <input className={cx(fieldClass, className)} {...props} />;

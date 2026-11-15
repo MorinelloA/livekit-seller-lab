@@ -315,7 +315,7 @@ export function PracticeCall() {
           <Eyebrow>Seller Lab 1 · Prove it</Eyebrow>
           <h1 className="display text-page-title leading-page">The practice call</h1>
           <p className="max-w-[680px] text-lead leading-reading tracking-body">
-            An 8 to 10 minute discovery call with Priya, an AI voice agent playing a buyer. It’s scored on what this lab
+            An 8 to 10 minute discovery call with Priya, an AI prospect. It’s scored on what this lab
             teaches, not on general sales skills. Use headphones.
           </p>
         </header>
@@ -359,7 +359,7 @@ export function PracticeCall() {
             {phase === 'scoring' && (
               <p role="status" className="m-0 flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-fg">
                 <span className="size-2.5 animate-pulse rounded-full bg-ok" aria-hidden />
-                Your coach is scoring the call. This takes a few seconds.
+                The call is being scored. This takes a few seconds.
               </p>
             )}
             {phase === 'empty' && (
@@ -441,8 +441,8 @@ function Briefing() {
             fails the call.
           </li>
           <li>
-            When you’re done, press <strong className="font-semibold text-fg">End the call and get feedback</strong>. A
-            coach scores the call and talks you through it.
+            When you’re done, press <strong className="font-semibold text-fg">End the call and get feedback</strong>.
+            The call is scored, and a coach talks you through it.
           </li>
           <li>A pass is {PASS_MARK} of 12 points, with no made-up answers.</li>
         </ul>
@@ -555,7 +555,7 @@ function CallBar(props: {
             <Button onClick={props.onToggleMic}>
               <Icon name="mic" className="size-4" />
               {/* Icon-only on phones, like the lab's call bar; the name stays for screen readers. */}
-              <span className="max-sm:sr-only">{micOn ? 'Mute' : 'Use my microphone'}</span>
+              <span className="max-sm:sr-only">{micOn ? 'Mute' : 'Use my voice'}</span>
             </Button>
           )}
           {(phase === 'idle' || phase === 'connecting') && (

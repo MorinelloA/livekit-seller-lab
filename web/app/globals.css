@@ -4,7 +4,7 @@
  * LiveKit's brand (livekit.com/brand): a near-black ground with cyan in dark
  * mode, a near-white ground with blue in light mode. The neutral ramp and the
  * status colours are the ones livekit.com uses. Every text pairing passes
- * WCAG AA; --faint is for ticks and dividers only.
+ * WCAG AA.
  */
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
@@ -22,7 +22,6 @@
   --fg: #ffffff;
   --body: #cccccc;
   --subtle: #999999;
-  --faint: #666666;
   --caller: #b2b2b2;
   --accent: #1fd5f9;
   --on-accent: #070707;
@@ -53,7 +52,6 @@
   --fg: #070707;
   --body: #30302f;
   --subtle: #666666;
-  --faint: #999999;
   --caller: #4d4d4c;
   --accent: #002cf2;
   --on-accent: #ffffff;
@@ -83,7 +81,6 @@
   --color-fg: var(--fg);
   --color-body: var(--body);
   --color-subtle: var(--subtle);
-  --color-faint: var(--faint);
   --color-caller: var(--caller);
   --color-accent: var(--accent);
   --color-on-accent: var(--on-accent);

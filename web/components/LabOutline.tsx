@@ -60,7 +60,7 @@ export function LabOutline({ items }: { items: OutlineItem[] }) {
                 <span className="sr-only">Done: </span>
               </span>
             ) : (
-              <span aria-hidden className="size-4 shrink-0 rounded-full border-[1.5px] border-line" />
+              <span aria-hidden className="size-4 shrink-0 rounded-full border-[1.5px] border-control-line" />
             )}
             {item.label}
           </a>

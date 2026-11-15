@@ -134,7 +134,7 @@ export function Segmented<T extends string>({
             disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cx(
-              'hit min-h-9.5 rounded px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+              'hit min-h-9.5 rounded px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60',
               on ? 'bg-fg text-page' : 'text-subtle hover:text-fg',
             )}
           >

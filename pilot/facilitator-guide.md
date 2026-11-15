@@ -6,7 +6,7 @@ Each person spends about 50 minutes:
 
 1. A quick check: five questions and three "how sure are you" ratings.
 2. The lab with Juniper: Make it your own, then the four experiments. About 30 minutes.
-3. A practice call with Priya, which a coach scores. 8 to 10 minutes, plus feedback.
+3. A practice call with Priya. A judge scores it and a coach talks them through the result. 8 to 10 minutes, plus feedback.
 4. The same quick check again.
 
 The pages walk them through it in order. The pilot page records their answers and how long each step takes. It also records their predictions, test-caller runs, error messages and practice-call scorecards with transcripts. LiveKit Cloud records the audio and transcripts of their calls.
@@ -34,7 +34,7 @@ The pages walk them through it in order. The pilot page records their answers an
 
 ## What to say at the start
 
-> Thanks for helping. I built this lab to teach new salespeople at LiveKit, a company whose software runs voice AI agents. I'm testing the lab, not you. If something is confusing, that's the lab's fault, and it's exactly what I need to find. Please think out loud as you go: what you're looking at, what you expect to happen, what surprises you. I won't help unless you're stuck for a couple of minutes.
+> Thanks for helping. I built this lab to show how I’d teach new salespeople at LiveKit, a company whose software runs voice AI agents. I don’t work there. I'm testing the lab, not you. If something is confusing, that's the lab's fault, and it's exactly what I need to find. Please think out loud as you go: what you're looking at, what you expect to happen, what surprises you. I won't help unless you're stuck for a couple of minutes.
 
 Then let them read the first page and agree to the recording themselves.
 
@@ -90,7 +90,7 @@ Then answer the questions you wrote down.
 
 ## Writing it up
 
-The lab guide asks for what happened, without percentages. For each person:
+Write what happened, without percentages: three people are too few for them. For each person:
 
 - Their check score before and after ("2 of 5, then 5 of 5"), and their three ratings before and after.
 - How long the lab and the practice call took.

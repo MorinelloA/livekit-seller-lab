@@ -46,7 +46,7 @@ export function KnowledgeCheck(props: {
                     key={option}
                     className={cx(
                       'flex min-h-11 cursor-pointer items-start gap-3 rounded-md border px-3.5 py-2.5 text-sm leading-snug transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent',
-                      chosen ? 'border-accent-line bg-accent-soft text-fg' : 'border-line hover:border-subtle',
+                      chosen ? 'border-accent-line bg-accent-soft text-fg' : 'border-control-line hover:border-subtle',
                     )}
                   >
                     <input
@@ -69,7 +69,7 @@ export function KnowledgeCheck(props: {
 
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-1.5">
-          <h2 className="display m-0 text-2xl">How sure are you?</h2>
+          <h2 className="display m-0 text-title">How sure are you?</h2>
           <p className="m-0 text-sm text-subtle">From 1 (not at all) to 5 (completely).</p>
         </div>
         {CHECK_RATINGS.map((statement, ri) => (
@@ -85,7 +85,7 @@ export function KnowledgeCheck(props: {
                     className={cx(
                       // At least 44px wide too: "2", "3" and "4" were 37px, under the touch minimum.
                       'flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-3.5 text-sm transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent',
-                      chosen ? 'border-accent-line bg-accent-soft text-fg' : 'border-line hover:border-subtle',
+                      chosen ? 'border-accent-line bg-accent-soft text-fg' : 'border-control-line hover:border-subtle',
                     )}
                   >
                     <input

@@ -171,8 +171,9 @@ conversations to tell "uh-huh" or "mm-hm" from a real interruption, from the sou
 itself. It's on by default for most agents deployed on LiveKit Cloud. A fuller \
 "yeah, okay" can still stop the agent.
 - Noise: LiveKit Cloud runs noise models from Krisp and ai-coustics on the caller's \
-audio before the agent hears it. Voice isolation, a paid add-on, keeps the main \
-speaker; background noise suppression suits calls with several speakers.
+audio before the agent hears it. Voice isolation keeps the main speaker and is \
+priced by the minute, with some minutes included in every plan; background noise \
+suppression suits calls with several speakers.
 - Latency: the turn detector closes turns sooner, and the agent can start drafting a \
 reply before the turn is confirmed. LiveKit Inference offers speech, LLM and voice \
 models from providers such as OpenAI, Google, Deepgram and Cartesia through one \

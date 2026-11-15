@@ -35,7 +35,7 @@ export function Prediction(props: {
               key={option}
               className={cx(
                 'flex min-h-12 items-center gap-2.5 rounded-md border px-3.5 py-2.5 text-sm leading-snug transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent',
-                chosen ? 'border-accent-line bg-accent-soft text-fg' : 'border-line text-body',
+                chosen ? 'border-accent-line bg-accent-soft text-fg' : 'border-control-line text-body',
                 locked ? (chosen ? '' : 'opacity-60') : 'cursor-pointer hover:border-subtle',
               )}
             >
