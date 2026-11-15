@@ -6,9 +6,10 @@ import { type RemoteParticipant, type Room, RoomEvent } from 'livekit-client';
 import { AccessCodeForm } from '@/components/AccessCodeForm';
 import { AgentBars } from '@/components/AgentBars';
 import { PilotBanner } from '@/components/PilotBanner';
-import { Callout, Eyebrow, inputClass, Pill, Points } from '@/components/ui/Bits';
+import { Callout, Eyebrow, Pill, Points } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
+import { TextInput } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
 import { AccessCodeError } from '@/lib/access';
 import { logPilot, requestRoom } from '@/lib/pilot';
@@ -693,8 +694,9 @@ function Transcript({ turns, live }: { turns: PracticeTurn[]; live: boolean }) {
 
 function TypeBox(props: { value: string; placeholder: string; onChange: (value: string) => void; onSend: () => void }) {
   return (
+    // On a phone, Send goes under the field, so the field (and its placeholder) gets the width.
     <form
-      className="flex gap-2"
+      className="flex flex-col gap-2 sm:flex-row"
       onSubmit={(event) => {
         event.preventDefault();
         props.onSend();
@@ -703,14 +705,14 @@ function TypeBox(props: { value: string; placeholder: string; onChange: (value: 
       <label htmlFor="typed" className="sr-only">
         Type instead of talking
       </label>
-      <input
+      <TextInput
         id="typed"
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
         maxLength={MAX_TYPED_CHARS}
         placeholder={props.placeholder}
         autoComplete="off"
-        className={cx(inputClass, 'min-w-0 flex-1')}
+        className="flex-1"
       />
       <Button type="submit" disabled={!props.value.trim()}>
         Send
