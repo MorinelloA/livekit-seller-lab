@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/components/ui/ExternalLink';
 import { AUTHOR } from '@/lib/site';
 import { Wordmark } from './Wordmark';
 
@@ -15,17 +16,14 @@ export function SiteFooter() {
           </p>
         </div>
         <ul className="flex flex-col gap-2 font-mono text-xs leading-relaxed text-subtle">
-          <li className="flex items-center gap-2">
-            <span aria-hidden className="size-2 shrink-0 rounded-full bg-ok" />
-            Agent on LiveKit Cloud, us-east
-          </li>
+          <li>Agent on LiveKit Cloud, us-east</li>
           <li>Calls aren’t recorded, except pilot calls with consent</li>
           {AUTHOR.links.length > 0 && (
             <li className="flex flex-wrap gap-x-4 gap-y-1">
               {AUTHOR.links.map((link) => (
-                <a key={link.href} href={link.href} className="text-accent hover:underline">
+                <ExternalLink key={link.href} href={link.href}>
                   {link.label}
-                </a>
+                </ExternalLink>
               ))}
             </li>
           )}

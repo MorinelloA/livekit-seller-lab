@@ -21,7 +21,7 @@ export function SiteHeader() {
         </Link>
         <nav
           aria-label="Main"
-          className="order-3 -mx-5 flex w-[calc(100%+2.5rem)] gap-6 overflow-x-auto border-t border-line-soft px-5 text-sm sm:order-none sm:mx-0 sm:w-auto sm:border-0 sm:px-0"
+          className="order-3 -mx-5 flex w-[calc(100%+2.5rem)] gap-6 overflow-x-auto border-t border-line-soft px-5 text-sm sm:-mx-10 sm:w-[calc(100%+5rem)] sm:px-10 md:order-none md:mx-0 md:w-auto md:border-0 md:px-0"
         >
           {NAV.map((item) => {
             const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);

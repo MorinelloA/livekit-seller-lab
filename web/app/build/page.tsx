@@ -7,7 +7,9 @@ import { Icon } from '@/components/ui/Icon';
 import { excerpt } from '@/lib/excerpts';
 import { RPC_FINISH, SCORECARD_TOPIC, CHAT_TOPIC } from '@/lib/practice';
 import { EVENTS_TOPIC, RPC_CUSTOMIZE, RPC_GET_STATE, RPC_RESET, RPC_SET_SETTINGS } from '@/lib/protocol';
+import { ExternalLink } from '@/components/ui/ExternalLink';
 import { Scroller } from '@/components/ui/Scroller';
+import { REPO_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'How it’s built',
@@ -37,7 +39,7 @@ const PROTOCOL = [
 const TUNING = [
   {
     label: '1.8 s pauses',
-    text: 'Juniper starts answering about 1.2 seconds after the caller stops, so a wrong decision is only audible when the pause is longer than that.',
+    text: 'When the clip was tuned, Juniper started answering about 1.2 seconds after the caller stopped (about 0.6 now, on faster speech models). A wrong decision is only audible when the pause is longer than that.',
   },
   {
     label: 'Pauses mid-thought',
@@ -50,7 +52,7 @@ const TUNING = [
   { label: 'A natural voice', text: 'With a robot voice, the detector scored the same pause 0.30 in one run and 0.46 in the next.' },
   {
     label: 'The right isolation',
-    text: 'On the café booking, ai-coustics Voice Focus removed the next table every time. Krisp VIVA let it through.',
+    text: 'On the café booking, ai-coustics Voice Focus S removed the next table every time. Krisp VIVA let it through.',
   },
 ];
 
@@ -80,7 +82,7 @@ const PILOT_RECORDS = [
   'consent and step changes',
   'both checks',
   'each locked-in prediction',
-  'test-caller runs and “Make it your own” changes',
+  'test-caller runs, recorded runs played, and “Make it your own” changes',
   'every error message shown',
   'each practice call’s scorecard and transcript',
 ];
@@ -89,9 +91,12 @@ const LIMITS = [
   { warn: true, text: 'The café button plays noise only while you talk. That gating needs a real microphone, so it hasn’t been tested yet.' },
   { warn: true, text: 'The pilot has only had a test participant. Priya has only been tried by typing, not by voice.' },
   { warn: true, text: 'Small samples: two runs per setting, and two calls for the judge comparison.' },
-  { warn: false, text: 'Tests cover the scoring rules and the timeline’s placement. Nothing tests the RPCs, the Worker or the mixer, and there’s no CI.' },
+  {
+    warn: false,
+    text: 'Tests cover the scoring rules, the timeline, the recordings, the Worker’s API and the names the agent and the pages share, and they run on every push. Nothing tests a live call end to end: the RPCs against a running agent, or the mixer.',
+  },
   { warn: false, text: 'The daily cap is rough: two requests at the same moment can both get through.' },
-  { warn: false, text: 'RPC names and the rubric are copied by hand between Python and TypeScript.' },
+  { warn: false, text: 'Anyone with the access code can write pilot events. Reading or deleting them takes the admin code.' },
 ];
 
 const th = 'border-b border-line px-4 py-3 eyebrow-sm text-subtle whitespace-nowrap';
@@ -405,7 +410,13 @@ export default function BuildPage() {
           {LIMITS.map((limit) => (
             <li key={limit.text} className="flex gap-3 border-b border-line py-3.5 text-card leading-relaxed">
               <span aria-hidden className={`mt-2 size-2 shrink-0 rounded-full ${limit.warn ? 'bg-warn' : 'bg-subtle'}`} />
-              {limit.text}
+              <span>
+                {/* The dot's colour says which kind it is; so do these words. */}
+                <span className={limit.warn ? 'font-medium text-warn' : 'font-medium text-fg'}>
+                  {limit.warn ? 'Unproven. ' : 'Known gap. '}
+                </span>
+                {limit.text}
+              </span>
             </li>
           ))}
         </ul>
@@ -413,7 +424,7 @@ export default function BuildPage() {
 
       <p className="m-0 text-small leading-relaxed text-subtle">
         Every number on this page comes from the README’s live runs or the code. The excerpts are read from the source when the
-        site is built.
+        site is built. <ExternalLink href={REPO_URL}>Read the source on GitHub</ExternalLink>.
       </p>
     </main>
   );

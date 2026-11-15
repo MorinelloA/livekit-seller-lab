@@ -59,12 +59,18 @@ test('boxes that scroll sideways are Scrollers, so a keyboard can reach them', (
 test('type sizes come from the kit’s tokens, not pixel values', () => {
   // em-relative sizes (inline code at 0.86em) follow their text, so they pass.
   const found = offenders(/\btext-\[(\d+(\.\d+)?px|clamp)/);
-  assert.deepEqual(found, [], 'Use a type token (text-label, text-small, text-card, text-page, …) from app/globals.css.');
+  assert.deepEqual(found, [], 'Use a type token (text-label, text-small, text-card, text-lead, text-title, …) from app/globals.css.');
 });
 
 test('icons are the kit’s line icons, not glyphs', () => {
   const found = offenders(/[✓✗✔✕✖]/).filter((line) => !/:\s*(\/\/|\*|\/\*)/.test(line));
   assert.deepEqual(found, [], 'Use Icon (components/ui/Icon.tsx), or RightWrong for a right or wrong mark.');
+});
+
+test('links that leave the site are ExternalLinks', () => {
+  // ExternalLink opens a new tab, so a call in progress isn't hung up, and sends no referrer.
+  const found = offenders(/target="_blank"|href=["{`']https?:/, (file) => /ui[\\/]ExternalLink\.tsx$/.test(file));
+  assert.deepEqual(found, [], 'Use ExternalLink (components/ui/ExternalLink.tsx).');
 });
 
 test('pages sit in the page column, not a copy of it', () => {
