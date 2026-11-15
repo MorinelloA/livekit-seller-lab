@@ -120,7 +120,9 @@ export function Segmented<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className="inline-flex max-w-full flex-wrap gap-0.5 rounded-md border border-control-line bg-page p-0.75"
+      // When the labels don't fit and the items wrap, 6px between rows leaves each 38px
+      // item room for its 44px touch area.
+      className="inline-flex max-w-full flex-wrap gap-x-0.5 gap-y-1.5 rounded-md border border-control-line bg-page p-0.75"
     >
       {options.map((option) => {
         const on = option.value === value;
