@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ConversationTimeline, type TimelineRun, TimelineLegend } from '@/components/ConversationTimeline';
-import { Eyebrow, Segmented } from '@/components/ui/Bits';
+import { brandCase, Eyebrow, Segmented } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
 import { Icon } from '@/components/ui/Icon';
@@ -139,7 +139,7 @@ export function Replay({ entries }: { entries: ReplayEntry[] }) {
       <div className="grid gap-px border-t border-line bg-line sm:grid-cols-2">
         {entries.map((e) => (
           <div key={e.mode} className="flex flex-col gap-1.5 bg-surface px-5 py-5 sm:px-6">
-            <p className={cx('eyebrow m-0 text-[11px]', e.mode === 'enhanced' ? 'text-accent' : 'text-subtle')}>{e.label}</p>
+            <p className={cx('eyebrow-sm m-0', e.mode === 'enhanced' ? 'text-accent' : 'text-subtle')}>{brandCase(e.label)}</p>
             <p className="m-0 text-[15px] leading-relaxed text-body">{e.summary}</p>
           </div>
         ))}

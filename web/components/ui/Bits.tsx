@@ -1,25 +1,47 @@
-import type { ReactNode } from 'react';
+import { Children, type ReactNode } from 'react';
+import { splitBrand } from '@/lib/text';
 import { cx } from './cx';
+import { fieldClass } from './Field';
 import { Icon } from './Icon';
+
+/**
+ * LiveKit's brand guide: the name is never written "LIVEKIT". In a label set in
+ * capitals, the name keeps its own case.
+ */
+export function brandCase(node: ReactNode): ReactNode {
+  if (typeof node !== 'string' || !node.includes('LiveKit')) return node;
+  return splitBrand(node).map((part, i) =>
+    i % 2 === 1 ? (
+      <span key={i} className="normal-case">
+        LiveKit
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
 
 /** LiveKit's section label: mono, bold, spaced capitals. */
 export function Eyebrow({
   as: Tag = 'p',
   tone = 'subtle',
+  size = 'md',
   className,
   id,
   children,
 }: {
   as?: 'p' | 'span' | 'h2' | 'h3' | 'dt';
   tone?: 'subtle' | 'accent' | 'ok' | 'warn';
+  /** md: the page-level label, 12px. sm: the kit's card label, 11px. */
+  size?: 'md' | 'sm';
   className?: string;
   id?: string;
   children: ReactNode;
 }) {
   const color = { subtle: 'text-subtle', accent: 'text-accent', ok: 'text-ok', warn: 'text-warn' }[tone];
   return (
-    <Tag id={id} className={cx('eyebrow', color, className)}>
-      {children}
+    <Tag id={id} className={cx(size === 'sm' ? 'eyebrow-sm' : 'eyebrow', color, className)}>
+      {Children.map(children, brandCase)}
     </Tag>
   );
 }
@@ -44,7 +66,7 @@ export function Pill({
   return (
     <span
       className={cx(
-        'inline-flex min-h-6 items-center gap-1.5 rounded-full px-2.5 font-mono text-[11px] font-bold tracking-[0.12em] uppercase',
+        'inline-flex min-h-6.5 items-center gap-1.5 rounded-full px-2.5 font-mono text-label font-bold tracking-pill uppercase',
         PILL_TONES[tone],
         className,
       )}
@@ -96,7 +118,11 @@ export function Segmented<T extends string>({
   disabled?: boolean;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex gap-0.5 rounded-md border border-line bg-page p-[3px]">
+    <div
+      role="group"
+      aria-label={label}
+      className="inline-flex max-w-full flex-wrap gap-0.5 rounded-md border border-control-line bg-page p-0.75"
+    >
       {options.map((option) => {
         const on = option.value === value;
         return (
@@ -107,7 +133,7 @@ export function Segmented<T extends string>({
             disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cx(
-              'min-h-9 rounded px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+              'hit min-h-9.5 rounded px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45',
               on ? 'bg-fg text-page' : 'text-subtle hover:text-fg',
             )}
           >
@@ -119,8 +145,8 @@ export function Segmented<T extends string>({
   );
 }
 
-export const inputClass =
-  'min-h-11 w-full rounded border border-line bg-page px-3 text-sm text-fg placeholder:text-subtle disabled:cursor-not-allowed disabled:opacity-50';
+/** @deprecated Use TextInput or TextArea from ./Field. */
+export const inputClass = fieldClass;
 
 /** A panel: LiveKit's raised card with a hairline border. */
 export function panelClass(className?: string): string {
@@ -130,11 +156,11 @@ export function panelClass(className?: string): string {
 /** Up to two points, as filled and empty dots. */
 export function Points({ score, max = 2 }: { score: number; max?: number }) {
   return (
-    <span className="flex shrink-0 gap-[5px] pt-1.5" role="img" aria-label={`${score} of ${max} points`}>
+    <span className="flex shrink-0 gap-1.25 pt-1.5" role="img" aria-label={`${score} of ${max} points`}>
       {Array.from({ length: max }, (_, i) => (
         <span
           key={i}
-          className={cx('size-[11px] rounded-full', i < score ? 'bg-accent' : 'border-[1.5px] border-line')}
+          className={cx('size-2.75 rounded-full', i < score ? 'bg-accent' : 'border-[1.5px] border-control-line')}
         />
       ))}
     </span>

@@ -23,7 +23,7 @@ export function TurnLog({ events }: { events: LoggedEvent[] }) {
   return (
     <section id="every-turn" aria-labelledby="every-turn-title" className="flex scroll-mt-6 flex-col gap-4 pt-6">
       <div className="flex flex-col gap-2">
-        <Eyebrow className="text-[11px]">LiveKit’s per-turn metrics</Eyebrow>
+        <Eyebrow size="sm">LiveKit’s per-turn metrics</Eyebrow>
         <h2 id="every-turn-title" className="display text-[30px] leading-[1.15]">
           Every turn, measured
         </h2>

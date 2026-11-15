@@ -1,6 +1,7 @@
 'use client';
 
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { brandCase } from '@/components/ui/Bits';
 import { type Peaks, usePeaks } from '@/lib/peaks';
 import type { LoggedEvent } from '@/lib/protocol';
 import {
@@ -61,7 +62,9 @@ function useWidth(ref: RefObject<HTMLDivElement | null>): number {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new ResizeObserver(([entry]) => setWidth(Math.max(280, Math.round(entry.contentRect.width))));
+    // The drawing's own width, so it's never squeezed out of shape (the SVG scales without
+    // keeping its aspect ratio). 120px is only a floor against a collapsed box.
+    const observer = new ResizeObserver(([entry]) => setWidth(Math.max(120, Math.round(entry.contentRect.width))));
     observer.observe(el);
     return () => observer.disconnect();
   }, [ref]);
@@ -206,8 +209,17 @@ export function ConversationTimeline({
   const runsTop = compact ? 92 : RUNS_TOP;
   const axisTop = runsTop + runs.length * RUN_BLOCK + 4;
   const height = axisTop + 24;
-  const step = axis.span > 16_000 || compact ? 2_000 : 1_000;
+  // Ticks at least 40px apart, so their labels never run together on a phone.
+  const base = axis.span > 16_000 || compact ? 2_000 : 1_000;
+  const step = [base, base * 2, 5_000, 10_000].find((s) => s * pxPerMs >= 40) ?? 10_000;
   const ticks = Array.from({ length: Math.floor(axis.span / step) + 1 }, (_, i) => axis.origin + i * step);
+
+  // A tag centred on a point near either end would hang outside the drawing (and the card),
+  // so it's slid back inside. Widths come from the 11px mono face.
+  const tagLeft = (px: number, chars: number, padPx = 0) => {
+    const w = chars * CHAR_PX + padPx;
+    return `${(Math.min(Math.max(0, px - w / 2), Math.max(0, width - w)) / width) * 100}%`;
+  };
 
   const cursors = runs.flatMap((r, i) => {
     const t0 = r.timeline.t0Perf;
@@ -341,7 +353,7 @@ export function ConversationTimeline({
         ))}
       </svg>
 
-      <p className="eyebrow absolute top-0 left-0 text-[11px] text-subtle" aria-hidden>
+      <p className="eyebrow-sm absolute top-0 left-0 text-subtle" aria-hidden>
         Test caller
       </p>
       {!compact &&
@@ -349,32 +361,35 @@ export function ConversationTimeline({
           <p
             key={i}
             aria-hidden
-            className="absolute font-mono text-[11px] leading-4 whitespace-nowrap text-body"
+            className="absolute font-mono text-label leading-4 whitespace-nowrap text-body"
             style={{ left: `${(c.left / width) * 100}%`, top: CAPTION_TOP + c.row * 18 }}
           >
             {c.text}
           </p>
         ))}
-      {pauses.map((p, i) => (
+      {pauses.map((p, i) => {
         // The pause's length, written into the silence it measures.
-        <p
-          key={i}
-          aria-hidden
-          className="absolute -translate-x-1/2 bg-page px-1.5 font-mono text-[11px] leading-4 whitespace-nowrap text-subtle tabular-nums"
-          style={{ left: pct((p.start + p.end) / 2), top: CALLER_MID - 8 }}
-        >
-          {((p.end - p.start) / 1000).toFixed(1)} s{compact ? '' : ' pause'}
-        </p>
-      ))}
+        const text = `${((p.end - p.start) / 1000).toFixed(1)} s${compact ? '' : ' pause'}`;
+        return (
+          <p
+            key={i}
+            aria-hidden
+            className="absolute bg-page px-1.5 font-mono text-label leading-4 whitespace-nowrap text-subtle tabular-nums"
+            style={{ left: tagLeft(x((p.start + p.end) / 2), text.length, 12), top: CALLER_MID - 8 }}
+          >
+            {text}
+          </p>
+        );
+      })}
       {runs.map((r, i) => {
         const top = runsTop + i * RUN_BLOCK;
         return (
           <div key={r.key} aria-hidden>
             <p
-              className={`eyebrow absolute left-0 text-[11px] ${r.tone === 'enhanced' ? 'text-accent' : 'text-subtle'}`}
+              className={`eyebrow-sm absolute left-0 ${r.tone === 'enhanced' ? 'text-accent' : 'text-subtle'}`}
               style={{ top }}
             >
-              {r.label}
+              {brandCase(r.label)}
               {r.timeline.status === 'running' && <span className="ml-2 font-normal tracking-normal normal-case">· live</span>}
             </p>
             {lanes[i].speaking
@@ -382,8 +397,8 @@ export function ConversationTimeline({
               .map((s, j) => (
                 <p
                   key={j}
-                  className="absolute -translate-x-1/2 font-mono text-[11px] leading-[14px] whitespace-nowrap text-warn"
-                  style={{ left: pct(s.end), top: top + LANE_OFFSET + LANE_HEIGHT + 4 }}
+                  className="absolute font-mono text-label leading-3.5 whitespace-nowrap text-warn"
+                  style={{ left: tagLeft(x(s.end), 7), top: top + LANE_OFFSET + LANE_HEIGHT + 4 }}
                 >
                   cut off
                 </p>
@@ -391,8 +406,8 @@ export function ConversationTimeline({
             {lanes[i].stalls.slice(0, 1).map((s, j) => (
               <p
                 key={j}
-                className="absolute -translate-x-1/2 font-mono text-[11px] leading-[14px] whitespace-nowrap text-warn"
-                style={{ left: pct((s.start + s.end) / 2), top: top + LANE_OFFSET + LANE_HEIGHT + 4 }}
+                className="absolute font-mono text-label leading-3.5 whitespace-nowrap text-warn"
+                style={{ left: tagLeft(x((s.start + s.end) / 2), 7), top: top + LANE_OFFSET + LANE_HEIGHT + 4 }}
               >
                 stalled
               </p>
@@ -404,7 +419,7 @@ export function ConversationTimeline({
         <p
           key={t}
           aria-hidden
-          className={`absolute font-mono text-[11px] leading-4 text-subtle tabular-nums ${
+          className={`absolute font-mono text-label leading-4 text-subtle tabular-nums ${
             i === 0 ? '' : i === ticks.length - 1 && x(t) > width - 30 ? '-translate-x-full' : '-translate-x-1/2'
           }`}
           style={{ left: pct(t), top: axisTop + 7 }}

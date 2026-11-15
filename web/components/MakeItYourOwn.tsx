@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { ConversationTimeline, TimelineLegend } from '@/components/ConversationTimeline';
 import { type RunView, TurnList } from '@/components/ExperimentPanel';
 import { Prediction } from '@/components/Prediction';
-import { Eyebrow, inputClass } from '@/components/ui/Bits';
+import { Eyebrow } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
-import { cx } from '@/components/ui/cx';
+import { Field, WrappingInput } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
 import { MAKE_IT_YOUR_OWN as copy } from '@/lib/experiments';
 import { isTurn, type LabPersona, MAX_NAME_CHARS, MAX_RULE_CHARS } from '@/lib/protocol';
@@ -49,15 +49,15 @@ export function MakeItYourOwn(props: {
       className="scroll-mt-6 rounded-lg border border-line bg-surface"
     >
       <div className="flex flex-col gap-3 px-5 pt-7 pb-6 sm:px-7">
-        <Eyebrow className="text-[11px]">Start here</Eyebrow>
-        <h2 id="make-it-your-own-title" className="display text-[30px] leading-[1.15]">
+        <Eyebrow size="sm">Start here</Eyebrow>
+        <h2 id="make-it-your-own-title" className="display text-heading leading-[1.15]">
           {copy.title}
         </h2>
         <p className="max-w-[680px] text-base leading-[1.7]">{copy.lead}</p>
       </div>
 
       <div className="flex flex-col gap-4 border-t border-line px-5 py-6 sm:px-7">
-        <Eyebrow as="span" className="text-[11px]">
+        <Eyebrow as="span" size="sm">
           Predict
         </Eyebrow>
         <Prediction
@@ -75,33 +75,32 @@ export function MakeItYourOwn(props: {
       </div>
 
       <div className="flex flex-col gap-4 border-t border-line px-5 py-6 sm:px-7">
-        <Eyebrow as="span" className="text-[11px]">
+        <Eyebrow as="span" size="sm">
           Do this
         </Eyebrow>
-        <p className="m-0 text-[15px] leading-relaxed">{copy.doThis}</p>
-        <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
-          <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-fg">
-            Restaurant name
-            <input
+        <p className="m-0 text-card leading-relaxed">{copy.doThis}</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field id="miyo-name" label="Restaurant name">
+            {/* Both fields wrap instead of hiding the end of a long name or rule on a phone. */}
+            <WrappingInput
+              id="miyo-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={MAX_NAME_CHARS}
               placeholder="Juniper"
               disabled={!locked}
-              className={cx(inputClass, 'font-normal')}
             />
-          </label>
-          <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-fg">
-            Your rule
-            <input
+          </Field>
+          <Field id="miyo-rule" label="Your rule">
+            <WrappingInput
+              id="miyo-rule"
               value={rule}
               onChange={(e) => setRule(e.target.value)}
               maxLength={MAX_RULE_CHARS}
               placeholder={copy.suggestions[0]}
               disabled={!locked}
-              className={cx(inputClass, 'font-normal')}
             />
-          </label>
+          </Field>
         </div>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Suggested rules">
           {copy.suggestions.map((suggestion) => (
@@ -110,7 +109,7 @@ export function MakeItYourOwn(props: {
               type="button"
               onClick={() => setRule(suggestion)}
               disabled={!locked}
-              className="min-h-9 rounded-full border border-line px-3 text-xs text-body transition-colors hover:border-subtle hover:text-fg disabled:cursor-not-allowed disabled:opacity-45"
+              className="hit min-h-9 max-w-full rounded-full border border-line px-3 py-1.5 text-xs text-body transition-colors hover:border-subtle hover:text-fg disabled:cursor-not-allowed disabled:opacity-45"
             >
               {suggestion}
             </button>
@@ -130,7 +129,7 @@ export function MakeItYourOwn(props: {
             </Button>
           )}
         </div>
-        {!locked && <p className="m-0 text-[13px] text-subtle">Lock in a prediction first.</p>}
+        {!locked && <p className="m-0 text-small text-subtle">Lock in a prediction first.</p>}
         <p className="m-0 text-sm" aria-live="polite">
           {!persona
             ? 'Call Juniper to start.'
@@ -163,7 +162,7 @@ export function MakeItYourOwn(props: {
             <TurnList turns={turns} />
           </div>
         )}
-        <p className="m-0 text-[13px] text-subtle">{copy.experimentsNote}</p>
+        <p className="m-0 text-small text-subtle">{copy.experimentsNote}</p>
       </div>
 
       <div className="flex flex-col gap-4 border-t border-line px-5 py-6 sm:px-7">

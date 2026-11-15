@@ -5,12 +5,14 @@ import { cx } from './cx';
 type Variant = 'primary' | 'secondary' | 'danger' | 'quiet';
 type Size = 'md' | 'sm';
 
+// max-w-full and text-center: a label longer than the screen wraps inside the button
+// instead of pushing it off the side.
 const BASE =
-  'inline-flex shrink-0 items-center justify-center gap-2 rounded font-semibold transition-[background-color,border-color,color,filter] duration-150 disabled:cursor-not-allowed disabled:opacity-45';
+  'inline-flex max-w-full shrink-0 items-center justify-center gap-2 rounded text-center font-semibold transition-[background-color,border-color,color,filter] duration-150 disabled:cursor-not-allowed disabled:opacity-45';
 
 const SIZES: Record<Size, string> = {
   md: 'min-h-11 px-4 text-sm',
-  sm: 'min-h-9 px-3 text-[13px]',
+  sm: 'hit min-h-9 px-3 text-small',
 };
 
 // Primary is LiveKit's accent fill with dark text on cyan, white on blue.

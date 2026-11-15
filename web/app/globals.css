@@ -17,6 +17,8 @@
   --raised: #1f1f1f;
   --line: #30302f;
   --line-soft: rgb(204 204 204 / 0.1);
+  /* The edge of a field or a segmented control: 3:1 or more on page, surface and raised (WCAG 1.4.11). */
+  --control-line: #737373;
   --fg: #ffffff;
   --body: #cccccc;
   --subtle: #999999;
@@ -47,6 +49,7 @@
   --raised: #ffffff;
   --line: #e3e3e1;
   --line-soft: rgb(7 7 7 / 0.08);
+  --control-line: #878786;
   --fg: #070707;
   --body: #30302f;
   --subtle: #666666;
@@ -76,6 +79,7 @@
   --color-raised: var(--raised);
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
+  --color-control-line: var(--control-line);
   --color-fg: var(--fg);
   --color-body: var(--body);
   --color-subtle: var(--subtle);
@@ -99,6 +103,25 @@
   --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: var(--font-commit-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+
+/*
+ * The kit's type sizes and page column. Each size sets only the font size, like
+ * the arbitrary values it replaces, so line heights stay with the element.
+ */
+@theme {
+  --text-label: 0.6875rem; /* 11px: card labels, pills, chips, captions */
+  --text-small: 0.8125rem; /* 13px: hints and notes */
+  --text-card: 0.9375rem; /* 15px: card text */
+  --text-lead: 1.0625rem; /* 17px: lead paragraphs */
+  --text-title: 1.375rem; /* 22px: card and section titles */
+  --text-heading: 1.875rem; /* 30px: experiment headings */
+  --container-page: 75rem; /* 1200px */
+  --tracking-pill: 0.12em; /* pills and status tags */
+  --tracking-chip: 0.06em; /* the call dock's settings chips */
+}
+
+/* A touch screen (the hit areas and 16px fields key off this). */
+@custom-variant touch (@media (pointer: coarse));
 
 @layer base {
   html {
@@ -130,6 +153,50 @@
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+}
+
+/* The kit's card label: the eyebrow at 11px, tracked 0.18em. */
+@utility eyebrow-sm {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: 1.5;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* The page column: 1200px at most, with 20px gutters on phones and 40px from 640px. */
+@utility page-column {
+  margin-inline: auto;
+  max-width: var(--container-page);
+  padding-inline: 1.25rem;
+  @variant sm {
+    padding-inline: 2.5rem;
+  }
+}
+
+/*
+ * A touch area for a control drawn smaller than the minimum: 24px with a mouse,
+ * 44px on a touch screen, centred on the control. The control keeps its drawn
+ * size. An ancestor with overflow hidden clips it, so check where it's used.
+ */
+@utility hit {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 24px);
+    height: max(100%, 24px);
+    transform: translate(-50%, -50%);
+  }
+  @media (pointer: coarse) {
+    &::after {
+      width: max(100%, 44px);
+      height: max(100%, 44px);
+    }
+  }
 }
 
 /* Headings: light weight, tight tracking, as livekit.com sets Everett. */

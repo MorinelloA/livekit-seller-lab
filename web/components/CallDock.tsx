@@ -56,9 +56,11 @@ export function CallDock(props: {
       {message && <Callout className="[box-shadow:var(--dock-shadow)] backdrop-blur-md">{message}</Callout>}
       <section
         aria-label="Call"
-        className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg border border-line bg-dock py-3 pr-3 pl-4 [box-shadow:var(--dock-shadow)] backdrop-blur-md"
+        // One row on phones, as the kit draws the dock at 390px: the status takes what the
+        // buttons leave. From 640px the settings chips can wrap onto a second row.
+        className="flex items-center gap-x-5 gap-y-3 rounded-lg border border-line bg-dock py-3 pr-3 pl-4 [box-shadow:var(--dock-shadow)] backdrop-blur-md max-sm:gap-x-3 sm:flex-wrap"
       >
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3 max-sm:flex-1">
           {props.hasRoom && agentPresent ? (
             <AgentBars />
           ) : (
@@ -69,7 +71,11 @@ export function CallDock(props: {
           )}
           <div className="flex min-w-0 flex-col" aria-live="polite">
             <span className="text-sm font-semibold text-fg">{label}</span>
-            {connected && props.persona && <span className="font-mono text-[11px] text-subtle">{props.persona}</span>}
+            {connected && props.persona && (
+              <span className="truncate font-mono text-label text-subtle" title={props.persona}>
+                {props.persona}
+              </span>
+            )}
           </div>
         </div>
         {connected && (
@@ -77,7 +83,7 @@ export function CallDock(props: {
             {chips(settings).map((chip) => (
               <li
                 key={chip.name}
-                className="inline-flex min-h-[26px] items-center gap-1.5 rounded border border-line px-2 font-mono text-[11px] tracking-[0.06em] text-subtle uppercase"
+                className="inline-flex min-h-6.5 items-center gap-1.5 rounded border border-line px-2 font-mono text-label tracking-chip text-subtle uppercase"
               >
                 {chip.name}
                 <span className={cx('normal-case', chip.on ? 'text-accent' : 'text-fg')}>{chip.value}</span>
@@ -85,7 +91,7 @@ export function CallDock(props: {
             ))}
           </ul>
         )}
-        <div className="ml-auto flex flex-wrap gap-2">
+        <div className="ml-auto flex shrink-0 flex-wrap gap-2">
           {connected && (
             <Button
               onClick={props.onToggleMic}
@@ -94,7 +100,8 @@ export function CallDock(props: {
               className={micOn ? 'border-accent-line bg-accent-soft text-accent' : undefined}
             >
               <Icon name="mic" className="size-4" />
-              {micOn ? 'Your microphone is on' : 'Use my voice'}
+              {/* Icon-only on phones, as the kit draws the dock at 390px; the name stays for screen readers. */}
+              <span className="max-sm:sr-only">{micOn ? 'Your microphone is on' : 'Use my voice'}</span>
             </Button>
           )}
           {connected ? (

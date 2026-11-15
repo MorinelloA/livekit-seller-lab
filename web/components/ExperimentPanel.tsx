@@ -4,7 +4,7 @@ import { type ReactNode, useState } from 'react';
 import { ConversationTimeline, type TimelineRun, TimelineLegend } from '@/components/ConversationTimeline';
 import { PauseParts } from '@/components/PauseParts';
 import { Prediction } from '@/components/Prediction';
-import { Eyebrow, Segmented } from '@/components/ui/Bits';
+import { brandCase, Eyebrow, Segmented } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
 import { Icon } from '@/components/ui/Icon';
@@ -254,7 +254,7 @@ export function ExperimentPanel(props: {
 function CardPart({ title, emphasis, children }: { title: string; emphasis?: boolean; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2 bg-surface p-[18px]">
-      <dt className="eyebrow text-[11px] text-subtle">{title}</dt>
+      <dt className="eyebrow-sm text-subtle">{brandCase(title)}</dt>
       <dd className={cx('m-0 text-sm leading-relaxed', emphasis ? 'text-fg' : 'text-body')}>{children}</dd>
     </div>
   );
