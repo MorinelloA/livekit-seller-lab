@@ -315,6 +315,8 @@ export function Lab() {
     setRoom(null);
     setAgentPresent(false);
     setPersona(null);
+    // The next call's agent starts on its defaults, so the page does too.
+    setSettings(DEFAULT_SETTINGS);
     setMicOn(false);
     setCafeOn(false);
     setStatus('idle');
