@@ -297,12 +297,17 @@ export default function BuildPage() {
               <span className="absolute inset-y-0 rounded-full bg-accent" style={{ left: '28.6%', width: '28.6%' }} />
             </div>
             <span />
-            <div className="flex justify-between font-mono text-[11px] text-subtle">
-              <span>0 s</span>
-              <span>2</span>
-              <span>4</span>
-              <span>6</span>
-              <span>7 s</span>
+            {/* Each tick at its own second on the 7-second axis the bars use. */}
+            <div className="relative h-4 font-mono text-label text-subtle">
+              {[0, 2, 4, 6, 7].map((s, i, all) => (
+                <span
+                  key={s}
+                  className={`absolute top-0 ${i === 0 ? '' : i === all.length - 1 ? '-translate-x-full' : '-translate-x-1/2'}`}
+                  style={{ left: `${(s / 7) * 100}%` }}
+                >
+                  {i === 0 || i === all.length - 1 ? `${s} s` : s}
+                </span>
+              ))}
             </div>
           </div>
           <p className="m-0 text-sm">4.5 to 6.5 seconds before, 2 to 4 now.</p>
