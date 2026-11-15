@@ -3,7 +3,9 @@ import type { ComponentProps } from 'react';
 import { cx } from './cx';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'quiet';
-type Size = 'md' | 'sm';
+// stack: md, but full width at the kit's 48px and 15px on a phone, as the kit draws a
+// page's main buttons at 390px.
+type Size = 'md' | 'sm' | 'stack';
 
 // max-w-full and text-center: a label longer than the screen wraps inside the button
 // instead of pushing it off the side.
@@ -16,6 +18,7 @@ const DISABLED = 'disabled:border disabled:border-fill-line disabled:bg-fill dis
 
 const SIZES: Record<Size, string> = {
   md: 'min-h-11 px-4 text-sm',
+  stack: 'min-h-11 px-4 text-sm max-sm:w-full max-sm:min-h-12 max-sm:text-card',
   sm: 'hit min-h-9 px-3 text-small',
 };
 

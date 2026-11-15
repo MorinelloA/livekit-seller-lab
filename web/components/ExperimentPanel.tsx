@@ -143,7 +143,7 @@ export function ExperimentPanel(props: {
           <p className="m-0 text-card leading-relaxed">{experiment.testCaller}</p>
           <div className="flex flex-wrap gap-2">
             {MODES.map((mode) => (
-              <Button key={mode} onClick={() => props.onRun(mode)} disabled={!canRun || !locked}>
+              <Button key={mode} size="stack" onClick={() => props.onRun(mode)} disabled={!canRun || !locked}>
                 <Icon name="play" className="size-3" />
                 Play test caller: {labels[mode]}
               </Button>

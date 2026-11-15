@@ -151,11 +151,13 @@ export default function OverviewPage() {
           difference, try it with your own voice, and leave with the question to ask a customer.
         </p>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3 pt-2">
-          <ButtonLink href="/lab/" variant="primary">
+          <ButtonLink href="/lab/" variant="primary" size="stack">
             Start the lab
             <Arrow />
           </ButtonLink>
-          <ButtonLink href="/build/">How it’s built</ButtonLink>
+          <ButtonLink href="/build/" size="stack">
+            How it’s built
+          </ButtonLink>
           <p className="m-0 text-sm text-subtle">Built by {AUTHOR.name} as a work sample for LiveKit</p>
         </div>
       </section>
