@@ -9,7 +9,7 @@ import { PilotBanner } from '@/components/PilotBanner';
 import { Callout, Eyebrow, Pill, Points } from '@/components/ui/Bits';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/components/ui/cx';
-import { TextInput } from '@/components/ui/Field';
+import { WrappingInput } from '@/components/ui/Field';
 import { Icon } from '@/components/ui/Icon';
 import { AccessCodeError } from '@/lib/access';
 import { logPilot, requestRoom } from '@/lib/pilot';
@@ -708,10 +708,14 @@ function TypeBox(props: { value: string; placeholder: string; onChange: (value: 
       <label htmlFor="typed" className="sr-only">
         Type instead of talking
       </label>
-      <TextInput
+      {/* Wraps, so a long message (or the placeholder on a phone) stays readable; Enter sends. */}
+      <WrappingInput
         id="typed"
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') event.currentTarget.form?.requestSubmit();
+        }}
         maxLength={MAX_TYPED_CHARS}
         placeholder={props.placeholder}
         autoComplete="off"
