@@ -15,7 +15,9 @@ const nextConfig: NextConfig = {
   // A build while `pnpm dev` runs would overwrite the dev server's files, so
   // each keeps its own folder.
   distDir: exporting ? '.next' : '.next-dev',
-  env: { NEXT_PUBLIC_BASE_PATH: BASE_PATH },
+  // NEXT_PUBLIC_LAB_FAKE_ROOM is set only by the UI capture harness
+  // (lib/room.ts). Inlining it as '' otherwise lets the build drop the hook.
+  env: { NEXT_PUBLIC_BASE_PATH: BASE_PATH, NEXT_PUBLIC_LAB_FAKE_ROOM: process.env.NEXT_PUBLIC_LAB_FAKE_ROOM ?? '' },
   ...(exporting
     ? { output: 'export' }
     : {

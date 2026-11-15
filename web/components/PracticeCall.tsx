@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
-import { type RemoteParticipant, Room, RoomEvent } from 'livekit-client';
+import { type RemoteParticipant, type Room, RoomEvent } from 'livekit-client';
 import { AccessCodeForm } from '@/components/AccessCodeForm';
 import { AgentBars } from '@/components/AgentBars';
 import { PilotBanner } from '@/components/PilotBanner';
@@ -26,6 +26,7 @@ import {
   type ScorecardMessage,
 } from '@/lib/practice';
 import { AGENT_STATE_ATTRIBUTE, EVENTS_TOPIC, type TimeLimitEvent } from '@/lib/protocol';
+import { createRoom } from '@/lib/room';
 import { useLabAccess } from '@/lib/useLabAccess';
 
 /**
@@ -117,7 +118,7 @@ export function PracticeCall() {
     try {
       const { serverUrl, participantToken } = await requestRoom('practice');
 
-      const r = new Room();
+      const r = createRoom();
       r.registerTextStreamHandler(EVENTS_TOPIC, async (reader) => {
         try {
           const event = JSON.parse(await reader.readAll()) as PracticeTurn | TimeLimitEvent;

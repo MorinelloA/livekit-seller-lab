@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
-import { type RemoteParticipant, Room, RoomEvent, Track } from 'livekit-client';
+import { type RemoteParticipant, type Room, RoomEvent, Track } from 'livekit-client';
 import { AccessCodeForm } from '@/components/AccessCodeForm';
 import { CallDock, type CallStatus } from '@/components/CallDock';
 import { ExperimentPanel, type RunState } from '@/components/ExperimentPanel';
@@ -34,6 +34,7 @@ import {
   RPC_SET_SETTINGS,
 } from '@/lib/protocol';
 import { encodeWav, firstSoundMs, type ReplayRun } from '@/lib/replay';
+import { createRoom } from '@/lib/room';
 import { type ClipKey, RunRecorder, type RunTimeline, speechRuns } from '@/lib/timeline';
 import { useLabAccess } from '@/lib/useLabAccess';
 
@@ -344,7 +345,7 @@ export function Lab() {
       await mic.resume();
       const { serverUrl, participantToken } = await requestRoom('lab');
 
-      const r = new Room();
+      const r = createRoom();
       r.registerTextStreamHandler(EVENTS_TOPIC, async (reader) => {
         try {
           handleEvent(JSON.parse(await reader.readAll()) as LabEvent);
