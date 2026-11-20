@@ -1,8 +1,8 @@
 # Seller Lab 1: Why Real-Time Voice AI Is Hard
 
-A hands-on LiveKit lab for new sellers, built as a work sample for LiveKit's Technical Enablement Engineer role.
+A hands-on LiveKit lab for new sellers. It's an independent, open-source demo by Tony Morinello, and isn't affiliated with or endorsed by LiveKit.
 
-**Live at [tonyt908.com/livekitlab](https://tonyt908.com/livekitlab/).** Every experiment can be heard there from a recording of a real call. Placing a call yourself takes the access code in the link you were sent.
+**Live at [tonyt908.com/livekitlab](https://tonyt908.com/livekitlab/).** Every experiment can be heard there from a recording of a real call. Placing a live call takes an access code, which keeps the hosted agent within its free plans.
 
 Juniper, a voice agent that answers the phone for a made-up restaurant, takes the same recorded test caller twice in each experiment, with one setting changed. The learner predicts what will happen, hears the difference, tries it with their own voice, and leaves with a card: what the customer says, what's happening, what LiveKit does about it, and the question to ask.
 
@@ -17,7 +17,7 @@ What's built:
 - **Seller cards with sources:** each card lists the LiveKit pages its facts rest on and the day they were read.
 - **The practice call:** a discovery call with Priya, an AI prospect, scored on six items by an LLM judge that has to quote the call, with a coach voice that talks the learner through the result.
 - **The pilot:** a check before and after the lab (five questions and three ratings), a page that walks a participant through the four steps, a record of each participant's session, and a results page. [`pilot/facilitator-guide.md`](pilot/facilitator-guide.md) says how to run it.
-- **The program:** a proposal for the training program this lab would belong to: the audit that comes first, five more labs, certification, and the job post's four measures set against what the pilot records today. Only Lab 1 is built, and the page says so.
+- **The program:** a design for the training program this lab would belong to: the audit that comes first, five more labs, certification, and four measures of a sales-training program set against what the pilot records today. Only Lab 1 is built, and the page says so.
 - **How it's built:** the architecture, the protocol between the page and the agent, the scoring rules and what isn't proven yet, in LiveKit's brand like the rest of the site (see [The design](#the-design)).
 - **Tests and CI:** 87 tests for the pages and the API and 16 for the agent, run on every push. None needs keys or places a call.
 
@@ -101,7 +101,7 @@ The layout and brand rules every page follows, and the ones `pnpm test` enforces
 
 ## The hosted lab
 
-The site runs at https://tonyt908.com/livekitlab/ for the people it's sent to, and the lab itself at https://tonyt908.com/livekitlab/lab/. Nothing on tonyt908.com links to them. Links sent before the overview existed open it instead of the lab; it keeps their access code, and its first button goes to the lab.
+The site runs at https://tonyt908.com/livekitlab/, and the lab itself at https://tonyt908.com/livekitlab/lab/. A link with the access code can open any page: the overview keeps the code, and its first button goes to the lab.
 
 - **The pages and the API.** A Cloudflare Worker, `livekit-seller-lab`, serves both. Its route, `tonyt908.com/livekitlab*`, takes precedence over the site's own Worker for those paths only. The pages are Next.js's static export, staged under `dist/livekitlab`, and only `/livekitlab/api/*` runs the Worker's code.
 - **The agent.** It runs on LiveKit Cloud as agent `CA_Meq4CxJofW4Q` in `us-east` (`agent/livekit.toml`). On the free plan it can sleep when idle, and the first call can then take up to 20 seconds; the pages say so.

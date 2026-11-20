@@ -73,7 +73,7 @@ async function matches(given: string | null, expected: string | undefined): Prom
   return crypto.subtle.timingSafeEqual(a, b);
 }
 
-const badCode = () => text('That access code isn’t right. It’s in the link you were sent, after “code=”.', 401);
+const badCode = () => text('That access code isn’t right. If you have a link with one, the code is after “code=”.', 401);
 
 async function token(request: Request, env: Env): Promise<Response> {
   if (!(await matches(request.headers.get('X-Lab-Code'), env.LAB_ACCESS_CODE))) return badCode();

@@ -54,7 +54,8 @@ export function AccessCodeForm({ onSave, error }: { onSave: (code: string) => vo
         label={
           <>
             <Icon name="info" className="mt-0.5 size-4 shrink-0 text-warn" />
-            Calls in this lab need an access code. It’s in the link you were sent, after “code=”.
+            Live calls need an access code, which keeps the hosted agent within its free plans. If you have a link with
+            one, the code is after “code=”.
           </>
         }
         error={error}

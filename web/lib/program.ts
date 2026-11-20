@@ -5,7 +5,7 @@
 // lab filled in, and every "recorded today" claim tied to something the pilot
 // really records.
 
-/** The four areas LiveKit's job post asks the curriculum to cover. */
+/** The four areas the curriculum covers. */
 export const TRACKS = {
   fundamentals: 'LiveKit fundamentals',
   architecture: 'Voice AI architecture',
@@ -210,7 +210,7 @@ export const KEEP_CURRENT = [
 ] as const;
 
 /**
- * The four measures the job post names. `recordedToday` is what Lab 1's pilot
+ * The four measures the program answers to. `recordedToday` is what Lab 1's pilot
  * already stores, and `pilotKinds` are the event kinds in lib/pilot.ts that
  * hold it. `missing` is what a real program would still need.
  */
@@ -226,14 +226,14 @@ export const METRICS = [
     recordedToday:
       'The check’s score before and after. Each practice call’s score on six items, and whether it passed. Whether each prediction was right.',
     pilotKinds: ['check', 'scorecard', 'prediction'],
-    missing: 'How many tries a pass takes, across a whole hiring class.',
+    missing: 'How many tries a pass takes, across a whole group of new sellers.',
   },
   {
     metric: 'Time to first qualified technical conversation',
     recordedToday: 'A stand-in: the time from starting the lab to the first passed practice call.',
     pilotKinds: ['consent', 'scorecard'],
     missing:
-      'The real number is in the CRM: the first meeting a Solutions Architect accepts as qualified. I’d agree what “qualified” means with the CRO in the first week.',
+      'The real number is in the CRM: the first meeting a Solutions Architect accepts as qualified. What “qualified” means gets agreed with the CRO before anything is counted.',
   },
   {
     metric: 'Ramp time',
@@ -243,10 +243,10 @@ export const METRICS = [
   },
 ] as const;
 
-export const FIRST_90_DAYS = [
+export const ROLLOUT = [
   {
     when: 'Days 1 to 30',
-    text: 'The audit. Lab 1 goes to the next new hires as it is, and gets fixed wherever they get stuck.',
+    text: 'The audit. Lab 1 goes to the next new sellers as it is, and gets fixed wherever they get stuck.',
   },
   {
     when: 'Days 31 to 60',

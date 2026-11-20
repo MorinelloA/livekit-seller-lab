@@ -34,7 +34,7 @@ The pages walk them through it in order. The pilot page records their answers an
 
 ## What to say at the start
 
-> Thanks for helping. I built this lab to show how I’d teach new salespeople at LiveKit, a company whose software runs voice AI agents. I don’t work there. I'm testing the lab, not you. If something is confusing, that's the lab's fault, and it's exactly what I need to find. Please think out loud as you go: what you're looking at, what you expect to happen, what surprises you. I won't help unless you're stuck for a couple of minutes.
+> Thanks for helping. I built this lab to teach salespeople why voice AI agents are hard to get right. It's built on LiveKit, a company whose software runs voice AI agents, but I don't work there. I'm testing the lab, not you. If something is confusing, that's the lab's fault, and it's exactly what I need to find. Please think out loud as you go: what you're looking at, what you expect to happen, what surprises you. I won't help unless you're stuck for a couple of minutes.
 
 Then let them read the first page and agree to the recording themselves.
 

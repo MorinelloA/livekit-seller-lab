@@ -81,7 +81,7 @@ export const MAKE_IT_YOUR_OWN = {
   experimentsNote:
     'Test-caller runs in the experiments switch back to the original Juniper, so everyone hears the same calls.',
   fullProgram:
-    'In the full program, each new hire builds this agent in Agent Builder, LiveKit’s no-code builder, in a LiveKit Cloud project of their own. This page uses two fields instead, because Agent Builder needs a LiveKit account.',
+    'In the full program, each seller builds this agent in Agent Builder, LiveKit’s no-code builder, in a LiveKit Cloud project of their own. This page uses two fields instead, because Agent Builder needs a LiveKit account.',
 };
 
 export const EXPERIMENTS: Experiment[] = [

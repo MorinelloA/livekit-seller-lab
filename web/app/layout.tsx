@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: '%s · Seller Lab',
   },
   description: 'A hands-on LiveKit lab for new sellers.',
-  // The lab is only for the people it's sent to, so search engines skip it.
+  // Links can carry the access code, so search engines skip the site.
   robots: { index: false, follow: false },
 };
 

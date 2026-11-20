@@ -11,8 +11,7 @@ export function SiteFooter() {
             <Wordmark />
           </span>
           <p className="text-sm leading-relaxed text-subtle">
-            An independent project by {AUTHOR.name}, built as a work sample for LiveKit. Not affiliated with or
-            endorsed by LiveKit.
+            An independent, open-source project by {AUTHOR.name}. Not affiliated with or endorsed by LiveKit.
           </p>
         </div>
         <ul className="flex flex-col gap-2 font-mono text-xs leading-relaxed text-subtle">

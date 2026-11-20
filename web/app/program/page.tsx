@@ -6,12 +6,12 @@ import { Icon } from '@/components/ui/Icon';
 import { Scroller } from '@/components/ui/Scroller';
 import { Feature, SectionHead } from '@/components/ui/Sections';
 import { PASS_MARK, RUBRIC } from '@/lib/practice';
-import { AUDIT, FIRST_90_DAYS, KEEP_CURRENT, LABS, LAB_SHAPE, METRICS, PATHS, TRACKS, type ProgramLab } from '@/lib/program';
+import { AUDIT, KEEP_CURRENT, LABS, LAB_SHAPE, METRICS, PATHS, ROLLOUT, TRACKS, type ProgramLab } from '@/lib/program';
 import { AUTHOR } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'The program',
-  description: 'A proposal for the technical training program Seller Lab 1 would belong to: the labs, certification and what gets measured.',
+  description: 'A design for the technical training program Seller Lab 1 would belong to: the labs, certification and what gets measured.',
 };
 
 const th = 'border-b border-line px-5 py-3.5 eyebrow-sm text-subtle';
@@ -39,16 +39,16 @@ export default function ProgramPage() {
   return (
     <main id="main" className="page-column">
       <section className="flex max-w-[820px] flex-col gap-5 pt-20 pb-16 sm:pt-24">
-        <Eyebrow>The program · A proposal</Eyebrow>
+        <Eyebrow>The program · A design</Eyebrow>
         <h1 className="display m-0 text-page-title leading-page">One lab is built. This is the program around it.</h1>
         <p className="m-0 text-lead leading-reading tracking-body [text-wrap:pretty]">
-          LiveKit’s job post asks for a technical training program, built from scratch, that gets sellers ready for a
-          customer conversation without pulling engineers off the roadmap. This page is how I’d build it: what I’d find out
-          first, the labs, how a seller is certified, and what gets measured.
+          One lab doesn’t get sellers ready for a technical customer conversation. A program can, without pulling
+          engineers off the roadmap to do it. This page is how I’d build one: what to find out first, the labs, how a
+          seller is certified, and what gets measured.
         </p>
         <Callout tone="info" role="note">
-          A proposal by {AUTHOR.name}, not LiveKit’s plan. I haven’t seen LiveKit’s deals, its sellers or its training, so
-          the first step is to go and look. Only <Link href="/lab/" className="text-accent underline-offset-2 hover:underline">Lab 1</Link>{' '}
+          A design by {AUTHOR.name}, not LiveKit’s plan. It was written without seeing LiveKit’s deals, its sellers or its
+          training, so its first step is to go and look. Only <Link href="/lab/" className="text-accent underline-offset-2 hover:underline">Lab 1</Link>{' '}
           exists. Everything marked Proposed is a plan.
         </Callout>
       </section>
@@ -60,7 +60,7 @@ export default function ProgramPage() {
         intro={
           <>
             <p className="m-0">
-              I’d spend the first two weeks listening. A curriculum written before that teaches what its author finds
+              The program starts with listening. A curriculum written before that teaches what its author finds
               interesting, which is rarely what loses deals.
             </p>
             <p className="m-0">
@@ -77,12 +77,12 @@ export default function ProgramPage() {
         <SectionHead eyebrow="The curriculum" id="labs-title" title="Six labs, each answering something a customer says" />
         <div className="flex max-w-[760px] flex-col gap-3.5 text-base leading-reading">
           <p className="m-0">
-            The post names four areas: LiveKit fundamentals, voice AI architecture, agents and the competitive landscape.
+            The labs cover four areas: LiveKit fundamentals, voice AI architecture, agents and the competitive landscape.
             Each lab starts from a sentence a seller will hear on a call and ends with the question to ask back.
           </p>
           <p className="m-0">
-            The last one is the hardest to write from outside. I’d draft the named comparisons with LiveKit’s product
-            team, and a seller should leave it able to say where LiveKit is the wrong choice.
+            The last one is the hardest to write from outside: the named comparisons need LiveKit’s product team behind
+            them, and a seller should leave it able to say where LiveKit is the wrong choice.
           </p>
         </div>
         <Scroller label="The six labs" className="rounded-lg border border-line">
@@ -286,12 +286,12 @@ export default function ProgramPage() {
       <Feature
         id="measures"
         eyebrow="What gets measured"
-        title="The post’s four measures, and what Lab 1 records today"
+        title="Four measures, and what Lab 1 records today"
         intro={
           <>
             <p className="m-0">
-              Two of the four can be read off the lab now. The other two need LiveKit’s own systems, and I’d rather say so
-              than pass off a stand-in as the real thing.
+              Two of the four can be read off the lab now. The other two need a sales team’s own systems, and I’d rather
+              say so than pass off a stand-in as the real thing.
             </p>
             <p className="m-0">
               So far the only data is one run of my own: 2 of 5 on the check before the lab, 5 of 5 after. That shows the
@@ -331,18 +331,18 @@ export default function ProgramPage() {
       </Feature>
 
       <Feature
-        id="first-90"
+        id="rollout"
         eyebrow="Getting started"
-        title="The first 90 days"
+        title="Rolling it out over three months"
         intro={
           <p className="m-0">
-            Rough, and the audit will move it. But Lab 1 can go in front of new hires in week one, because it’s already
+            Rough, and the audit will move it. But Lab 1 can go in front of new sellers on day one, because it’s already
             running.
           </p>
         }
       >
         <ol className="m-0 flex list-none flex-col border-t border-line p-0">
-          {FIRST_90_DAYS.map((stage) => (
+          {ROLLOUT.map((stage) => (
             <li key={stage.when} className="grid gap-x-6 gap-y-1 border-b border-line py-4 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
               <span className="font-mono text-small text-subtle">{stage.when}</span>
               <span className="text-card leading-reading">{stage.text}</span>

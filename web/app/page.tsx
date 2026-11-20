@@ -169,7 +169,7 @@ export default async function OverviewPage() {
           <ButtonLink href="/build/" size="stack">
             How it’s built
           </ButtonLink>
-          <p className="m-0 text-sm text-subtle">Built by {AUTHOR.name} as a work sample for LiveKit</p>
+          <p className="m-0 text-sm text-subtle">An open-source project by {AUTHOR.name}</p>
         </div>
       </section>
 
@@ -197,8 +197,8 @@ export default async function OverviewPage() {
           <div className="flex min-w-0 flex-[1_1_380px] flex-col gap-2">
             <h3 className="m-0 text-title leading-snug font-normal tracking-title text-fg">This is Lab 1 of a program</h3>
             <p className="m-0 max-w-[680px] text-card leading-reading">
-              LiveKit’s job post asks for a curriculum, certification and measurement, not one lab. So there’s a proposal
-              for the rest: what I’d find out first, five more labs, and what the pilot already measures.
+              Getting sellers ready takes a curriculum, certification and measurement, not one lab. So there’s a design
+              for the rest: what to find out first, five more labs, and what the pilot already measures.
             </p>
           </div>
           <ButtonLink href="/program/">

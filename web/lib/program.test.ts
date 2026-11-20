@@ -14,7 +14,7 @@ test('exactly one lab is built, and it’s Lab 1', () => {
   assert.ok(LABS.filter((lab) => lab.status === 'proposed').every((lab) => !lab.href), 'a proposed lab has nowhere to link to');
 });
 
-test('labs are numbered in order, and every area the job post names has one', () => {
+test('labs are numbered in order, and every area the curriculum covers has one', () => {
   assert.deepEqual(LABS.map((lab) => lab.number), LABS.map((_, i) => i + 1));
   for (const track of Object.keys(TRACKS)) {
     assert.ok(LABS.some((lab) => lab.track === track), `no lab covers ${track}`);
